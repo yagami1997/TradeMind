@@ -85,7 +85,7 @@
      ```
    - 安装依赖：
      ```bash
-     pip3 install -r requirements.txt
+     pip install yfinance pandas numpy scipy
      ```
 
 4. **运行程序**
