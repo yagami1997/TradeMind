@@ -1,13 +1,14 @@
 # 美股技术面简单分析工具 Alpha v 0.1
+
+## 项目介绍
+这是一个基于Python开发的股票纯技术面分析工具，目前主要用于美股市场分析。本工具通过分析多个技术指标，识别价格形态，结合成交量分析来生成交易信号，并以直观的HTML报告形式展示分析结果。
+
 <img width="1114" alt="image" src="https://github.com/user-attachments/assets/8fbe8696-6beb-4955-b072-cd06b221f64c" />
 
 <img width="1114" alt="image" src="https://github.com/user-attachments/assets/e71bbbb5-6bac-4cb5-96a2-cfb4b2444fee" />
 
 <img width="1114" alt="image" src="https://github.com/user-attachments/assets/47cb66b3-3027-44ae-a002-99d162ca022a" />
 
-
-## 项目介绍
-这是一个基于Python开发的股票纯技术面分析工具，目前主要用于美股市场分析。本工具通过分析多个技术指标，识别价格形态，结合成交量分析来生成交易信号，并以直观的HTML报告形式展示分析结果。
 
 ## 核心功能
 
