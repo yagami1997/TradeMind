@@ -42,27 +42,31 @@
 
 ## 使用指南
 
+### 环境要求
+- Python 3.8 或更高版本
+- pip 包管理工具
+- 稳定的网络连接（访问 Yahoo Finance）
+
 ### Windows 系统安装步骤
 
-1. **安装Python环境**
+1. **安装 Python**
    - 访问 [Python官网](https://www.python.org/downloads/)
-   - 下载并安装Python 3.8或更高版本
-   - 安装时勾选"Add Python to PATH"
+   - 下载并安装 Python 3.8 或更高版本
+   - 安装时勾选 "Add Python to PATH"
 
-2. **下载项目代码**
-   - 点击本页面右上角的绿色"Code"按钮
-   - 选择"Download ZIP"
-   - 解压下载的文件到本地文件夹
+2. **下载项目**
+   - 克隆或下载本项目到本地
+   - 解压文件（如果是下载的 ZIP）
 
 3. **安装依赖包**
-   - 打开命令提示符(Win+R输入cmd)
+   - 打开命令提示符 (Win + R，输入 cmd)
    - 进入项目目录：
      ```bash
      cd 项目所在路径
      ```
-   - 安装依赖：
+   - 安装所有依赖：
      ```bash
-      pip install yfinance pandas numpy pytz plotly jinja2
+     pip install -r requirements.txt
      ```
 
 4. **运行程序**
@@ -102,7 +106,7 @@
      ```
    - 安装依赖：
      ```bash
-     pip3 install yfinance pandas numpy pytz plotly jinja2
+    pip3 install -r requirements.txt
      ```
 
 4. **运行程序**
@@ -120,6 +124,42 @@
      python main.py
      
      ```
+
+### 主要依赖包说明
+- **yfinance**: Yahoo Finance 数据获取
+- **pandas**: 数据处理和分析
+- **numpy**: 数值计算
+- **pandas_ta**: 技术分析指标库
+- **scipy**: 科学计算
+- **ib-insync**: Interactive Brokers API 接口
+- **schedule**: 定时任务调度
+
+
+### 可能遇到的问题和解决方案
+
+1. **安装依赖失败**
+   ```bash
+   # 如果安装失败，可以尝试更新 pip
+   # Windows:
+   python -m pip install --upgrade pip
+   # Mac:
+   pip3 install --upgrade pip
+   
+   # 然后重新安装依赖
+   pip install -r requirements.txt
+   ```
+
+2. **lxml 安装问题**
+   - Windows: 可能需要安装 Visual C++ Build Tools
+   - Mac: 可能需要安装 Xcode Command Line Tools
+     ```bash
+     xcode-select --install
+     ```
+
+3. **数据获取超时**
+   - 检查网络连接
+   - 确保能够访问 Yahoo Finance
+   - 考虑使用代理服务器
 
 ## 常见问题解答
 
@@ -143,13 +183,23 @@
 2. 定期更新Python和依赖包
 3. 分析结果仅供参考，请结合其他因素做出投资决策
 
-## 注意事项
-1. 本工具使用Yahoo Finance的数据，可能存在延迟
-2. 分析结果仅供参考，不构成投资建议
-3. 投资有风险，入市需谨慎
+### 更新说明
+- 建议定期更新依赖包：
+  ```bash
+  pip install --upgrade -r requirements.txt
+  ```
+- 关注项目更新，及时同步最新代码
+
+### 注意事项
+1. 首次运行可能需要较长时间下载依赖包
+2. 确保安装的 Python 版本兼容所有依赖
+3. 如遇到 SSL 证书问题，请确保系统时间正确
+4. 建议在虚拟环境中运行项目
 
 ## 问题反馈
 如果使用中遇到问题，欢迎提交Issue或Pull Request。
 
 ## 免责声明
-本工具仅供学习和研究使用，不构成任何投资建议和风险控制依据。投资者应当对自己的投资决策负责。市场有风险，投资需谨慎。
+本工具仅供学习和研究使用，不构成任何投资建议和风险控制依据。该工具可能会深度行业研究员，公司研究员和注重价值投资的个人投资者提供价值。但是，无论如何，投资者应当对自己的投资决策独立负责。
+
+最后强调：市场有风险，投资需谨慎，不要轻信任何信息，要有自己的独立价值体系和判断能力。
