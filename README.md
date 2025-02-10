@@ -104,13 +104,13 @@
    - 在终端中输入：
      ```bash
      source venv/bin/activate 
-     python3 stock_analyzer.py
+     python stock_analyzer.py
     
      ```
  - 或者在终端中输入，执行main.py,这是另一个快速分析结果：
   ```bash
      source venv/bin/activate 
-     python3 main.py
+     python main.py
     
      ```
 
