@@ -83,6 +83,11 @@
      ```bash
      brew install python
      ```
+   - 安装虚拟化环境
+     ```bash
+     python3 -m venv venv  #创建虚拟化环境
+     source venv/bin/activate
+     ```
 
 2. **下载项目代码**
    - 点击本页面右上角的绿色"Code"按钮
@@ -101,6 +106,8 @@
      ```
 
 4. **运行程序**
+    #确保安装了Venv虚拟化环境之后，先激活虚拟化，再运行程序
+
    - 在终端中输入：
      ```bash
      source venv/bin/activate 
