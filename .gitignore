@@ -1,0 +1,10 @@
+.DS_Store
+logs/
+reports/
+results/
+venv/
+stock_analysis/
+__pycache__/
+*.pyc
+.env
+.idea/
