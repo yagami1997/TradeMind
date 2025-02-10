@@ -50,7 +50,7 @@
      ```
    - 安装依赖：
      ```bash
-     pip install -r requirements.txt
+      pip install yfinance pandas numpy pytz plotly jinja2
      ```
 
 4. **运行程序**
@@ -85,7 +85,7 @@
      ```
    - 安装依赖：
      ```bash
-     pip install yfinance pandas numpy scipy
+     pip3 install yfinance pandas numpy pytz plotly jinja2
      ```
 
 4. **运行程序**
