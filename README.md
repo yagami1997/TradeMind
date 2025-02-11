@@ -11,10 +11,10 @@
 
 ### 2025年2月11日更新
 
-<img width="1305" alt="image" src="https://github.com/user-attachments/assets/43e871d7-a5dd-46b7-809d-bb3ebe44ea93" />
+<img width="1224" alt="image" src="https://github.com/user-attachments/assets/a0d29ad1-31aa-4745-afca-15dfcbe72c92" />
 
 
-- 解决了MACD值显示错误的算法BUG，解决了一个不重要的告警提示；
+- 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 更新了股票决策的算法，目前操作结论偏积极，决策偏向布林带和RSI，这是我个人的偏好，大家可以根据自己偏好调整算法；
 - 改进了HTML的显示方式，色彩搭配，采用大型卡片显示个股信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
 - 优化改进了其他问题，提高了分析速度；
