@@ -22,7 +22,7 @@
 - ⚠️项目目录中main.py是个更简单的快速遍历股票程序，我会重新思考Main程序的功能，架构和体现方式，目前不推荐使用该程序分析股票。主要推荐使用stock_analyzer.py。
  
  ```Shell下执行命令
-python main.py
+python stock_analyzer.py
  ```
 
 
