@@ -80,12 +80,12 @@ class StockAnalyzer:
         rsv = (close - low_list) / (high_list - low_list) * 100
         k = pd.Series(0.0, index=close.index)
         d = pd.Series(0.0, index=close.index)
-        k[n-1] = 50.0
-        d[n-1] = 50.0
+        k.iloc[n-1] = 50.0
+        d.iloc[n-1] = 50.0
         
         for i in range(n, len(close)):
-            k[i] = 2/3 * k[i-1] + 1/3 * rsv[i]
-            d[i] = 2/3 * d[i-1] + 1/3 * k[i]
+            k.iloc[i] = 2/3 * k.iloc[i-1] + 1/3 * rsv.iloc[i]
+            d.iloc[i] = 2/3 * d.iloc[i-1] + 1/3 * k.iloc[i]
         j = 3 * k - 2 * d
         
         return float(k.iloc[-1]), float(d.iloc[-1]), float(j.iloc[-1])
