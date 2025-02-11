@@ -8,6 +8,12 @@ from pathlib import Path
 import logging
 from typing import Dict, List, Optional
 import json
+import warnings
+import webbrowser
+import os
+
+# 忽略特定警告
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 @dataclass
 class TechnicalPattern:
@@ -43,49 +49,55 @@ class StockAnalyzer:
     def setup_colors(self):
         """设置颜色主题"""
         self.colors = {
-            "primary": "#1a237e",
-            "secondary": "#4a148c",
-            "success": "#004d40",
-            "warning": "#e65100",
-            "danger": "#b71c1c",
-            "info": "#0d47a1",
-            "background": "#fafafa",
-            "text": "#263238",
-            "card": "#ffffff",
-            "border": "#e0e0e0",
-            "gradient_start": "#1a237e",
-            "gradient_end": "#4a148c"
+            "primary": "#1976D2",      # 主色调：深邃蓝色
+            "secondary": "#673AB7",     # 次要色：高贵紫色
+            "success": "#2E7D32",       # 成功色：深绿色
+            "warning": "#F57F17",       # 警告色：金黄色
+            "danger": "#C62828",        # 危险色：深红色
+            "info": "#0097A7",          # 信息色：青色
+            "background": "#F5F5F5",    # 背景色：浅灰色
+            "text": "#212121",          # 文字色：深灰色
+            "card": "#FFFFFF",          # 卡片色：白色
+            "border": "#E0E0E0",        # 边框色：浅灰色
+            "gradient_start": "#1976D2", # 渐变开始：深蓝色
+            "gradient_end": "#64B5F6",   # 渐变结束：浅蓝色
+            "strong_buy": "#00C853",     # 强烈买入：翠绿色
+            "buy": "#4CAF50",           # 买入：绿色
+            "strong_sell": "#D50000",    # 强烈卖出：鲜红色
+            "sell": "#F44336",          # 卖出：红色
+            "neutral": "#FF9800",        # 观望：橙色
+            "name_tag": "#E3F2FD",      # 股票名称标签：浅蓝色
+            "highlight": "#FFF3E0",      # 高亮背景：暖色
+            "tag_text": "#FFFFFF",       # 标签文字：白色
+            "advice_bg": "#FAFAFA"       # 建议背景：淡灰色
         }
-
-    def calculate_rsi(self, prices: pd.Series, period: int = 14) -> float:
-        """计算RSI指标"""
-        delta = prices.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs = gain / loss
-        return 100 - (100 / (1 + rs)).iloc[-1]
 
     def calculate_macd(self, prices: pd.Series) -> tuple:
         """计算MACD指标"""
-        exp1 = prices.ewm(span=12, adjust=False).mean()
-        exp2 = prices.ewm(span=26, adjust=False).mean()
+        prices = pd.to_numeric(prices, errors='coerce')
+        exp1 = prices.ewm(span=12, adjust=False, min_periods=12).mean()
+        exp2 = prices.ewm(span=26, adjust=False, min_periods=26).mean()
         macd = exp1 - exp2
-        signal = macd.ewm(span=9, adjust=False).mean()
+        signal = macd.ewm(span=9, adjust=False, min_periods=9).mean()
         hist = macd - signal
-        return macd.iloc[-1], signal.iloc[-1], hist.iloc[-1]
+        macd = macd.fillna(0)
+        signal = signal.fillna(0)
+        hist = hist.fillna(0)
+        return float(macd.iloc[-1]), float(signal.iloc[-1]), float(hist.iloc[-1])
 
     def calculate_kdj(self, high: pd.Series, low: pd.Series, close: pd.Series, n: int = 9) -> tuple:
         """计算KDJ指标"""
+        high = pd.to_numeric(high, errors='coerce')
+        low = pd.to_numeric(low, errors='coerce')
+        close = pd.to_numeric(close, errors='coerce')
+        
         low_min = low.rolling(window=n).min()
         high_max = high.rolling(window=n).max()
+        denominator = high_max - low_min
+        rsv = np.where(denominator != 0, (close - low_min) * 100 / denominator, 0)
         
-        rsv = (close - low_min) / (high_max - low_min) * 100
-        
-        k = pd.Series(index=close.index, dtype='float64')
-        d = pd.Series(index=close.index, dtype='float64')
-        
-        k[0] = 50
-        d[0] = 50
+        k = pd.Series(50.0, index=close.index, dtype='float64')
+        d = pd.Series(50.0, index=close.index, dtype='float64')
         
         for i in range(1, len(close)):
             k[i] = 2/3 * k[i-1] + 1/3 * rsv[i]
@@ -93,7 +105,19 @@ class StockAnalyzer:
         
         j = 3 * k - 2 * d
         
-        return k.iloc[-1], d.iloc[-1], j.iloc[-1]
+        k = pd.Series(k).fillna(50)
+        d = pd.Series(d).fillna(50)
+        j = pd.Series(j).fillna(50)
+        
+        return float(k.iloc[-1]), float(d.iloc[-1]), float(j.iloc[-1])
+
+    def calculate_rsi(self, prices: pd.Series, period: int = 14) -> float:
+        """计算RSI指标"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        return float(100 - (100 / (1 + rs)).iloc[-1])
 
     def calculate_bollinger_bands(self, prices: pd.Series, window: int = 20) -> tuple:
         """计算布林带"""
@@ -101,178 +125,156 @@ class StockAnalyzer:
         std = prices.rolling(window=window).std()
         upper = middle + (std * 2)
         lower = middle - (std * 2)
-        return upper.iloc[-1], middle.iloc[-1], lower.iloc[-1]
+        return float(upper.iloc[-1]), float(middle.iloc[-1]), float(lower.iloc[-1])
 
-    def identify_patterns(self, high: pd.Series, low: pd.Series, close: pd.Series) -> List[TechnicalPattern]:
-        """识别价格形态"""
-        patterns = []
+    def generate_trading_advice(self, indicators, price: float) -> dict:
+        """生成交易建议，重点关注布林带和RSI"""
+        rsi = indicators['rsi']
+        macd = indicators['macd']['macd']
+        macd_hist = indicators['macd']['hist']
+        k = indicators['kdj']['k']
+        j = indicators['kdj']['j']
+        bb_upper = indicators['bollinger']['upper']
+        bb_middle = indicators['bollinger']['middle']
+        bb_lower = indicators['bollinger']['lower']
         
-        # 获取最近的数据
-        recent_high = high[-5:]
-        recent_low = low[-5:]
-        recent_close = close[-5:]
-        recent_open = (recent_high + recent_low) / 2  # 简化计算开盘价
+        signals = []
+        confidence = 0
         
-        # 识别吞没形态
-        if (recent_close.iloc[-2] < recent_open.iloc[-2] and
-            recent_close.iloc[-1] > recent_open.iloc[-1] and
-            recent_close.iloc[-1] > recent_close.iloc[-2] and
-            recent_open.iloc[-1] < recent_close.iloc[-2]):
-            patterns.append(TechnicalPattern(
-                name="吞没形态",
-                confidence=0.8,
-                description="看多吞没形态"
-            ))
-            
-        # 识别十字星
-        body_sizes = abs(recent_close - recent_open)
-        shadow_sizes = recent_high - recent_low
-        if body_sizes.iloc[-1] < 0.1 * shadow_sizes.iloc[-1]:
-            patterns.append(TechnicalPattern(
-                name="十字星",
-                confidence=0.6,
-                description="可能出现反转"
-            ))
-            
-        # 识别锤子线
-        if (recent_close.iloc[-1] > recent_open.iloc[-1] and
-            (recent_high.iloc[-1] - recent_close.iloc[-1]) < (recent_open.iloc[-1] - recent_low.iloc[-1]) * 0.3):
-            patterns.append(TechnicalPattern(
-                name="锤子线",
-                confidence=0.7,
-                description="看多信号"
-            ))
-            
-        # 识别上吊线
-        if (recent_close.iloc[-1] < recent_open.iloc[-1] and
-            (recent_close.iloc[-1] - recent_low.iloc[-1]) < (recent_high.iloc[-1] - recent_open.iloc[-1]) * 0.3):
-            patterns.append(TechnicalPattern(
-                name="上吊线",
-                confidence=0.7,
-                description="看空信号"
-            ))
-
-        return patterns
-
-    def analyze_trend(self, prices: pd.Series) -> dict:
-        """分析价格趋势"""
-        ma_short = prices.rolling(window=20).mean()
-        ma_long = prices.rolling(window=50).mean()
+        # 布林带信号（重要权重）
+        bb_position = (price - bb_lower) / (bb_upper - bb_lower) * 100
+        if bb_position < 0:
+            signals.append("价格低于布林带下轨，超卖明显")
+            confidence += 40
+        elif bb_position < 20:
+            signals.append("价格接近布林带下轨，可能超卖")
+            confidence += 30
+        elif bb_position > 100:
+            signals.append("价格高于布林带上轨，超买明显")
+            confidence -= 40
+        elif bb_position > 80:
+            signals.append("价格接近布林带上轨，可能超买")
+            confidence -= 30
         
-        # 计算趋势强度
-        slope = np.polyfit(range(len(prices[-20:])), prices[-20:], 1)[0]
-        trend_strength = abs(slope) / prices.std()
+        # RSI信号（重要权重）
+        if rsi < 30:
+            signals.append("RSI严重超卖（<30）")
+            confidence += 35
+        elif rsi < 40:
+            signals.append("RSI处于低位")
+            confidence += 25
+        elif rsi > 70:
+            signals.append("RSI严重超买（>70）")
+            confidence -= 35
+        elif rsi > 60:
+            signals.append("RSI处于高位")
+            confidence -= 25
         
-        # 判断趋势方向
-        if ma_short.iloc[-1] > ma_long.iloc[-1] and slope > 0:
-            trend = "上升"
-        elif ma_short.iloc[-1] < ma_long.iloc[-1] and slope < 0:
-            trend = "下降"
+        # MACD信号（次要权重）
+        if macd > 0 and macd_hist > 0:
+            signals.append("MACD金叉后上升趋势")
+            confidence += 15
+        elif macd < 0 and macd_hist < 0:
+            signals.append("MACD死叉后下降趋势")
+            confidence -= 15
+        
+        # KDJ信号（次要权重）
+        if k < 20 and j < 20:
+            signals.append("KDJ超卖区间")
+            confidence += 10
+        elif k > 80 and j > 80:
+            signals.append("KDJ超买区间")
+            confidence -= 10
+        
+        # 生成建议
+        if confidence >= 60:
+            advice = "强烈买入"
+            color = self.colors["strong_buy"]
+            description = "多个指标显示极度超卖，建议积极买入"
+        elif confidence >= 30:
+            advice = "建议买入"
+            color = self.colors["buy"]
+            description = "指标偏向利好，可以考虑买入"
+        elif confidence <= -60:
+            advice = "强烈卖出"
+            color = self.colors["strong_sell"]
+            description = "多个指标显示极度超买，建议及时卖出"
+        elif confidence <= -30:
+            advice = "建议卖出"
+            color = self.colors["sell"]
+            description = "指标偏向利空，建议考虑卖出"
         else:
-            trend = "横盘"
-            
-        return {
-            'trend': trend,
-            'strength': trend_strength,
-            'slope': slope,
-            'ma_short': ma_short.iloc[-1],
-            'ma_long': ma_long.iloc[-1]
-        }
-
-    def calculate_volume_analysis(self, volume: pd.Series) -> dict:
-        """分析成交量"""
-        volume_ma = volume.rolling(window=20).mean()
-        volume_ratio = volume.iloc[-1] / volume_ma.iloc[-1]
-        volume_trend = (volume[-5:] > volume_ma[-5:]).sum()
+            advice = "观望等待"
+            color = self.colors["neutral"]
+            description = "指标中性，建议观望等待机会"
         
         return {
-            'volume_ratio': volume_ratio,
-            'volume_ma': volume_ma.iloc[-1],
-            'volume_trend': volume_trend,
-            'volume_increase': volume.iloc[-1] > volume.iloc[-2]
+            'advice': advice,
+            'signals': signals,
+            'confidence': abs(confidence),
+            'color': color,
+            'description': description
         }
-
     def analyze_stocks(self, symbols: List[str], names: Optional[Dict[str, str]] = None) -> List[Dict]:
-        """主要分析方法"""
+        """分析多个股票"""
         results = []
-        for symbol in symbols:
+        total = len(symbols)
+        
+        for i, symbol in enumerate(symbols, 1):
             try:
                 name = names.get(symbol, symbol) if names else symbol
-                self.logger.info(f"开始分析 {symbol}")
+                self.logger.info(f"正在分析 {name} ({symbol}) - {i}/{total}")
                 
-                # 获取数据
                 ticker = yf.Ticker(symbol)
                 hist = ticker.history(period="1y")
                 
                 if hist.empty:
-                    self.logger.warning(f"没有获取到 {symbol} 的数据")
+                    self.logger.warning(f"未能获取到 {symbol} 的数据")
                     continue
                 
-                # 基础计算
                 latest = hist.iloc[-1]
                 prev = hist.iloc[-2]
-                price_change = ((latest['Close'] / prev['Close']) - 1) * 100
+                price = float(latest['Close'])
+                price_change = ((price / prev['Close']) - 1) * 100
                 
-                # 计算技术指标
                 rsi = self.calculate_rsi(hist['Close'])
                 macd, signal_line, hist_macd = self.calculate_macd(hist['Close'])
                 k, d, j = self.calculate_kdj(hist['High'], hist['Low'], hist['Close'])
                 upper, middle, lower = self.calculate_bollinger_bands(hist['Close'])
-                bb_b = (latest['Close'] - lower) / (upper - lower)
                 
-                # 分析成交量
-                volume_analysis = self.calculate_volume_analysis(hist['Volume'])
-                
-                # 分析趋势
-                trend_analysis = self.analyze_trend(hist['Close'])
-                
-                # 识别形态
-                patterns = self.identify_patterns(hist['High'], hist['Low'], hist['Close'])
-                
-                # 生成信号
-                data = {
+                indicators = {
                     'rsi': rsi,
-                    'macd': macd,
-                    'macd_signal': signal_line,
-                    'k': k,
-                    'd': d,
-                    'bb_b': bb_b,
-                    'volume_analysis': volume_analysis,
-                    'trend': trend_analysis,
-                    'patterns': patterns
-                }
-                
-                signal, confidence, reasons = self.generate_signal(data)
-                
-                # 回测分析
-                backtest = self.backtest_signals(hist)
-                
-                # 整合结果
-                results.append({
-                    'symbol': symbol,
-                    'name': name,
-                    'price': latest['Close'],
-                    'change': price_change,
-                    'technical_indicators': {
-                        'rsi': rsi,
+                    'macd': {
                         'macd': macd,
-                        'signal_line': signal_line,
-                        'hist_macd': hist_macd,
+                        'signal': signal_line,
+                        'hist': hist_macd
+                    },
+                    'kdj': {
                         'k': k,
                         'd': d,
-                        'j': j,
-                        'bb_b': bb_b
+                        'j': j
                     },
-                    'volume_analysis': volume_analysis,
-                    'trend_analysis': trend_analysis,
-                    'patterns': patterns,
-                    'signal': signal,
-                    'confidence': confidence,
-                    'reasons': reasons,
-                    'backtest': backtest
-                })
+                    'bollinger': {
+                        'upper': upper,
+                        'middle': middle,
+                        'lower': lower
+                    }
+                }
                 
-                self.logger.info(f"成功分析 {symbol}")
+                trading_advice = self.generate_trading_advice(indicators, price)
+                
+                result = {
+                    'symbol': symbol,
+                    'name': name,
+                    'price': price,
+                    'change': price_change,
+                    'volume': int(latest['Volume']),
+                    'indicators': indicators,
+                    'advice': trading_advice
+                }
+                
+                results.append(result)
+                print(f"进度: {i}/{total} - 完成分析 {name}")
                 
             except Exception as e:
                 self.logger.error(f"分析 {symbol} 时出错: {str(e)}")
@@ -280,304 +282,148 @@ class StockAnalyzer:
         
         return results
 
-    def generate_signal(self, data: dict) -> tuple:
-        """生成交易信号"""
-        signal = "观望"
-        confidence = 50
-        reasons = []
-        
-        # RSI 信号
-        if data['rsi'] < 30:
-            reasons.append("RSI超卖")
-            confidence += 10
-        elif data['rsi'] > 70:
-            reasons.append("RSI超买")
-            confidence -= 10
-            
-        # MACD信号
-        if data['macd'] > data['macd_signal']:
-            reasons.append("MACD金叉")
-            confidence += 10
-        elif data['macd'] < data['macd_signal']:
-            reasons.append("MACD死叉")
-            confidence -= 10
-            
-        # KDJ信号
-        if data['k'] < 20 and data['d'] < 20:
-            reasons.append("KDJ超卖")
-            confidence += 10
-        elif data['k'] > 80 and data['d'] > 80:
-            reasons.append("KDJ超买")
-            confidence -= 10
-            
-        # 成交量分析
-        if data['volume_analysis']['volume_ratio'] > 1.5:
-            reasons.append("成交量显著放大")
-            confidence += 5
-            
-        # 趋势分析
-        if data['trend']['trend'] == "上升" and data['trend']['strength'] > 1:
-            reasons.append("强势上涨趋势")
-            confidence += 10
-        elif data['trend']['trend'] == "下降" and data['trend']['strength'] > 1:
-            reasons.append("强势下跌趋势")
-            confidence -= 10
-            
-        # 形态分析
-        for pattern in data['patterns']:
-            reasons.append(f"出现{pattern.description}")
-            confidence += pattern.confidence * 10
-            
-        # 生成最终信号
-        if confidence >= 70:
-            signal = "强烈买入"
-        elif confidence >= 60:
-            signal = "建议买入"
-        elif confidence <= 30:
-            signal = "强烈卖出"
-        elif confidence <= 40:
-            signal = "建议卖出"
-            
-        return signal, min(100, max(0, confidence)), reasons
-
-    def backtest_signals(self, hist: pd.DataFrame, lookback_period: int = 60) -> dict:
-        """回测历史信号表现"""
-        signals = []
-        performance = []
-        
-        for i in range(lookback_period, len(hist)):
-            window = hist.iloc[i-lookback_period:i]
-            current_price = hist.iloc[i]['Close']
-            
-            # 计算技术指标
-            rsi = self.calculate_rsi(window['Close'])
-            macd, signal_line, _ = self.calculate_macd(window['Close'])
-            k, d, _ = self.calculate_kdj(window['High'], window['Low'], window['Close'])
-            
-            # 生成信号
-            data = {
-                'rsi': rsi,
-                'macd': macd,
-                'macd_signal': signal_line,
-                'k': k,
-                'd': d,
-                'volume_analysis': self.calculate_volume_analysis(window['Volume']),
-                'trend': self.analyze_trend(window['Close']),
-                'patterns': self.identify_patterns(window['High'], window['Low'], window['Close'])
-            }
-            
-            signal, confidence, _ = self.generate_signal(data)
-            
-            signals.append({
-                'date': hist.index[i],
-                'price': current_price,
-                'signal': signal,
-                'confidence': confidence
-            })
-            
-            # 计算未来5天收益
-            if i + 5 < len(hist):
-                future_return = (hist.iloc[i+5]['Close'] - current_price) / current_price * 100
-                performance.append({
-                    'signal': signal,
-                    'confidence': confidence,
-                    'return': future_return
-                })
-        
-        # 分析信号表现
-        buy_signals = [p for p in performance if "买入" in p['signal']]
-        sell_signals = [p for p in performance if "卖出" in p['signal']]
-        
-        return {
-            'buy': {
-                'count': len(buy_signals),
-                'avg_return': np.mean([p['return'] for p in buy_signals]) if buy_signals else 0,
-                'win_rate': sum(1 for p in buy_signals if p['return'] > 0) / len(buy_signals) if buy_signals else 0
-            },
-            'sell': {
-                'count': len(sell_signals),
-                'avg_return': np.mean([p['return'] for p in sell_signals]) if sell_signals else 0,
-                'win_rate': sum(1 for p in sell_signals if p['return'] < 0) / len(sell_signals) if sell_signals else 0
-            },
-            'recent_signals': signals[-10:],
-            'overall_accuracy': sum(1 for p in performance if 
-                                  ("买入" in p['signal'] and p['return'] > 0) or 
-                                  ("卖出" in p['signal'] and p['return'] < 0)) / len(performance) if performance else 0
-        }
-
-    def generate_html_report(self, results: List[Dict], title: str = "股票分析报告") -> str:
+    def generate_html_report(self, results: List[Dict], title: str = "股票分析报告") -> Path:
         """生成HTML分析报告"""
-        timestamp = datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y%m%d_%H%M')
-        filename = f"stock_analysis_{timestamp}.html"
-        file_path = self.results_path / filename
-
+        timestamp = datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y%m%d_%H%M%S')
+        report_file = self.results_path / f"stock_analysis_{timestamp}.html"
+        
         html_content = f"""
         <!DOCTYPE html>
-        <html>
+        <html lang="zh-CN">
         <head>
-            <meta charset="utf-8">
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>{title}</title>
-            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
             <style>
                 body {{
-                    font-family: 'Noto Sans SC', sans-serif;
+                    font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+                    line-height: 1.6;
+                    color: {self.colors['text']};
+                    background-color: {self.colors['background']};
                     margin: 0;
                     padding: 20px;
-                    background-color: {self.colors['background']};
-                    color: {self.colors['text']};
-                    line-height: 1.6;
                 }}
                 .container {{
-                    max-width: 1400px;
+                    max-width: 1200px;
                     margin: 0 auto;
-                    padding: 20px;
                 }}
                 .header {{
                     text-align: center;
-                    padding: 40px;
+                    margin-bottom: 40px;
+                    padding: 30px;
                     background: linear-gradient(135deg, {self.colors['gradient_start']}, {self.colors['gradient_end']});
                     color: white;
                     border-radius: 15px;
-                    margin-bottom: 30px;
                     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                 }}
-                .grid {{
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-                    gap: 25px;
+                .header h1 {{
+                    margin: 0;
+                    font-size: 2.5em;
+                    font-weight: 300;
                 }}
-                .card {{
-                    background: {self.colors['card']};
+                .stock-card {{
+                    background-color: {self.colors['card']};
                     border-radius: 15px;
                     padding: 25px;
+                    margin-bottom: 30px;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                    transition: all 0.3s ease;
+                    transition: transform 0.3s ease;
                 }}
-                .card:hover {{
+                .stock-card:hover {{
                     transform: translateY(-5px);
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
                 }}
                 .stock-header {{
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-bottom: 2px solid {self.colors['border']};
-                    padding-bottom: 15px;
                     margin-bottom: 20px;
+                    padding: 15px;
+                    background: {self.colors['name_tag']};
+                    border-radius: 10px;
                 }}
                 .stock-name {{
-                    font-size: 1.5em;
-                    font-weight: 700;
+                    font-size: 1.8em;
+                    font-weight: 500;
                     color: {self.colors['primary']};
+                    padding: 8px 15px;
+                    background: linear-gradient(135deg, {self.colors['gradient_start']}, {self.colors['gradient_end']});
+                    border-radius: 8px;
+                    color: white;
                 }}
                 .price-info {{
                     text-align: right;
-                }}
-                .current-price {{
-                    font-size: 1.8em;
-                    font-weight: 700;
-                    color: {self.colors['primary']};
-                }}
-                .price-change {{
-                    font-size: 1.2em;
-                    padding: 5px 10px;
-                    border-radius: 5px;
-                }}
-                .price-change.-up {{
-                    color: {self.colors['success']};
-                    background: rgba(0,77,64,0.1);
-                }}
-                .price-change.-down {{
-                    color: {self.colors['danger']};
-                    background: rgba(183,28,28,0.1);
-                }}
-                .indicator-group {{
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 15px;
-                    margin: 20px 0;
-                }}
-                .indicator {{
-                    background: {self.colors['background']};
-                    padding: 10px;
+                    background: {self.colors['highlight']};
+                    padding: 10px 20px;
                     border-radius: 8px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
                 }}
-                .indicator-label {{
-                    color: {self.colors['text']};
-                    opacity: 0.8;
-                }}
-                .indicator-value {{
+                .price {{
+                    font-size: 1.5em;
                     font-weight: 500;
-                    color: {self.colors['primary']};
                 }}
-                .signal-section {{
+                .change.positive {{
+                    color: {self.colors['success']};
+                }}
+                .change.negative {{
+                    color: {self.colors['danger']};
+                }}
+                .indicators-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 20px;
                     margin: 20px 0;
+                }}
+                .indicator-card {{
+                    background-color: {self.colors['background']};
                     padding: 15px;
+                    border-radius: 10px;
+                    border: 1px solid {self.colors['border']};
+                }}
+                .indicator-title {{
+                    font-size: 1.1em;
+                    font-weight: 500;
+                    color: {self.colors['secondary']};
+                    margin-bottom: 10px;
+                    padding-bottom: 5px;
+                    border-bottom: 2px solid {self.colors['border']};
+                }}
+                .advice-section {{
+                    margin-top: 25px;
+                    padding: 20px;
+                    border-radius: 10px;
+                    background-color: var(--advice-bg);
+                }}
+                .advice-header {{
+                    font-size: 1.3em;
+                    font-weight: 500;
+                    margin-bottom: 15px;
+                    padding: 10px;
+                    color: white;
                     border-radius: 8px;
                     text-align: center;
-                    color: white;
                 }}
-                .signal-strong-buy {{
-                    background: {self.colors['success']};
+                .signals-list {{
+                    list-style: none;
+                    padding: 0;
+                    margin: 15px 0;
                 }}
-                .signal-buy {{
-                    background: {self.colors['info']};
-                }}
-                .signal-hold {{
-                    background: {self.colors['warning']};
-                }}
-                .signal-sell {{
-                    background: {self.colors['danger']};
+                .signals-list li {{
+                    margin: 8px 0;
+                    padding: 8px 12px;
+                    background: {self.colors['highlight']};
+                    border-radius: 6px;
                 }}
                 .confidence-meter {{
-                    height: 6px;
-                    background: {self.colors['border']};
-                    border-radius: 3px;
+                    height: 8px;
+                    background: #e0e0e0;
+                    border-radius: 4px;
                     margin: 15px 0;
+                    overflow: hidden;
                 }}
                 .confidence-value {{
                     height: 100%;
-                    border-radius: 3px;
+                    border-radius: 4px;
                     transition: width 0.3s ease;
-                }}
-                .analysis-section {{
-                    margin-top: 20px;
-                }}
-                .analysis-title {{
-                    font-size: 1.2em;
-                    font-weight: 500;
-                    margin-bottom: 10px;
-                    color: {self.colors['primary']};
-                }}
-                .analysis-content {{
-                    background: {self.colors['background']};
-                    padding: 15px;
-                    border-radius: 8px;
-                    margin-bottom: 15px;
-                }}
-                .pattern-item {{
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 8px 0;
-                    border-bottom: 1px solid {self.colors['border']};
-                }}
-                .pattern-name {{
-                    color: {self.colors['primary']};
-                    font-weight: 500;
-                }}
-                .pattern-confidence {{
-                    color: {self.colors['secondary']};
-                }}
-                .footer {{
-                    text-align: center;
-                    margin-top: 40px;
-                    padding: 20px;
-                    color: {self.colors['text']};
-                    opacity: 0.8;
                 }}
             </style>
         </head>
@@ -587,132 +433,110 @@ class StockAnalyzer:
                     <h1>{title}</h1>
                     <p>生成时间: {datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')}</p>
                 </div>
-                <div class="grid">
         """
 
-        for r in results:
-            signal_class = (
-                "signal-strong-buy" if "强烈买入" in r['signal']
-                else "signal-buy" if "建议买入" in r['signal']
-                else "signal-sell" if "卖出" in r['signal']
-                else "signal-hold"
-            )
-
+        for result in results:
+            price_change_class = "positive" if result['change'] >= 0 else "negative"
+            price_change_symbol = "+" if result['change'] >= 0 else ""
+            advice = result['advice']
+            
             html_content += f"""
-                    <div class="card">
-                        <div class="stock-header">
-                            <div class="stock-name">
-                                <div>{r['symbol']}</div>
-                                <div style="font-size: 0.8em; opacity: 0.8;">{r['name']}</div>
-                            </div>
-                            <div class="price-info">
-                                <div class="current-price">${r['price']:.2f}</div>
-                                <div class="price-change {'-up' if r['change'] >= 0 else '-down'}">
-                                    {r['change']:+.2f}%
-                                </div>
-                            </div>
+                <div class="stock-card">
+                    <div class="stock-header">
+                        <div class="stock-name">
+                            {result['name']} ({result['symbol']})
                         </div>
-
-                        <div class="indicator-group">
-                            <div class="indicator">
-                                <span class="indicator-label">RSI</span>
-                                <span class="indicator-value">{r['technical_indicators']['rsi']:.1f}</span>
-                            </div>
-                            <div class="indicator">
-                                <span class="indicator-label">MACD</span>
-                                <span class="indicator-value">{r['technical_indicators']['macd']:.3f}</span>
-                            </div>
-                            <div class="indicator">
-                                <span class="indicator-label">KDJ-K</span>
-                                <span class="indicator-value">{r['technical_indicators']['k']:.1f}</span>
-                            </div>
-                            <div class="indicator">
-                                <span class="indicator-label">布林带位置</span>
-                                <span class="indicator-value">{r['technical_indicators']['bb_b']*100:.1f}%</span>
-                            </div>
-                        </div>
-
-                        <div class="signal-section {signal_class}">
-                            <div style="font-size: 1.3em; font-weight: 500;">{r['signal']}</div>
-                            <div style="font-size: 0.9em; margin-top: 5px;">置信度: {r['confidence']}%</div>
-                        </div>
-
-                        <div class="confidence-meter">
-                            <div class="confidence-value" style="width: {r['confidence']}%; 
-                                 background: {self.colors['success'] if r['confidence'] > 50 else self.colors['danger']};">
-                            </div>
-                        </div>
-
-                        <div class="analysis-section">
-                            <div class="analysis-title">趋势分析</div>
-                            <div class="analysis-content">
-                                <div>趋势: {r['trend_analysis']['trend']}</div>
-                                <div>强度: {r['trend_analysis']['strength']:.2f}</div>
-                            </div>
-
-                            <div class="analysis-title">形态识别</div>
-                            <div class="analysis-content">
-                                {self._generate_patterns_html(r['patterns'])}
-                            </div>
-
-                            <div class="analysis-title">回测结果</div>
-                            <div class="analysis-content">
-                                <div>整体准确率: {r['backtest']['overall_accuracy']*100:.1f}%</div>
-                                <div>买入信号胜率: {r['backtest']['buy']['win_rate']*100:.1f}%</div>
-                                <div>卖出信号胜率: {r['backtest']['sell']['win_rate']*100:.1f}%</div>
-                            </div>
-
-                            <div class="analysis-title">分析依据</div>
-                            <div class="analysis-content">
-                                {'<br>'.join(r['reasons'])}
+                        <div class="price-info">
+                            <div class="price">${result['price']:.2f}</div>
+                            <div class="change {price_change_class}">
+                                {price_change_symbol}{result['change']:.2f}%
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="indicators-grid">
+                        <div class="indicator-card">
+                            <div class="indicator-title">RSI 指标</div>
+                            <div class="indicator-value">
+                                {result['indicators']['rsi']:.2f}
+                                <span class="indicator-analysis">
+                                    {' (超买)' if result['indicators']['rsi'] > 70 else ' (超卖)' if result['indicators']['rsi'] < 30 else ''}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="indicator-card">
+                            <div class="indicator-title">MACD 指标</div>
+                            <div class="indicator-value">
+                                MACD: {result['indicators']['macd']['macd']:.3f}<br>
+                                信号线: {result['indicators']['macd']['signal']:.3f}<br>
+                                柱状值: {result['indicators']['macd']['hist']:.3f}
+                            </div>
+                        </div>
+                        
+                        <div class="indicator-card">
+                            <div class="indicator-title">KDJ 指标</div>
+                            <div class="indicator-value">
+                                K: {result['indicators']['kdj']['k']:.2f}<br>
+                                D: {result['indicators']['kdj']['d']:.2f}<br>
+                                J: {result['indicators']['kdj']['j']:.2f}
+                            </div>
+                        </div>
+                        
+                        <div class="indicator-card">
+                            <div class="indicator-title">布林带</div>
+                            <div class="indicator-value">
+                                上轨: {result['indicators']['bollinger']['upper']:.2f}<br>
+                                中轨: {result['indicators']['bollinger']['middle']:.2f}<br>
+                                下轨: {result['indicators']['bollinger']['lower']:.2f}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="advice-section" style="background-color: {advice['color']}15;">
+                        <div class="advice-header" style="background-color: {advice['color']}">
+                            交易建议: {advice['advice']}
+                        </div>
+                        <div class="advice-content">
+                            <p>{advice['description']}</p>
+                            <ul class="signals-list">
+                                {' '.join(f'<li>{signal}</li>' for signal in advice['signals'])}
+                            </ul>
+                            <div class="confidence-meter">
+                                <div class="confidence-value" 
+                                     style="width: {advice['confidence']}%; background-color: {advice['color']}">
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                信心指数: {advice['confidence']}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
             """
 
         html_content += """
-                </div>
-                <div class="footer">
-                    <p>本报告基于技术分析生成，仅供参考。投资有风险，入市需谨慎。</p>
-                </div>
             </div>
         </body>
         </html>
         """
-
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-
-        return str(file_path)
-
-    def _generate_patterns_html(self, patterns: List[TechnicalPattern]) -> str:
-        """生成形态识别的HTML内容"""
-        if not patterns:
-            return "<div>未识别到明显形态</div>"
         
-        return "".join([
-            f"""
-            <div class="pattern-item">
-                <span class="pattern-name">{pattern.name}</span>
-                <span class="pattern-confidence">置信度: {pattern.confidence*100:.0f}%</span>
-            </div>
-            """ for pattern in patterns
-        ])
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        return report_file
 
 if __name__ == "__main__":
-    # 创建分析器实例
     analyzer = StockAnalyzer()
     
     try:
-        # 提供两个选项
-        print("\n股票分析器")
+        print("\n📊 股票技术分析系统")
         print("=" * 50)
         print("1. 输入自定义股票代码（不超过10个）")
         print("2. 从配置文件读取股票组合")
         choice = input("\n请选择操作 (1/2): ")
         
         if choice == "1":
-            # 自定义输入
             print("\n请输入股票代码，每行一个，最多10个")
             print("输入空行结束")
             symbols = []
@@ -730,10 +554,8 @@ if __name__ == "__main__":
             title = "自定义股票分析报告"
             
         elif choice == "2":
-            # 从配置文件读取
             config_file = Path("config/watchlists.json")
             if not config_file.exists():
-                # 如果配置文件不存在，创建示例文件
                 config_dir = Path("config")
                 config_dir.mkdir(exist_ok=True)
                 
@@ -753,24 +575,17 @@ if __name__ == "__main__":
                         "JD": "京东",
                         "BIDU": "百度",
                         "NIO": "蔚来汽车"
-                    },
-                    "金融股": {
-                        "JPM": "摩根大通",
-                        "BAC": "美国银行",
-                        "GS": "高盛集团",
-                        "MS": "摩根士丹利",
-                        "C": "花旗集团"
                     }
                 }
                 
                 with open(config_file, 'w', encoding='utf-8') as f:
                     json.dump(watchlists_example, f, ensure_ascii=False, indent=4)
-                print(f"\n已创建示例配置文件：{config_file}")
+                print(f"\n✨ 已创建示例配置文件：{config_file}")
                 
             with open(config_file, 'r', encoding='utf-8') as f:
                 watchlists = json.load(f)
                 
-            print("\n可用的股票组合：")
+            print("\n📁 可用的股票组合：")
             for i, group in enumerate(watchlists.keys(), 1):
                 print(f"{i}. {group} ({len(watchlists[group])}支股票)")
             print(f"{len(watchlists) + 1}. 分析所有股票")
@@ -780,30 +595,59 @@ if __name__ == "__main__":
             if group_choice.isdigit():
                 group_idx = int(group_choice)
                 if group_idx <= len(watchlists):
-                    # 选择特定组合
                     group_name = list(watchlists.keys())[group_idx - 1]
                     symbols = list(watchlists[group_name].keys())
                     names = watchlists[group_name]
                     title = f"{group_name}分析报告"
-                else:
-                    # 分析所有股票
+                elif group_idx == len(watchlists) + 1:
                     symbols = []
                     names = {}
                     for group_stocks in watchlists.values():
                         symbols.extend(group_stocks.keys())
                         names.update(group_stocks)
                     title = "全市场分析报告"
+                else:
+                    print("❌ 无效的选择")
+                    exit(1)
+            else:
+                print("❌ 无效的输入")
+                exit(1)
         else:
-            print("无效的选择")
+            print("❌ 无效的选择")
             exit(1)
             
-        # 进行分析
-        print(f"\n开始分析 {len(symbols)} 支股票...")
+        print(f"\n🔍 开始分析 {len(symbols)} 支股票...")
         results = analyzer.analyze_stocks(symbols, names)
         
-        # 生成报告
-        report_path = analyzer.generate_html_report(results, title)
-        print(f"\n分析完成！报告已生成：{report_path}")
+        if results:
+            report_path = analyzer.generate_html_report(results, title)
+            abs_path = os.path.abspath(report_path)
+            
+            print(f"\n✨ 分析完成！报告已生成：")
+            print(f"📊 报告路径：{abs_path}")
+            
+            # 尝试自动打开报告
+            try:
+                print("\n🌐 正在尝试自动打开报告...")
+                webbrowser.open(f'file://{abs_path}')
+                print("✅ 报告已在默认浏览器中打开")
+            except Exception as e:
+                print(f"⚠️ 无法自动打开报告：{str(e)}")
+                print("请手动打开上述路径查看报告")
+            
+            print("\n📊 简要分析结果：")
+            for result in results:
+                print(f"\n{result['name']} ({result['symbol']}):")
+                print(f"价格: ${result['price']:.2f} ({result['change']:+.2f}%)")
+                print(f"RSI: {result['indicators']['rsi']:.2f}")
+                print(f"MACD: {result['indicators']['macd']['macd']:.3f}")
+                print(f"KDJ: K={result['indicators']['kdj']['k']:.2f}, D={result['indicators']['kdj']['d']:.2f}, J={result['indicators']['kdj']['j']:.2f}")
+                print(f"交易建议: {result['advice']['advice']} (信心指数: {result['advice']['confidence']}%)")
+        else:
+            print("\n❌ 没有产生任何分析结果")
         
     except Exception as e:
-        print(f"程序运行出错：{str(e)}")
+        print(f"\n❌ 程序运行出错：{str(e)}")
+        logging.error(f"程序异常：{str(e)}", exc_info=True)
+
+        
