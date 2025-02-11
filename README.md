@@ -235,6 +235,6 @@ python stock_analyzer.py
 ---
 <p align="right">
   <em>“In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!”</em><br>
-  — **Yagami**<br>
+  — ** Yagami **<br>
   _2025-02-11_
 </p>
