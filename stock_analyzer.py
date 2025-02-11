@@ -66,6 +66,54 @@ class StockAnalyzer:
             "neutral": "#FFA000"
         }
 
+    def identify_candlestick_patterns(self, data: pd.DataFrame) -> List[TechnicalPattern]:
+        patterns = []
+        
+        if len(data) < 3:
+            return patterns
+        
+        # 获取最近的K线数据
+        latest = data.iloc[-1]
+        prev = data.iloc[-2]
+        prev2 = data.iloc[-3]
+        
+        open_price = latest['Open']
+        close = latest['Close']
+        high = latest['High']
+        low = latest['Low']
+        
+        body = abs(open_price - close)
+        upper_shadow = high - max(open_price, close)
+        lower_shadow = min(open_price, close) - low
+        total_length = high - low
+        
+        # 放宽判断条件
+        # 十字星形态
+        if body <= total_length * 0.2:  # 放宽比例
+            patterns.append(TechnicalPattern(
+                name="十字星",
+                confidence=75,
+                description="开盘价和收盘价接近，表示市场犹豫不决"
+            ))
+        
+        # 锤子线
+        if (lower_shadow > body * 1.2) and (upper_shadow < body * 0.4):  # 放宽条件
+            patterns.append(TechnicalPattern(
+                name="锤子线",
+                confidence=70,
+                description="下影线较长，可能预示着底部反转"
+            ))
+        
+        # 吊颈线
+        if (upper_shadow > body * 1.2) and (lower_shadow < body * 0.4):  # 放宽条件
+            patterns.append(TechnicalPattern(
+                name="吊颈线",
+                confidence=70,
+                description="上影线较长，可能预示着顶部反转"
+            ))
+        
+        return patterns
+
     def calculate_macd(self, prices: pd.Series) -> tuple:
         exp1 = prices.ewm(span=12, adjust=False).mean()
         exp2 = prices.ewm(span=26, adjust=False).mean()
@@ -103,67 +151,101 @@ class StockAnalyzer:
         upper = middle + (std * 2)
         lower = middle - (std * 2)
         return float(upper.iloc[-1]), float(middle.iloc[-1]), float(lower.iloc[-1])
-    
-    def backtest_strategy(self, data: pd.DataFrame) -> Dict:
-        close = data['Close'].values
-        high = data['High'].values
-        low = data['Low'].values
+
+
+    def generate_trading_advice(self, indicators: Dict, current_price: float) -> Dict:
+        signals = []
+        confidence = 50
         
+        # RSI分析
+        rsi = indicators['rsi']
+        if rsi < 30:
+            signals.append("RSI超卖")
+            confidence += 10
+        elif rsi > 70:
+            signals.append("RSI超买")
+            confidence -= 10
+            
+        # MACD分析
+        macd = indicators['macd']
+        if macd['hist'] > 0 and abs(macd['hist']) > abs(macd['macd']) * 0.1:
+            signals.append("MACD金叉")
+            confidence += 10
+        elif macd['hist'] < 0 and abs(macd['hist']) > abs(macd['macd']) * 0.1:
+            signals.append("MACD死叉")
+            confidence -= 10
+            
+        # KDJ分析
+        kdj = indicators['kdj']
+        if kdj['k'] < 20 and kdj['k'] > kdj['d']:
+            signals.append("KDJ金叉")
+            confidence += 10
+        elif kdj['k'] > 80 and kdj['k'] < kdj['d']:
+            signals.append("KDJ死叉")
+            confidence -= 10
+            
+        # 布林带分析
+        bb = indicators['bollinger']
+        if current_price < bb['lower']:
+            signals.append("突破布林下轨")
+            confidence += 10
+        elif current_price > bb['upper']:
+            signals.append("突破布林上轨")
+            confidence -= 10
+            
+        # 根据综合得分给出建议
+        if confidence >= 70:
+            advice = "强烈买入"
+            color = self.colors['strong_buy']
+        elif confidence >= 60:
+            advice = "建议买入"
+            color = self.colors['buy']
+        elif confidence <= 30:
+            advice = "强烈卖出"
+            color = self.colors['strong_sell']
+        elif confidence <= 40:
+            advice = "建议卖出"
+            color = self.colors['sell']
+        else:
+            advice = "观望"
+            color = self.colors['neutral']
+            
+        return {
+            'advice': advice,
+            'confidence': confidence,
+            'signals': signals,
+            'color': color
+        }
+
+    def backtest_strategy(self, data: pd.DataFrame) -> Dict:
+        if len(data) < 30:  # 确保有足够的数据进行回测
+            return {
+                'total_trades': 0,
+                'win_rate': 0,
+                'avg_profit': 0,
+                'max_profit': 0,
+                'max_loss': 0
+            }
+            
+        close = data['Close'].values
         trades = []
         position = 0  # -1: 空仓, 0: 无仓位, 1: 多仓
         entry_price = 0
-        buy_trades = []
-        sell_trades = []
-        
-        # 设置止损止盈参数
-        stop_loss = 0.05  # 5%止损
-        take_profit = 0.10  # 10%止盈
         
         for i in range(26, len(close)):
             price_window = pd.Series(close[:i+1])
-            high_window = pd.Series(high[:i+1])
-            low_window = pd.Series(low[:i+1])
-            
             current_price = close[i]
             
             # 计算技术指标
             rsi = self.calculate_rsi(price_window)
             macd, signal, hist = self.calculate_macd(price_window)
-            k, d, j = self.calculate_kdj(high_window, low_window, price_window)
-            bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(price_window)
             
-            # 买入信号
-            buy_signal = (
-                (rsi < 35) and  # 放宽RSI条件
-                ((k < 25 and k > d) or  # 放宽KDJ条件
-                 (hist > 0) or  # MACD金叉
-                 (current_price < bb_lower))  # 触及布林下轨
-            )
+            # 交易信号
+            buy_signal = (rsi < 30) or (hist > 0)
+            sell_signal = (rsi > 70) or (hist < 0)
             
-            # 卖出信号
-            sell_signal = (
-                (rsi > 65) and  # 放宽RSI条件
-                ((k > 75 and k < d) or  # 放宽KDJ条件
-                 (hist < 0) or  # MACD死叉
-                 (current_price > bb_upper))  # 触及布林上轨
-            )
-            
-            # 先检查止损止盈
-            if position != 0:
-                profit_pct = ((current_price - entry_price) / entry_price) * 100 if position == 1 else ((entry_price - current_price) / entry_price) * 100
-                
-                # 触发止损或止盈
-                if profit_pct <= -stop_loss * 100 or profit_pct >= take_profit * 100:
-                    if position == 1:
-                        buy_trades.append(profit_pct)
-                    else:
-                        sell_trades.append(profit_pct)
-                    trades.append(profit_pct)
-                    position = 0
-                    continue
-            
-            # 交易信号执行
-            if position == 0:  # 无仓位时
+            # 交易逻辑
+            if position == 0:  # 无仓位
                 if buy_signal:
                     position = 1
                     entry_price = current_price
@@ -172,56 +254,35 @@ class StockAnalyzer:
                     entry_price = current_price
             elif position == 1:  # 持有多仓
                 if sell_signal:
-                    profit_pct = ((current_price - entry_price) / entry_price) * 100
-                    trades.append(profit_pct)
-                    buy_trades.append(profit_pct)
-                    position = -1
-                    entry_price = current_price
+                    profit = ((current_price - entry_price) / entry_price) * 100
+                    trades.append(profit)
+                    position = 0
             elif position == -1:  # 持有空仓
                 if buy_signal:
-                    profit_pct = ((entry_price - current_price) / entry_price) * 100
-                    trades.append(profit_pct)
-                    sell_trades.append(profit_pct)
-                    position = 1
-                    entry_price = current_price
+                    profit = ((entry_price - current_price) / entry_price) * 100
+                    trades.append(profit)
+                    position = 0
         
-        # 回测结束，平掉最后的仓位
-        if position != 0:
-            profit_pct = ((close[-1] - entry_price) / entry_price) * 100 if position == 1 else ((entry_price - close[-1]) / entry_price) * 100
-            trades.append(profit_pct)
-            if position == 1:
-                buy_trades.append(profit_pct)
-            else:
-                sell_trades.append(profit_pct)
-        
-        # 计算统计数据
-        total_trades = len(trades)
-        if total_trades == 0:
+        # 计算回测结果
+        if not trades:
             return {
                 'total_trades': 0,
                 'win_rate': 0,
-                'buy_win_rate': 0,
-                'sell_win_rate': 0,
                 'avg_profit': 0,
                 'max_profit': 0,
                 'max_loss': 0
             }
-        
+            
         win_trades = len([t for t in trades if t > 0])
-        buy_wins = len([t for t in buy_trades if t > 0])
-        sell_wins = len([t for t in sell_trades if t > 0])
         
         return {
-            'total_trades': total_trades,
-            'win_rate': (win_trades / total_trades) * 100 if total_trades > 0 else 0,
-            'buy_win_rate': (buy_wins / len(buy_trades)) * 100 if buy_trades else 0,
-            'sell_win_rate': (sell_wins / len(sell_trades)) * 100 if sell_trades else 0,
-            'avg_profit': sum(trades) / len(trades) if trades else 0,
-            'max_profit': max(trades) if trades else 0,
-            'max_loss': min(trades) if trades else 0
+            'total_trades': len(trades),
+            'win_rate': (win_trades / len(trades)) * 100,
+            'avg_profit': sum(trades) / len(trades),
+            'max_profit': max(trades),
+            'max_loss': min(trades)
         }
-
-
+    
     def analyze_stocks(self, symbols: List[str], names: Dict[str, str]) -> List[Dict]:
         results = []
         total = len(symbols)
@@ -247,6 +308,9 @@ class StockAnalyzer:
                 k, d, j = self.calculate_kdj(hist['High'], hist['Low'], hist['Close'])
                 bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(hist['Close'])
                 
+                print("分析K线形态...")
+                patterns = self.identify_candlestick_patterns(hist.tail(3))
+                
                 indicators = {
                     'rsi': rsi,
                     'macd': {'macd': macd, 'signal': signal, 'hist': hist_macd},
@@ -266,12 +330,13 @@ class StockAnalyzer:
                     'price': current_price,
                     'change': price_change,
                     'indicators': indicators,
+                    'patterns': patterns,
                     'advice': advice,
                     'backtest': backtest_results
                 })
                 
                 print(f"✅ {symbol} 分析完成")
-                time.sleep(0.5)  # 添加短暂延迟，让用户能看清进度
+                time.sleep(0.5)
                 
             except Exception as e:
                 self.logger.error(f"分析 {symbol} 时出错", exc_info=True)
@@ -279,82 +344,6 @@ class StockAnalyzer:
                 continue
         
         return results
-    
-    def generate_trading_advice(self, indicators: Dict, price: float) -> Dict:
-        rsi = indicators['rsi']
-        k = indicators['kdj']['k']
-        d = indicators['kdj']['d']
-        j = indicators['kdj']['j']  # 添加J值
-        macd = indicators['macd']['macd']
-        signal = indicators['macd']['signal']
-        hist = indicators['macd']['hist']
-        bb_upper = indicators['bollinger']['upper']
-        bb_lower = indicators['bollinger']['lower']
-        
-        signals = []
-        confidence = 0
-        
-        # RSI信号
-        if rsi < 30:
-            signals.append("RSI超卖")
-            confidence += 20
-        elif rsi > 70:
-            signals.append("RSI超买")
-            confidence -= 20
-        
-        # KDJ信号
-        if k < 20 and d < 20 and j < 0:  # 添加J值判断
-            signals.append("KDJ超卖")
-            confidence += 20
-        elif k > 80 and d > 80 and j > 100:  # 添加J值判断
-            signals.append("KDJ超买")
-            confidence -= 20
-        elif k > d and j > k:  # 考虑J值的金叉形态
-            signals.append("KDJ金叉")
-            confidence += 15
-        elif k < d and j < k:  # 考虑J值的死叉形态
-            signals.append("KDJ死叉")
-            confidence -= 15
-        
-        # MACD信号
-        if macd > signal and hist > 0:
-            signals.append("MACD金叉")
-            confidence += 15
-        elif macd < signal and hist < 0:
-            signals.append("MACD死叉")
-            confidence -= 15
-        
-        # 布林带信号
-        if price <= bb_lower:
-            signals.append("触及布林下轨")
-            confidence += 20
-        elif price >= bb_upper:
-            signals.append("触及布林上轨")
-            confidence -= 20
-        
-        # 生成建议
-        if confidence >= 40:
-            advice = "强烈买入"
-            color = self.colors['strong_buy']
-        elif confidence >= 20:
-            advice = "建议买入"
-            color = self.colors['buy']
-        elif confidence <= -40:
-            advice = "强烈卖出"
-            color = self.colors['strong_sell']
-        elif confidence <= -20:
-            advice = "建议卖出"
-            color = self.colors['sell']
-        else:
-            advice = "观望"
-            color = self.colors['neutral']
-        
-        return {
-            'advice': advice,
-            'confidence': abs(confidence),
-            'signals': signals,
-            'color': color
-        }
 
     def generate_html_report(self, results: List[Dict], title: str = "股票分析报告") -> str:
         timestamp = datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y%m%d_%H%M%S')
@@ -362,6 +351,22 @@ class StockAnalyzer:
         
         stock_cards = []
         for result in results:
+            # 生成形态分析HTML
+            patterns_html = ""
+            if result.get('patterns'):
+                patterns_html = f"""
+                    <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 4px;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">K线形态</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                            {''.join([
+                                f'<div style="background: {self.colors["info"]}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;" title="{p.description}">'
+                                f'{p.name} ({p.confidence}%)</div>'
+                                for p in result['patterns']
+                            ])}
+                        </div>
+                    </div>
+                """
+
             card = f"""
                 <div class="stock-card">
                     <div class="stock-header" style="background-color: {result['advice']['color']}">
@@ -372,17 +377,18 @@ class StockAnalyzer:
                             </span>
                         </div>
                     </div>
+                    
                     <div class="indicators-section">
                         <div class="indicator-row">
                             <span class="indicator-label">RSI</span>
                             <span class="indicator-value">{result['indicators']['rsi']:.1f}</span>
                         </div>
-                         <div class="indicator-row">
-                    <span class="indicator-label">KDJ</span>
-                    <span class="indicator-value">K:{result['indicators']['kdj']['k']:.1f} 
-                    D:{result['indicators']['kdj']['d']:.1f} 
-                    J:{result['indicators']['kdj']['j']:.1f}</span>
-                </div>
+                        <div class="indicator-row">
+                            <span class="indicator-label">KDJ</span>
+                            <span class="indicator-value">K:{result['indicators']['kdj']['k']:.1f} 
+                            D:{result['indicators']['kdj']['d']:.1f} 
+                            J:{result['indicators']['kdj']['j']:.1f}</span>
+                        </div>
                         <div class="indicator-row">
                             <span class="indicator-label">MACD</span>
                             <span class="indicator-value">{result['indicators']['macd']['hist']:.3f}</span>
@@ -396,14 +402,26 @@ class StockAnalyzer:
                             </span>
                         </div>
                     </div>
-                    <div class="advice-section">
-                        <div class="advice-tag" style="background-color: {result['advice']['color']}">
-                            {result['advice']['advice']} ({result['advice']['confidence']}%)
+
+                   <!-- ... previous card content ... -->
+                    
+                    <div style="padding: 8px; text-align: center;">
+                        {' '.join([
+                            f'<span style="display: inline-block; background: #4682B4; color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.85em; margin: 2px 4px;">{p.name} ({p.confidence}%)</span>'
+                            for p in result.get('patterns', []) if p
+                        ]) if result.get('patterns') else '<span style="display: inline-block; background: #808080; color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.85em; margin: 2px 4px;">无形态特征</span>'}
+                    </div>
+                    
+                    <div class="advice-section" style="text-align: center; padding: 10px;">
+                        <div style="display: inline-block; background-color: {result['advice']['color']}; color: white; padding: 4px 12px; border-radius: 4px; margin-bottom: 8px;">
+                            <div style="font-size: 0.9em;">{result['advice']['advice']}</div>
+                            <div style="font-size: 0.8em;">置信度: {result['advice']['confidence']}%</div>
                         </div>
-                        <div class="signals-list">
-                            {' '.join([f'<span class="signal-tag">{signal}</span>' for signal in result['advice']['signals']])}
+                        <div class="signals-list" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+                            {' '.join([f'<span class="signal-tag" style="background: #D4B886; color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.85em;">{signal}</span>' for signal in result['advice']['signals']])}
                         </div>
                     </div>
+                    
                     <div class="backtest-section">
                         <div class="backtest-row">
                             <span class="backtest-label">总交易</span>
@@ -431,197 +449,158 @@ class StockAnalyzer:
         <html>
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>{title}</title>
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
                     margin: 0;
-                    padding: 15px;
-                    background-color: #f0f2f5;
-                    color: {self.colors['text']};
-                    line-height: 1.4;
+                    padding: 20px;
+                    background: #f0f2f5;
                 }}
-                
                 .container {{
                     max-width: 1200px;
                     margin: 0 auto;
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 15px;
-                    padding: 15px;
                 }}
-                
                 .header {{
-                    grid-column: 1 / -1;
                     text-align: center;
-                    margin-bottom: 20px;
-                    background: #26a69a;  /* 改这里，换成浅青绿色 */
-                    color: white;         /* 保持文字为白色 */
-                    padding: 15px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    margin-bottom: 30px;
+                    background-color: #26A69A;  /* 改为青绿色 */
+                    padding: 20px;
+                    border-radius: 10px;
                 }}
-                
+                .header h1 {{
+                    color: white;  /* 标题改为白色 */
+                    margin: 0;
+                    font-weight: bold;
+                }}
+                .timestamp {{
+                    color: white;  /* 时间戳也改为白色 */
+                    font-size: 0.9em;
+                    margin-top: 5px;
+                }}
+                .stock-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }}
                 .stock-card {{
                     background: white;
-                    border-radius: 8px;
-                    overflow: hidden;
+                    border-radius: 10px;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    transition: transform 0.2s;
+                    overflow: hidden;
                 }}
-                
-                .stock-card:hover {{
-                    transform: translateY(-2px);
-                }}
-                
                 .stock-header {{
-                    padding: 12px;
+                    padding: 15px;
                     color: white;
                 }}
-                
                 .stock-name {{
-                    font-size: 15px;
-                    font-weight: 600;
+                    font-size: 1.2em;
+                    font-weight: bold;
                 }}
-                
                 .stock-price {{
-                    font-size: 16px;
-                    font-weight: 700;
-                    margin-top: 4px;
+                    font-size: 1.1em;
+                    margin-top: 5px;
                 }}
-                
                 .price-change {{
-                    font-size: 13px;
+                    font-size: 0.9em;
                     margin-left: 5px;
                 }}
-                
-                .positive {{ color: #4caf50; }}
-                .negative {{ color: #f44336; }}
-                
+                .price-change.positive {{
+                    color: #4caf50;
+                }}
+                .price-change.negative {{
+                    color: #f44336;
+                }}
                 .indicators-section {{
-                    padding: 10px;
-                    background: #f8f9fa;
+                    padding: 15px;
                     border-bottom: 1px solid #eee;
                 }}
-                
                 .indicator-row {{
                     display: flex;
                     justify-content: space-between;
-                    align-items: center;
-                    margin: 3px 0;
-                    font-size: 13px;
+                    margin-bottom: 8px;
                 }}
-                
+                .indicator-row:last-child {{
+                    margin-bottom: 0;
+                }}
+                .indicator-label {{
+                    color: #666;
+                }}
                 .advice-section {{
-                    padding: 10px;
-                    text-align: center;
-                    background: white;
+                    padding: 15px;
+                    border-bottom: 1px solid #eee;
                 }}
-                
                 .advice-tag {{
                     display: inline-block;
+                    padding: 5px 10px;
+                    border-radius: 4px;
                     color: white;
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    margin-bottom: 5px;
+                    font-weight: bold;
+                    margin-bottom: 10px;
                 }}
-                
                 .signals-list {{
                     display: flex;
                     flex-wrap: wrap;
-                    gap: 4px;
-                    justify-content: center;
+                    gap: 5px;
                 }}
-                
                 .signal-tag {{
-                    background: {self.colors['secondary']};
-                    color: white;
-                    padding: 2px 6px;
+                    background: #e0e0e0;
+                    padding: 3px 8px;
                     border-radius: 4px;
-                    font-size: 11px;
+                    font-size: 0.9em;
                 }}
-                
                 .backtest-section {{
-                    padding: 10px;
-                    background: #f8f9fa;
-                    border-top: 1px solid #eee;
+                    padding: 15px;
                 }}
-                
                 .backtest-row {{
                     display: flex;
                     justify-content: space-between;
-                    align-items: center;
-                    margin: 2px 0;
-                    font-size: 12px;
+                    margin-bottom: 8px;
                 }}
-                
+                .backtest-row:last-child {{
+                    margin-bottom: 0;
+                }}
+                .backtest-label {{
+                    color: #666;
+                }}
                 .manual-section {{
-                    grid-column: 1 / -1;
-                    background: white;
-                    border-radius: 8px;
-                    padding: 20px;
                     margin-top: 30px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }}
-                
                 .manual-title {{
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: {self.colors['primary']};
+                    font-size: 1.2em;
+                    font-weight: bold;
                     margin-bottom: 15px;
-                    padding-bottom: 8px;
-                    border-bottom: 2px solid {self.colors['primary']};
                 }}
-                
                 .manual-grid {{
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
                     gap: 20px;
-                    margin-bottom: 20px;
                 }}
-                
                 .manual-card {{
-                    background: #f8f9fa;
+                    background: white;
                     padding: 15px;
-                    border-radius: 6px;
-                    border-left: 4px solid {self.colors['primary']};
+                    border-radius: 10px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }}
-                
                 .manual-card h3 {{
-                    margin: 0 0 10px 0;
-                    font-size: 15px;
-                    color: {self.colors['secondary']};
+                    margin-top: 0;
+                    margin-bottom: 10px;
+                    color: {self.colors['primary']};
                 }}
-                
-                .manual-card p {{
-                    margin: 0;
-                    font-size: 13px;
-                    line-height: 1.6;
-                }}
-                
                 .disclaimer {{
-                    grid-column: 1 / -1;
-                    text-align: center;
-                    margin-top: 20px;
-                    padding: 15px;
+                    margin-top: 30px;
+                    padding: 20px;
                     background: #fff3e0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    color: #f57c00;
-                    line-height: 1.6;
+                    border-radius: 10px;
+                    font-size: 0.9em;
+                    line-height: 1.5;
                 }}
-                
                 .signature {{
-                    grid-column: 1 / -1;
-                    text-align: right;
                     margin-top: 20px;
-                    font-style: italic;
-                    color: {self.colors['secondary']};
-                    font-size: 13px;
-                    line-height: 1.6;
+                    text-align: center;
+                    font-size: 0.8em;
+                    color: #666;
                 }}
             </style>
         </head>
@@ -632,99 +611,82 @@ class StockAnalyzer:
                     <div class="timestamp">生成时间: {datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')}</div>
                 </div>
                 
-                {''.join(stock_cards)}
+                <div class="stock-grid">
+                    {''.join(stock_cards)}
+                </div>
 
-                    <div class="manual-section">
+                <div class="manual-section">
                     <div class="manual-title">技术指标说明</div>
                     <div class="manual-grid">
                         <div class="manual-card">
                             <h3>RSI - 相对强弱指标</h3>
-                            <p>• 计算周期：14天<br>
-                               • 超买区间：RSI > 70<br>
-                               • 超卖区间：RSI < 30<br>
-                               • 原理：衡量价格动量，帮助判断超买超卖</p>
-                        </div>
-                        <div class="manual-card">
-                            <h3>MACD - 指数平滑异同移动平均线</h3>
-                            <p>• 快线参数：12日EMA<br>
-                               • 慢线参数：26日EMA<br>
-                               • 信号线：9日EMA<br>
-                               • 原理：反映价格趋势的变化和动量</p>
+                            <p>
+                                • RSI > 70: 超买区域，可能出现回落<br>
+                                • RSI < 30: 超卖区域，可能出现反弹<br>
+                                • 50为中性水平
+                            </p>
                         </div>
                         <div class="manual-card">
                             <h3>KDJ - 随机指标</h3>
-                            <p>• 计算周期：9日<br>
-                               • K值：RSV的3日移动平均<br>
-                               • D值：K值的3日移动平均<br>
-                               • J值：3K-2D<br>
-                               • 原理：反映价格的超买超卖和潜在转折点</p>
+                            <p>
+                                • K线与D线金叉（K上穿D）：买入信号<br>
+                                • K线与D线死叉（K下穿D）：卖出信号<br>
+                                • J线超买超卖区间：80-20
+                            </p>
+                        </div>
+                        <div class="manual-card">
+                            <h3>MACD - 指数平滑移动平均线</h3>
+                            <p>
+                                • HIST > 0：多头市场<br>
+                                • HIST < 0：空头市场<br>
+                                • 金叉死叉：HIST由负转正或正转负
+                            </p>
                         </div>
                         <div class="manual-card">
                             <h3>布林带 - Bollinger Bands</h3>
-                            <p>• 中轨：20日移动平均线<br>
-                               • 上下轨：中轨±2倍标准差<br>
-                               • 原理：反映价格波动性和潜在支撑压力位</p>
-                        </div>
-                    </div>
-                    
-                    <div class="manual-title">交易策略说明</div>
-                    <div class="manual-grid">
-                        <div class="manual-card">
-                            <h3>买入条件</h3>
-                            <p>• RSI < 30（超卖）<br>
-                               • KDJ金叉且K < 20<br>
-                               • MACD金叉<br>
-                               • 价格触及布林下轨<br>
-                               • 满足多个条件增加信心指数</p>
+                            <p>
+                                • 上轨：阻力位，突破注意回落<br>
+                                • 中轨：价格中枢，重要参考<br>
+                                • 下轨：支撑位，突破注意反弹
+                            </p>
                         </div>
                         <div class="manual-card">
-                            <h3>卖出条件</h3>
-                            <p>• RSI > 70（超买）<br>
-                               • KDJ死叉且K > 80<br>
-                               • MACD死叉<br>
-                               • 价格触及布林上轨<br>
-                               • 满足多个条件增加信心指数</p>
-                        </div>
-                        <div class="manual-card">
-                            <h3>风险控制</h3>
-                            <p>• 止损：-5%<br>
-                               • 止盈：+10%<br>
-                               • 建议仓位：单只股票不超过20%<br>
-                               • 注意：高波动性股票应适当提高止损位</p>
-                        </div>
-                    </div>
-                    
-                    <div class="manual-title">回测说明</div>
-                    <div class="manual-grid">
-                        <div class="manual-card">
-                            <h3>回测参数</h3>
-                            <p>• 周期：过去一年<br>
-                               • 交易成本：未计入手续费和滑点<br>
-                               • 交易规则：信号出现立即执行<br>
-                               • 仓位：满仓进出</p>
-                        </div>
-                        <div class="manual-card">
-                            <h3>统计指标</h3>
-                            <p>• 总交易次数：策略产生的交易次数<br>
-                               • 胜率：盈利交易占总交易的比例<br>
-                               • 平均收益：所有交易的平均收益率<br>
-                               • 最大收益/损失：单次交易的最佳和最差表现</p>
+                            <h3>K线形态分析</h3>
+                            <p>
+                                • 十字星：开盘价和收盘价接近，表示市场犹豫不决<br>
+                                • 锤子线：下影线长，上影线短，可能预示底部反转<br>
+                                • 吊颈线：上影线长，下影线短，可能预示顶部反转
+                            </p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="disclaimer">
-                    <strong>风险提示：</strong><br>
-                    本报告基于技术分析生成，仅供参考，不构成任何投资建议。<br>
-                    投资者应当独立判断，自主决策，自行承担投资风险。<br>
-                    过往表现不代表未来收益，市场有风险，投资需谨慎。
-                </div>
-                
-                <div class="signature">
-                    In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
-                    Long live the Free Software Movement!<br>
-                    美股技术面分析工具 Alpha v0.2
-                </div>
+                <div class="disclaimer" style="
+                text-align: center;
+                padding: 20px;
+                margin: 20px auto;
+                max-width: 800px;
+                color: #666;
+                font-size: 0.9em;
+                line-height: 1.6;
+            ">
+                <strong>风险提示：</strong><br>
+                本报告基于技术分析生成，仅供参考，不构成任何投资建议。<br>
+                投资者应当独立判断，自主决策，自行承担投资风险。<br>
+                过往表现不代表未来收益，市场有风险，投资需谨慎。
+            </div>
+            
+            <div class="signature" style="
+                text-align: center;
+                color: #888;
+                font-size: 0.85em;
+                margin-top: 15px;
+                font-style: italic;
+            ">
+                In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
+                Long live the Free Software Movement!<br>
+                美股技术面分析工具 Alpha v0.2
+            </div>
             </div>
         </body>
         </html>
@@ -734,7 +696,7 @@ class StockAnalyzer:
             f.write(html_content)
         
         return str(report_file)
-    
+
 if __name__ == "__main__":
     try:
         analyzer = StockAnalyzer()
@@ -877,5 +839,3 @@ if __name__ == "__main__":
         logging.error(f"程序异常", exc_info=True)
     finally:
         print("\n👋 感谢使用美股技术面分析工具！")
-
-
