@@ -59,8 +59,8 @@ class StockAnalyzer:
             "text": "#212121",          # 文字色：深灰色
             "card": "#FFFFFF",          # 卡片色：白色
             "border": "#E0E0E0",        # 边框色：浅灰色
-            "gradient_start": "#1976D2", # 渐变开始：深蓝色
-            "gradient_end": "#64B5F6",   # 渐变结束：浅蓝色
+            "gradient_start": "#00695c", # 渐变开始：深蓝色
+            "gradient_end": "#00897b",   # 渐变结束：浅蓝色
             "strong_buy": "#00C853",     # 强烈买入：翠绿色
             "buy": "#4CAF50",           # 买入：绿色
             "strong_sell": "#D50000",    # 强烈卖出：鲜红色
