@@ -11,15 +11,14 @@
 ## 更新日志
 
 ### 2025年2月11日更新
-
-<img width="1251" alt="image" src="https://github.com/user-attachments/assets/4ba836da-9bd2-464f-b049-8b6834211740" />
-<img width="1271" alt="image" src="https://github.com/user-attachments/assets/12e0b847-10c4-4f21-990d-bec3b68a8a23" />
-<img width="1226" alt="image" src="https://github.com/user-attachments/assets/2c852649-3ff8-406c-888b-54c4bf7d0481" />
+<img width="1261" alt="image" src="https://github.com/user-attachments/assets/ba3aa1ef-efeb-424a-b382-02572aa01ac6" />
+<img width="1270" alt="image" src="https://github.com/user-attachments/assets/18ee113c-6671-4764-b52b-717361c0e4b7" />
+<img width="1252" alt="image" src="https://github.com/user-attachments/assets/3ba95df6-b95f-42a1-80f8-56fef3c9403d" />
 
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
 - 更新了股票决策的算法，目前操作结论偏积极，决策偏向布林带和RSI，这是我个人的偏好，大家可以根据自己偏好调整算法；
-- 改进了HTML的显示方式，色彩搭配，采用大型卡片显示个股信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
+- 改进了HTML的显示方式，色彩搭配，采用紧凑型卡片显示更多的个股技术信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
 - 优化改进了其他问题，提高了分析速度；
 - ⚠️项目目录中main.py是个更简单的快速遍历股票程序，我会重新思考Main程序的功能，架构和体现方式，目前不推荐使用该程序分析股票。主要推荐使用stock_analyzer.py。请在Shell下执行如下命令：（MacOS请开启Shell虚拟化：source venv/bin/activate）
  
