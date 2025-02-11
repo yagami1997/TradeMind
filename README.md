@@ -12,11 +12,12 @@
 
 ### 2025年2月11日更新
 <img width="1261" alt="image" src="https://github.com/user-attachments/assets/ba3aa1ef-efeb-424a-b382-02572aa01ac6" />
-<img width="1270" alt="image" src="https://github.com/user-attachments/assets/18ee113c-6671-4764-b52b-717361c0e4b7" />
-<img width="1252" alt="image" src="https://github.com/user-attachments/assets/3ba95df6-b95f-42a1-80f8-56fef3c9403d" />
+<img width="1262" alt="image" src="https://github.com/user-attachments/assets/909f6ae8-a711-467e-b49a-b97d647faa30" />
+<img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
 
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
+- 重新大幅度优化了K线形态特征的判定，优化了显示效果；
 - 更新了股票决策的算法，目前操作结论偏积极，决策偏向布林带和RSI，这是我个人的偏好，大家可以根据自己偏好调整算法；
 - 改进了HTML的显示方式，色彩搭配，采用紧凑型卡片显示更多的个股技术信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
 - 优化改进了其他问题，提高了分析速度；
