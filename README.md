@@ -233,8 +233,8 @@ python stock_analyzer.py
 
 最后强调：市场有风险，投资需谨慎，不要轻信任何信息，要有自己的独立价值体系和判断能力。
 ---
-<p style="text-align: right;">
-Yours Yagami<br>
+<div style="text-align: right;">
+Yours Yagami 
 2025-02-11
-</p>
+</div>
 
