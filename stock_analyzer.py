@@ -85,29 +85,56 @@ class StockAnalyzer:
         hist = hist.fillna(0)
         return float(macd.iloc[-1]), float(signal.iloc[-1]), float(hist.iloc[-1])
 
-    def calculate_kdj(self, high: pd.Series, low: pd.Series, close: pd.Series, n: int = 9) -> tuple:
-        """计算KDJ指标"""
+    def calculate_kdj(self, high: pd.Series, low: pd.Series, close: pd.Series, n: int = 9, m1: int = 3, m2: int = 3) -> tuple:
+        """
+        计算KDJ指标
+        :param high: 最高价序列
+        :param low: 最低价序列
+        :param close: 收盘价序列
+        :param n: RSV计算周期，默认9
+        :param m1: K值平滑因子，默认3
+        :param m2: D值平滑因子，默认3
+        :return: (K值, D值, J值)
+        """
         high = pd.to_numeric(high, errors='coerce')
         low = pd.to_numeric(low, errors='coerce')
         close = pd.to_numeric(close, errors='coerce')
         
-        low_min = low.rolling(window=n).min()
-        high_max = high.rolling(window=n).max()
-        denominator = high_max - low_min
-        rsv = np.where(denominator != 0, (close - low_min) * 100 / denominator, 0)
+        # 计算RSV
+        low_list = low.rolling(window=n, min_periods=1).min()
+        high_list = high.rolling(window=n, min_periods=1).max()
+        rsv = pd.Series(np.zeros(len(close)), index=close.index)
         
-        k = pd.Series(50.0, index=close.index, dtype='float64')
-        d = pd.Series(50.0, index=close.index, dtype='float64')
+        # 避免除数为0
+        denominator = high_list - low_list
+        rsv = np.where(denominator != 0, 
+                       (close - low_list) * 100 / denominator,
+                       0)
         
+        # 计算K值，使用SMA算法
+        k = pd.Series(np.zeros(len(close)), index=close.index)
+        k[0] = 50  # 初始值设为50
         for i in range(1, len(close)):
-            k[i] = 2/3 * k[i-1] + 1/3 * rsv[i]
-            d[i] = 2/3 * d[i-1] + 1/3 * k[i]
+            k[i] = (m1 - 1) * k[i-1] / m1 + rsv[i] / m1
         
+        # 计算D值，使用SMA算法
+        d = pd.Series(np.zeros(len(close)), index=close.index)
+        d[0] = 50  # 初始值设为50
+        for i in range(1, len(close)):
+            d[i] = (m2 - 1) * d[i-1] / m2 + k[i] / m2
+        
+        # 计算J值
         j = 3 * k - 2 * d
         
-        k = pd.Series(k).fillna(50)
-        d = pd.Series(d).fillna(50)
-        j = pd.Series(j).fillna(50)
+        # 处理可能的极端值
+        k = k.clip(0, 100)
+        d = d.clip(0, 100)
+        j = j.clip(0, 100)
+        
+        # 填充空值
+        k = k.fillna(50)
+        d = d.fillna(50)
+        j = j.fillna(50)
         
         return float(k.iloc[-1]), float(d.iloc[-1]), float(j.iloc[-1])
 
@@ -215,6 +242,7 @@ class StockAnalyzer:
             'color': color,
             'description': description
         }
+
     def analyze_stocks(self, symbols: List[str], names: Optional[Dict[str, str]] = None) -> List[Dict]:
         """分析多个股票"""
         results = []
@@ -649,5 +677,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ 程序运行出错：{str(e)}")
         logging.error(f"程序异常：{str(e)}", exc_info=True)
-
         
