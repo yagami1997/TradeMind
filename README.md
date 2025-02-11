@@ -12,10 +12,12 @@
 
 ### 2025年2月11日更新
 
-<img width="1224" alt="image" src="https://github.com/user-attachments/assets/a0d29ad1-31aa-4745-afca-15dfcbe72c92" />
+<img width="1251" alt="image" src="https://github.com/user-attachments/assets/4ba836da-9bd2-464f-b049-8b6834211740" />
+<img width="1271" alt="image" src="https://github.com/user-attachments/assets/12e0b847-10c4-4f21-990d-bec3b68a8a23" />
 
 
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
+- 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
 - 更新了股票决策的算法，目前操作结论偏积极，决策偏向布林带和RSI，这是我个人的偏好，大家可以根据自己偏好调整算法；
 - 改进了HTML的显示方式，色彩搭配，采用大型卡片显示个股信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
 - 优化改进了其他问题，提高了分析速度；
