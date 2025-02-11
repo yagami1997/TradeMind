@@ -14,7 +14,7 @@
 
 <img width="1251" alt="image" src="https://github.com/user-attachments/assets/4ba836da-9bd2-464f-b049-8b6834211740" />
 <img width="1271" alt="image" src="https://github.com/user-attachments/assets/12e0b847-10c4-4f21-990d-bec3b68a8a23" />
-
+<img width="1185" alt="image" src="https://github.com/user-attachments/assets/288a5969-26c0-44eb-9f14-0e57bbcc21d5" />
 
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
