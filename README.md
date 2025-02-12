@@ -7,15 +7,10 @@
 3. 本工具完全开源、免费、无论是Clone、再开发甚至商业化我都不反对。
 4. 后续其他二次开发版本和我无关，我亦不承担任何责任，本代码仓库仅供学习研究。
 5. 市场有风险，投资需谨慎，成熟的交易者不会把决策简单归因于信息差或者技术操作，投资是修行。
-
+---
 ## 更新日志
 
 ### 2025年2月11日更新
-<img width="1114" alt="image" src="https://github.com/user-attachments/assets/64b79263-c7fe-4291-b942-5774fd445770" />
-<img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
-<img width="1035" alt="image" src="https://github.com/user-attachments/assets/f54895e0-fbd2-4707-9276-c5a1b57fa56e" />
-
-
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
 - 重新大幅度优化了K线形态特征的判定，优化了显示效果；
@@ -32,7 +27,7 @@ python stock_analyzer.py
 ## 项目介绍
 这是一个基于Python开发的股票纯技术面分析工具，目前主要用于美股市场分析。本工具通过分析多个技术指标，识别价格形态，结合成交量分析来生成交易信号，并以直观的HTML报告形式展示分析结果。
 
-<img width="1114" alt="image" src="https://github.com/user-attachments/assets/e71bbbb5-6bac-4cb5-96a2-cfb4b2444fee" />
+<img width="1114" alt="image" src="https://github.com/user-attachments/assets/64b79263-c7fe-4291-b942-5774fd445770" />
 
 ## 核心功能
 
@@ -68,11 +63,10 @@ python stock_analyzer.py
 - 包含图表和详细分析说明
 - 支持批量股票分析
   
-<img width="1492" alt="image" src="https://github.com/user-attachments/assets/03fab51a-c669-448d-8aee-4f7ae9d38510" />
+<img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
+<img width="1035" alt="image" src="https://github.com/user-attachments/assets/f54895e0-fbd2-4707-9276-c5a1b57fa56e" />
 
-<img width="1415" alt="image" src="https://github.com/user-attachments/assets/60b1a55b-1a0f-47d5-911c-f67511c656b2" />
-
-
+---
 ## 使用指南
 
 ### 环境要求
