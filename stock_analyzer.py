@@ -14,6 +14,7 @@ import os
 from tqdm import tqdm
 import time
 
+warnings.filterwarnings('ignore', category=Warning)
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 @dataclass
