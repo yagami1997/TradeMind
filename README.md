@@ -65,7 +65,7 @@ python stock_analyzer.py
 <img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
 <img width="1226" alt="image" src="https://github.com/user-attachments/assets/f94c6cec-3581-4702-a186-5b8a51d715c5" />
 <img width="1229" alt="image" src="https://github.com/user-attachments/assets/31ac852c-d907-4f2a-b165-439e190fe92f" />
-<img width="1035" alt="image" src="https://github.com/user-attachments/assets/f54895e0-fbd2-4707-9276-c5a1b57fa56e" />
+<img width="1021" alt="image" src="https://github.com/user-attachments/assets/55e61df4-be2b-4f3f-896c-6a8b3ac2842a" />
 
 ---
 ## 使用指南
