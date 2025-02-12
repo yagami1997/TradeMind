@@ -11,6 +11,7 @@ import json
 import warnings
 import webbrowser
 import os
+import sys
 from tqdm import tqdm
 import time
 
@@ -724,15 +725,20 @@ if __name__ == "__main__":
         
         print("请选择分析模式：")
         print("1. 手动输入股票代码")
-        print("2. 使用预设股票组合")
-        
+        print("2. 使用预设股票组合")  
+        print("0. 退出程序")      
         mode = input("\n请输入模式编号 (1 或 2): ").strip()
         
         symbols = []
         names = {}
-        title = "股票分析报告"
+        title = "美股技术面分析工具Alpha v0.2"
         
-        if mode == "1":
+        if mode == "0":
+            print("\n正在退出程序...")
+            print("提示：如需关闭虚拟环境，请在终端输入 'deactivate'")
+            sys.exit(0)
+        
+        elif mode == "1":
             print("\n请输入股票代码（最多10个，每行一个，支持自定义名称，格式：代码=名称）")
             print("示例：")
             print("AAPL=苹果")
@@ -853,8 +859,26 @@ if __name__ == "__main__":
         
     except KeyboardInterrupt:
         print("\n\n⚠️ 程序被用户中断")
+    except ValueError as e:
+        print("\n")
+        print("❌ 输入错误 ".center(50, "="))
+        print(f"• 原因：{str(e)}")
+        print("• 请重新运行程序并选择正确的选项")
+        print("="*50)
+        
+    except KeyboardInterrupt:
+        print("\n")
+        print("⚠️ 程序已停止 ".center(50, "="))
+        print("• 用户主动中断程序")
+        print("• 感谢使用，再见！")
+        print("="*50)
+        
     except Exception as e:
-        print(f"\n❌ 错误：{str(e)}")
-        logging.error(f"程序异常", exc_info=True)
+        print("\n")
+        print("❌ 程序异常 ".center(50, "="))
+        print(f"• 错误信息：{str(e)}")
+        print("• 请检查输入或联系开发者")
+        print("="*50)
+        logging.error("程序异常", exc_info=True)
     finally:
-        print("\n👋 感谢使用美股技术面分析工具！")
+        print("\n�� 感谢使用美股技术面分析工具！")
