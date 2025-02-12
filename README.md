@@ -49,8 +49,6 @@ python stock_analyzer.py
 - 信号可信度评级评分
 - 清晰的买入/卖出建议
 
- 
-
 ### 4. 回测系统
 - 使用Pandas + NumPy这个最简单的组合做回测框架；
 - 回测系统支持多股票，多参数，多策略回测；
@@ -63,7 +61,10 @@ python stock_analyzer.py
 - 包含图表和详细分析说明
 - 支持批量股票分析
   
+<img width="1242" alt="image" src="https://github.com/user-attachments/assets/f4b90186-2ff1-4221-87ce-d3cae4573e28" />
 <img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
+<img width="1226" alt="image" src="https://github.com/user-attachments/assets/f94c6cec-3581-4702-a186-5b8a51d715c5" />
+<img width="1229" alt="image" src="https://github.com/user-attachments/assets/31ac852c-d907-4f2a-b165-439e190fe92f" />
 <img width="1035" alt="image" src="https://github.com/user-attachments/assets/f54895e0-fbd2-4707-9276-c5a1b57fa56e" />
 
 ---
