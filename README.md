@@ -12,8 +12,9 @@
 
 ### 2025年2月11日更新
 <img width="1261" alt="image" src="https://github.com/user-attachments/assets/ba3aa1ef-efeb-424a-b382-02572aa01ac6" />
-<img width="1262" alt="image" src="https://github.com/user-attachments/assets/909f6ae8-a711-467e-b49a-b97d647faa30" />
 <img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
+<img width="1035" alt="image" src="https://github.com/user-attachments/assets/f54895e0-fbd2-4707-9276-c5a1b57fa56e" />
+
 
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
