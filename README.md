@@ -11,7 +11,7 @@
 ## 更新日志
 
 ### 2025年2月11日更新
-<img width="1261" alt="image" src="https://github.com/user-attachments/assets/ba3aa1ef-efeb-424a-b382-02572aa01ac6" />
+<img width="1114" alt="image" src="https://github.com/user-attachments/assets/64b79263-c7fe-4291-b942-5774fd445770" />
 <img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
 <img width="1035" alt="image" src="https://github.com/user-attachments/assets/f54895e0-fbd2-4707-9276-c5a1b57fa56e" />
 
