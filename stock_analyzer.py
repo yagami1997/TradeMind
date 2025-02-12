@@ -610,7 +610,7 @@ class StockAnalyzer:
             <div class="container">
                 <div class="header">
                     <h1>{title}</h1>
-                    <div class="timestamp">生成时间: {datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')}</div>
+                    <div class="timestamp">报告生成时间: {datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')}</div>
                 </div>
                 
                 <div class="stock-grid">
@@ -827,7 +827,7 @@ if __name__ == "__main__":
                             if code not in names:  # 避免重复
                                 symbols.append(code)
                                 names[code] = name
-                    title = "全市场分析报告"
+                    title = "全市场分析报告（预置股票列表）"
                 else:
                     raise ValueError("无效的选择")
             else:
