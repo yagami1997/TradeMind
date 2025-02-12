@@ -636,7 +636,7 @@ class StockAnalyzer:
                             </p>
                         </div>
                         <div class="manual-card">
-                            <h3>MACD - 指数平滑移动平均线</h3>
+                            <h3>MACD - 指数平滑移动均线</h3>
                             <p>
                                 • HIST > 0：多头市场<br>
                                 • HIST < 0：空头市场<br>
@@ -681,15 +681,18 @@ class StockAnalyzer:
                 text-align: center;
                 padding: 20px;
                 margin: 20px auto;
-                max-width: 800px;
-                color: #666;
+                width: 100%;           /* 改为100%宽度 */
+                background: #D4B886;   /* 使用卡其色背景 */
+                color: white;          /* 文字改为白色以提高可读性 */
                 font-size: 0.9em;
                 line-height: 1.6;
+                border-radius: 6px;    /* 添加圆角 */
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* 添加轻微阴影 */
             ">
-                <strong>风险提示：</strong><br>
-                本报告基于技术分析生成，仅供参考，不构成任何投资建议。<br>
-                投资者应当独立判断，自主决策，自行承担投资风险。<br>
-                过往表现不代表未来收益，市场有风险，投资需谨慎。
+                <strong style="font-size: 1.2em;">风险提示：</strong><br>
+                本报告基于雅虎财经API技术分析生成，仅供学习，不构成任何投资建议。<br>
+                投资者应当独立判断，自主决策，自行承担投资风险，投资是修行，不要指望单边信息。<br>
+                过往市场表现不代表未来收益，市场有较大风险，投资需理性谨慎。
             </div>
             
             <div class="signature" style="
