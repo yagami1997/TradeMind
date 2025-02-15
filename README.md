@@ -57,9 +57,9 @@ python stock_analyzer.py
 - 回测系统支持多种参数，如：RSI，MACD，KDJ，布林带，成交量等；
 
 ### 5. 自动化HTML分析报告
-- 自动生成HTML格式报告，未来会支持PDF格式
-- 包含图表和详细分析说明
-- 支持批量股票分析
+- 自动生成HTML格式报告，未来会支持PDF格式；
+- 包含图表和详细分析说明；
+- 支持批量股票分析；
   
 <img width="1242" alt="image" src="https://github.com/user-attachments/assets/f4b90186-2ff1-4221-87ce-d3cae4573e28" />
 <img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
