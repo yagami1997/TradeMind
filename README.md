@@ -239,7 +239,8 @@ python stock_analyzer.py
 
 本项目采用 **GPLv3 许可证** - 详情请参见 [LICENSE](LICENSE) 文件。下面是我的声明：
 
-- 我本身是 [理查德·斯托曼](https://www.stallman.org/) 的粉丝和 **FSF** 的资深赞助会员，在 [MIT 许可证](https://opensource.org/licenses/MIT) 和 [GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html) 的选择上，我希望采用 **自由软件基金会 (FSF)** 的方式处理许可证问题。希望大家遵守 **GPLv3** 条款，开源你们的成果，并且沿用 **GPLv3** 协议，让更多的人从中受益。
+- 我本身是 [理查德·斯托曼](https://www.stallman.org/) 的粉丝和 **FSF** 的资深赞助会员，在 [MIT 许可证](https://opensource.org/licenses/MIT) 和 [GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html) 的选择上，我希望采用[自由软件基金会 (FSF)](https://www.fsf.org/)
+的方式处理许可证问题。希望大家遵守 **GPLv3** 条款，开源你们的成果，并且沿用 **GPLv3** 协议，让更多的人从中受益。
   
 - 我在标准 **GPLv3** 许可证的末尾追加了一段遵循协议的免责声明，全文如下：（本项目特指：[TradeMind](https://github.com/yagami1997/TradeMind)）
 ```bash
