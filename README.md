@@ -1,6 +1,4 @@
-# 美股技术面简单分析工具 Alpha v 0.3
-
-我们的全新开发工作开始了，加油！争取早日完工
+# TradeMind Alpha v0.3 重构版
 
 ## 重要声明
 1. 本工具99%的代码由Cursor自动生成，Coding模型Claude3.5，当然也可以用别的。对我来说，更像个赛博念经的，负责规划设计调试。
@@ -11,21 +9,70 @@
 ---
 ## 更新日志
 
-### 2025年2月11日更新
-- 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
-- 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
-- 重新大幅度优化了K线形态特征的判定，优化了显示效果；
-- 更新了股票决策的算法，目前操作结论偏积极，决策偏向布林带和RSI，这是我个人的偏好，大家可以根据自己偏好调整算法；
-- 改进了HTML的显示方式，色彩搭配，采用紧凑型卡片显示更多的个股技术信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
-- 优化改进了其他问题，提高了分析速度；
-- ⚠️项目目录中main.py是个更简单的快速遍历股票程序，我会重新思考Main程序的功能，架构和体现方式，目前不推荐使用该程序分析股票。主要推荐使用stock_analyzer.py。请在Shell下执行如下命令：（MacOS请开启Shell虚拟化：source venv/bin/activate）
- 
- ```Shell下执行命令
-python stock_analyzer.py
- ```
+###2025年2月16日TradeMind重构公告
+
+- 从现在开始，我们对系统进行重构，全新的项目目录如下：
+  TradeMind/
+├── config/ # 配置文件目录
+│ └── watchlists.json # 股票池配置文件
+├── data/ # 数据管理模块
+│ ├── init.py
+│ ├── data_manager_yf.py # Yahoo Finance 数据获取
+│ └── data_manager_ibkr.py # IBKR 数据获取
+├── logs/ # 交易日志目录
+├── reports/ # 交易报告 (HTML/PDF)
+├── results/ # 回测数据存储 (JSON/CSV)
+├── strategies/ # 策略分析模块
+│ ├── init.py
+│ ├── advanced_analysis.py # 高级分析工具
+│ ├── backtester.py # 回测系统
+│ ├── enhanced_trading_advisor.py # 增强型交易顾问
+│ ├── stock_analyzer.py # 股票分析工具
+│ ├── strategy_manager.py # 策略管理器
+│ └── technical_indicators.py # 技术指标计算
+├── watchlist/ # 股票池管理
+│ └── watchlist_manager.py # 股票池管理器
+├── venv/ # Python 虚拟环境
+├── .gitignore # Git 忽略规则
+├── LICENSE # 许可证文件
+├── main.py # 主程序入口
+├── README.md # 项目说明文档
+└── requirements.txt # 项目依赖
+- 在DEV开发工作基本结束之前，我将不会提交代码和合并到Main，充分测试完成之后，我会和Main合并。
+
+- ###核心功能及迭代方向介绍
+
+**📌 核心模块与功能设计**：
+**1️⃣ 数据管理模块** (data_manager_yf.py 和 data_manager_ibkr.py)：
+
+**Yahoo Finance 数据管理**：获取股票、ETF、指数等的历史数据。适用于普通用户，支持定时抓取和数据缓存。
+**IBKR 数据管理**：提供更高频率的实时数据，支持 股票、期权、期货 等市场数据，适合专业用户的需求。
+
+**2️⃣策略分析模块 (strategy_manager.py 和 technical_indicators.py)**：
+包括常用技术指标，如 RSI、SMA、EMA、MACD 等。
+引入 高级策略分析，支持使用 机器学习、深度学习 进行预测分析，或者通过复杂的 多因子模型 改进策略的效果。
+
+**3️⃣回测系统 (backtester.py)**：
+提供资金管理功能（例如 止损、止盈、最大回撤控制、仓位管理 等）。
+滑点模拟、交易成本 等影响因素的模拟，使回测结果更真实。
+支持 多策略回测，可以选择不同的策略组合进行回测。
+
+**4️⃣报告生成 (reports/)**：
+支持生成 HTML/PDF 格式的回测报告，包含详细的 交易信号、策略表现、盈亏统计 等。
+可视化回测结果，如 策略收益曲线、资金变化、风险指标（最大回撤、夏普比率等）。
+
+**📌 工作计划**：
+**1️⃣数据源选择**：在 main.py 中提供一个简单的界面，让用户选择 Yahoo Finance 或 IBKR 数据源。
+
+**2️⃣优化回测**：改进回测模型，增加 风险控制 和 交易成本。支持回测时的 滑点模拟 和 实际交易模拟，让回测结果更贴近实际情况。
+
+**3️⃣技术分析模型**：加入更多的技术指标，并支持基于 机器学习 的策略模型，可以动态调整交易信号。
+
+**4️⃣系统集成和测试**：完成 IBKR Gateway 和 Yahoo Finance 的数据接入。测试不同策略在 回测系统 中的表现，并对回测报告进行多次优化。
+
 ---
 
-## 项目介绍
+## 旧版项目介绍（TradeMind Alpha v0.2）
 这是一个基于Python开发的股票纯技术面分析工具，目前主要用于美股市场分析。本工具通过分析多个技术指标，识别价格形态，结合成交量分析来生成交易信号，并以直观的HTML报告形式展示分析结果。
 
 <img width="1114" alt="image" src="https://github.com/user-attachments/assets/64b79263-c7fe-4291-b942-5774fd445770" />
