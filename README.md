@@ -237,17 +237,20 @@ python stock_analyzer.py
 
 ##  GPLv3 许可证（GNU 通用公共许可证）声明
 
-本项目采用 GPLv3许可证 - 详情请参见 [LICENSE](LICENSE) 文件。下面是我的声明：
-- 我本身是[理查德·斯托曼](https://www.stallman.org/)的粉丝和FSF的资深赞助会员，在[MIT许可证](https://opensource.org/licenses/MIT) 和[GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html)许可证选择上，我希望采用[自由软件基金会 (FSF)](https://www.fsf.org/)的方式处理许可证问题，希望大家遵守GPLv3条款，把诸位的成果开源，并且沿用GPLv3协议，让更多的人获益。
-- 我在标准GPLv3的末尾追加了一段遵循协议的免责声明，全文如下：
+本项目采用 **GPLv3 许可证** - 详情请参见 [LICENSE](LICENSE) 文件。下面是我的声明：
+
+- 我本身是 [理查德·斯托曼](https://www.stallman.org/) 的粉丝和 **FSF** 的资深赞助会员，在 [MIT 许可证](https://opensource.org/licenses/MIT) 和 [GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html) 的选择上，我希望采用 **自由软件基金会 (FSF)** 的方式处理许可证问题。希望大家遵守 GPLv3 条款，开源你们的成果，并且沿用 GPLv3 协议，让更多的人从中受益。
+  
+- 我在标准 **GPLv3** 许可证的末尾追加了一段遵循协议的免责声明，全文如下：
+
 ```bash
-This project TradeMind(https://github.com/yagami1997/TradeMind) is licensed under the GNU General Public License v3.0 (GPL-3.0). This software is provided 'as-is' without any warranty of any kind, express or implied, including but not limited to the warranties of merchantability or fitness for a particular purpose. In no event will the authors or copyright holders be liable for any damages.
+This project [TradeMind](https://github.com/yagami1997/TradeMind) is licensed under the GNU General Public License v3.0 (GPL-3.0). This software is provided 'as-is' without any warranty of any kind, express or implied, including but not limited to the warranties of merchantability or fitness for a particular purpose. In no event will the authors or copyright holders be liable for any damages.
 ```
-  中文含义为：
+中文含义为：
  ```bash
-本项目 TradeMind(https://github.com/yagami1997/TradeMind) 采用 GNU 通用公共许可证 v3.0 (GPL-3.0) 许可。本软件按“现状”提供，不提供任何形式的明示或暗示的保证，包括但不限于适销性或特定用途适用性的保证。在任何情况下，作者或版权持有者均不对任何损害负责。
+本项目 [TradeMind](https://github.com/yagami1997/TradeMind) 采用 GNU 通用公共许可证 v3.0 (GPL-3.0) 许可。本软件按“现状”提供，不提供任何形式的明示或暗示的保证，包括但不限于适销性或特定用途适用性的保证。在任何情况下，作者或版权持有者均不对任何损害负责。
 ```
-- 我已经可以预感到很多大佬沿用这个思路，可以开发出更强更完善的系统造福散户，谢谢你们！
+- 我已经可以预感到很多大佬沿用这个思路，可以开发出更强更完善的系统造福散户，谢谢你们！🙏🙏🙏
   
 ---
 <p align="right">
