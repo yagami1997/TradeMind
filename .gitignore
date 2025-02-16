@@ -8,4 +8,3 @@ __pycache__/
 *.pyc
 .env
 .idea/
-Trading.code-workspace
