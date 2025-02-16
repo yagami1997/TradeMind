@@ -9,6 +9,35 @@
 ---
 ## 更新日志
 
+### 2025年2月16日更新
+- 我已经着手开始/dev分支的开发，所以/main分支可能会停留在当前版本，仅维护自选股列表，如果算法有改进的话，我会及时同步算法和策略；
+- /dev的基本架构如下：
+  TradeMind/
+├── config/                     # 配置文件（config.ini）
+├── logs/                       # 交易日志
+├── reports/                    # 交易报告（HTML/PDF）
+├── results/                    # 回测数据存储（JSON/CSV）
+├── data/                       # 数据管理（Yahoo Finance、IBKR）
+│   ├── __init__.py             # 使其成为模块
+│   ├── data_manager_yf.py      # Yahoo Finance 数据获取
+│   ├── data_manager_ibkr.py    # IBKR 数据获取
+├── strategies/                 # 策略分析
+│   ├── __init__.py             # 使其成为模块
+│   ├── technical_indicators.py # 技术指标计算（SMA, RSI, MACD等）
+│   ├── strategy_manager.py     # 策略执行
+│   ├── backtester.py           # 回测系统
+│   ├── advanced_analysis.py    # 高级市场分析模型
+├── watchlist/                  # 监控股票池
+│   ├── watchlist_manager.py    # 管理用户关注的股票池
+├── venv/                       # 虚拟环境（保持不变）
+├── .gitignore                  # Git 忽略规则
+├── main.py                     # 入口文件，自动选择适合的数据源和策略
+├── README.md                   # 项目文档
+├── requirements.txt            # 依赖项
+
+如果你对新的架构感兴趣，可以Fork /dev，然后按照这个思路独立开发，🙏🙏
+- 我已经把目前的/main主分支的程序Release了一个版本出来，可以直接下载部署使用。
+
 ### 2025年2月11日更新
 - 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
 - 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
