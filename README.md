@@ -11,33 +11,10 @@
 
 ###2025年2月16日TradeMind重构公告
 
-- 从现在开始，我们对系统进行重构，全新的项目目录如下：
-  TradeMind/
-├── config/ # 配置文件目录
-│ └── watchlists.json # 股票池配置文件
-├── data/ # 数据管理模块
-│ ├── init.py
-│ ├── data_manager_yf.py # Yahoo Finance 数据获取
-│ └── data_manager_ibkr.py # IBKR 数据获取
-├── logs/ # 交易日志目录
-├── reports/ # 交易报告 (HTML/PDF)
-├── results/ # 回测数据存储 (JSON/CSV)
-├── strategies/ # 策略分析模块
-│ ├── init.py
-│ ├── advanced_analysis.py # 高级分析工具
-│ ├── backtester.py # 回测系统
-│ ├── enhanced_trading_advisor.py # 增强型交易顾问
-│ ├── stock_analyzer.py # 股票分析工具
-│ ├── strategy_manager.py # 策略管理器
-│ └── technical_indicators.py # 技术指标计算
-├── watchlist/ # 股票池管理
-│ └── watchlist_manager.py # 股票池管理器
-├── venv/ # Python 虚拟环境
-├── .gitignore # Git 忽略规则
-├── LICENSE # 许可证文件
-├── main.py # 主程序入口
-├── README.md # 项目说明文档
-└── requirements.txt # 项目依赖
+- **从现在开始，我们对系统进行重构，全新的项目目录如下**：
+  
+<img width="637" alt="image" src="https://github.com/user-attachments/assets/b60ecc9a-df1f-49a9-bc9e-9376cc409a52" />
+
 - 在DEV开发工作基本结束之前，我将不会提交代码和合并到Main，充分测试完成之后，我会和Main合并。
 
 - ###核心功能及迭代方向介绍
