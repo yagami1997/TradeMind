@@ -54,7 +54,8 @@
 
 ---
 
-##🔔旧版项目介绍（TradeMind Alpha v0.2）
+## 🔔旧版项目介绍（TradeMind Alpha v0.2）
+
 这是一个基于Python开发的股票纯技术面分析工具，目前主要用于美股市场分析。本工具通过分析多个技术指标，识别价格形态，结合成交量分析来生成交易信号，并以直观的HTML报告形式展示分析结果。
 
 <img width="1114" alt="image" src="https://github.com/user-attachments/assets/64b79263-c7fe-4291-b942-5774fd445770" />
