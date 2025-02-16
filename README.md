@@ -235,9 +235,10 @@ python stock_analyzer.py
 
 最后强调：市场有风险，投资需谨慎，不要轻信任何信息，要有自己的独立价值体系和判断能力。
 
-## License
+## 许可证声明
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+本项目采用 MIT 许可证 - 详情请参见 [LICENSE](LICENSE) 文件。
+
 
 
 ---
