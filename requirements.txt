@@ -25,3 +25,4 @@ typing_extensions==4.12.2
 urllib3==2.3.0
 webencodings==0.5.1
 yfinance==0.2.36
+tqdm==4.67.1
