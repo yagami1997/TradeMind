@@ -243,13 +243,11 @@ python stock_analyzer.py
   
 - 我在标准 **GPLv3** 许可证的末尾追加了一段遵循协议的免责声明，全文如下：
 
-```bash
 This project [TradeMind](https://github.com/yagami1997/TradeMind) is licensed under the GNU General Public License v3.0 (GPL-3.0). This software is provided 'as-is' without any warranty of any kind, express or implied, including but not limited to the warranties of merchantability or fitness for a particular purpose. In no event will the authors or copyright holders be liable for any damages.
-```
-中文含义为：
- ```bash
+
+**中文含义为：**
 本项目 [TradeMind](https://github.com/yagami1997/TradeMind) 采用 GNU 通用公共许可证 v3.0 (GPL-3.0) 许可。本软件按“现状”提供，不提供任何形式的明示或暗示的保证，包括但不限于适销性或特定用途适用性的保证。在任何情况下，作者或版权持有者均不对任何损害负责。
-```
+
 - 我已经可以预感到很多大佬沿用这个思路，可以开发出更强更完善的系统造福散户，谢谢你们！🙏🙏🙏
   
 ---
