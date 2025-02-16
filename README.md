@@ -237,8 +237,8 @@ python stock_analyzer.py
 
 ##  GPL 许可证（GNU 通用公共许可证）声明
 
-本项目采用 GPL v3许可证 - 详情请参见 [LICENSE](LICENSE) 文件。下面是我的声明：
-- 我本身是[理查德·斯托曼](https://www.stallman.org/)的粉丝和FSF的资深赞助会员，在[MIT 许可证](https://opensource.org/licenses/MIT) 和[GPL v3 许可证](https://www.gnu.org/licenses/gpl-3.0.html)许可证选择上，我希望采用[自由软件基金会 (FSF)](https://www.fsf.org/)的方式处理许可证问题，希望大家遵守GPL v3条款，把诸位的成果开源，并且沿用GPL v3协议，让更多的人获益。
+本项目采用 GPLv3许可证 - 详情请参见 [LICENSE](LICENSE) 文件。下面是我的声明：
+- 我本身是[理查德·斯托曼](https://www.stallman.org/)的粉丝和FSF的资深赞助会员，在[MIT许可证](https://opensource.org/licenses/MIT) 和[GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html)许可证选择上，我希望采用[自由软件基金会 (FSF)](https://www.fsf.org/)的方式处理许可证问题，希望大家遵守GPLv3条款，把诸位的成果开源，并且沿用GPLv3协议，让更多的人获益。
 - 我已经可以预感到很多大佬沿用这个思路，可以开发出更强更完善的系统造福散户，谢谢你们！
   
 ---
