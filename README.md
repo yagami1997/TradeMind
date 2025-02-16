@@ -24,6 +24,7 @@
 **1️⃣ 数据管理模块** (data_manager_yf.py 和 data_manager_ibkr.py)：
 
 **Yahoo Finance 数据管理**：获取股票、ETF、指数等的历史数据。适用于普通用户，支持定时抓取和数据缓存。
+
 **IBKR 数据管理**：提供更高频率的实时数据，支持 股票、期权、期货 等市场数据，适合专业用户的需求。
 
 **2️⃣策略分析模块 (strategy_manager.py 和 technical_indicators.py)**：
