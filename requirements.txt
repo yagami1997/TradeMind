@@ -70,8 +70,8 @@ soupsieve==2.6
 # 类型提示扩展
 typing_extensions==4.12.2
 
-# URL处理库
-urllib3==2.3.0
+# HTTP 客户端库(2.X版本和yfinance0.2.53不兼容，所以只能用1.26.6)
+urllib3==1.26.6
 
 # Web编码工具
 webencodings==0.5.1
