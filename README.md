@@ -286,7 +286,7 @@ pur -r requirements.txt
 
 - pur 是一个专门用于更新 requirements.txt 文件的 Python 工具。下面是用法：
 
-  - 只更新指定的包
+ - 只更新指定的包
 ```bash
 pur django pytest -r requirements.txt
 ```
