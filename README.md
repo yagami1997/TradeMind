@@ -234,8 +234,8 @@ six==1.17.0
 soupsieve==2.6
 - 类型提示扩展库
 typing_extensions==4.12.2
-- HTTP 客户端库
-urllib3==2.3.0
+- HTTP 客户端库(2.X版本和yfinance0.2.53不兼容，只能用1.26.6)
+urllib3==1.26.6
 - 处理 HTML 和 XML 编码的库
 webencodings==0.5.1
 - Yahoo Finance 数据获取库，用于获取股票市场数据
