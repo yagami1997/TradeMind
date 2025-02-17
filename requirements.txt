@@ -1,0 +1,83 @@
+# 文件系统路径处理
+appdirs==1.4.4
+
+# HTML解析器
+beautifulsoup4==4.13.3
+
+# SSL/TLS证书验证
+certifi==2024.2.2
+
+# 字符编码检测
+charset-normalizer==3.4.1
+
+# 事件处理库
+eventkit==1.0.3
+
+# 不可变字典实现
+frozendict==2.4.6
+
+# HTML解析
+html5lib==1.1
+
+# Interactive Brokers API
+ib-insync==0.9.86
+
+# 国际化域名支持
+idna==3.10
+
+# XML处理库
+lxml==5.3.0
+
+# 多任务处理
+multitasking==0.0.11
+
+# 异步嵌套支持
+nest-asyncio==1.6.0
+
+# 数值计算库
+numpy==1.26.4
+
+# 数据分析库
+pandas==2.2.0
+
+# 技术分析指标库
+pandas_ta==0.3.14b0
+
+# 轻量级ORM
+peewee==3.17.9
+
+# 日期时间处理
+python-dateutil==2.9.0.post0
+
+# 时区处理
+pytz==2024.1
+
+# HTTP请求库
+requests==2.32.3
+
+# 定时任务调度
+schedule==1.2.2
+
+# 科学计算库
+scipy==1.13.1
+
+# Python 2和3兼容库
+six==1.17.0
+
+# Beautiful Soup的HTML解析器
+soupsieve==2.6
+
+# 类型提示扩展
+typing_extensions==4.12.2
+
+# URL处理库
+urllib3==2.3.0
+
+# Web编码工具
+webencodings==0.5.1
+
+# Yahoo Finance数据获取
+yfinance==0.2.36
+
+# 进度条显示
+tqdm==4.67.1
