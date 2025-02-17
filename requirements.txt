@@ -70,8 +70,8 @@ soupsieve==2.6
 # 类型提示扩展库
 typing_extensions==4.12.2
 
-# HTTP 客户端库
-urllib3==2.3.0
+# HTTP 客户端库 只能用1.26.6，不能用最新的2.X版
+urllib3==1.26.6
 
 # 处理 HTML 和 XML 编码的库
 webencodings==0.5.1
