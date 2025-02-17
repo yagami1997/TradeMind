@@ -7,11 +7,11 @@ frozendict==2.4.6
 html5lib==1.1
 ib-insync==0.9.86
 idna==3.10
-lxml==5.3.0
+lxml==5.3.1
 multitasking==0.0.11
 nest-asyncio==1.6.0
-numpy==1.23.5
-pandas==1.5.3
+numpy==2.0.2
+pandas==2.2.3
 pandas_ta==0.3.14b0
 peewee==3.17.9
 python-dateutil==2.9.0.post0
@@ -24,5 +24,5 @@ soupsieve==2.6
 typing_extensions==4.12.2
 urllib3==2.3.0
 webencodings==0.5.1
-yfinance==0.2.36
+yfinance==0.2.53
 tqdm==4.67.1
