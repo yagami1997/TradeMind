@@ -186,13 +186,62 @@
      ```
 
 ### 主要依赖包说明
-- **yfinance**: Yahoo Finance 数据获取
-- **pandas**: 数据处理和分析
-- **numpy**: 数值计算
-- **pandas_ta**: 技术分析指标库
-- **scipy**: 科学计算
-- **ib-insync**: Interactive Brokers API 接口
-- **schedule**: 定时任务调度
+- 用于处理操作系统中的文件路径
+appdirs==1.4.4
+- Python 的网页解析库，用于提取网页数据
+beautifulsoup4==4.13.3
+- 提供 SSL/TLS 证书验证功能
+certifi==2025.1.31
+- 字符编码检测库
+charset-normalizer==3.4.1
+- 事件驱动编程库
+eventkit==1.0.3
+- 不可变字典实现
+frozendict==2.4.6
+- HTML 和 XML 文件解析器
+html5lib==1.1
+- Interactive Brokers Python API 的异步封装库，用于股票交易
+ib-insync==0.9.86
+- 国际化域名支持库
+idna==3.10
+- XML 和 HTML 处理库，性能优秀
+lxml==5.3.1
+- Python 多任务处理库
+multitasking==0.0.11
+- 解决 Jupyter 中的异步嵌套问题
+nest-asyncio==1.6.0
+- 数值计算库，提供多维数组支持
+numpy==2.0.2
+- 数据分析处理库，提供 DataFrame 数据结构
+pandas==2.2.3
+- 基于 Pandas 的技术分析指标库，用于金融市场分析
+pandas_ta==0.3.14b0
+- 简单而小巧的 ORM 数据库框架
+peewee==3.17.9
+- 日期时间处理工具库
+python-dateutil==2.9.0.post0
+- 时区处理库
+pytz==2025.1
+- HTTP 请求库
+requests==2.32.3
+- 任务调度库
+schedule==1.2.2
+- 科学计算库
+scipy==1.13.1
+- Python 2 和 3 兼容性工具库
+six==1.17.0
+- beautifulsoup4 的依赖库
+soupsieve==2.6
+- 类型提示扩展库
+typing_extensions==4.12.2
+- HTTP 客户端库
+urllib3==2.3.0
+- 处理 HTML 和 XML 编码的库
+webencodings==0.5.1
+- Yahoo Finance 数据获取库，用于获取股票市场数据
+yfinance==0.2.53
+- 进度条显示库，用于显示循环进度
+tqdm==4.67.1
 
 
 ### 可能遇到的问题和解决方案
@@ -245,12 +294,36 @@
 2. 定期更新Python和依赖包
 3. 分析结果仅供参考，请结合其他因素做出投资决策
 
-### 更新说明
-- 建议定期更新依赖包：
-  ```bash
-  pip install --upgrade -r requirements.txt
-  ```
-- 关注项目更新，及时同步最新代码
+### 依赖库更新说明
+- 建议定期更新依赖包，建议用下列指令更新：
+ - 安装 pur
+ ```bash
+pip install pur 
+ ```
+  - 更新 requirements.txt
+ ```bash
+pur -r requirements.txt 
+```
+
+- pur 是一个专门用于更新 requirements.txt 文件的 Python 工具。下面是用法：
+
+ - 只更新指定的包
+```bash
+pur django pytest -r requirements.txt
+```
+  - 预览会更新什么（不实际更新）
+```bash
+pur --dry-run -r requirements.txt
+```
+  - 强制更新到最新版本（忽略版本限制
+```bash
+pur --force -r requirements.txt
+```
+
+  - 更新时保存备份
+```bash
+pur --backup -r requirements.txt
+```
 
 ### 注意事项
 1. 首次运行可能需要较长时间下载依赖包
