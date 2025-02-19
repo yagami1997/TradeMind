@@ -234,12 +234,12 @@ six==1.17.0
 soupsieve==2.6
 - 类型提示扩展库
 typing_extensions==4.12.2
-- HTTP 客户端库(2.X版本和yfinance0.2.53不兼容，只能用1.26.6)
+- HTTP 客户端库(2.X版本和yfinance0.2.54不兼容，只能用1.26.6)
 urllib3==1.26.6
 - 处理 HTML 和 XML 编码的库
 webencodings==0.5.1
 - Yahoo Finance 数据获取库，用于获取股票市场数据
-yfinance==0.2.53
+yfinance==0.2.54
 - 进度条显示库，用于显示循环进度
 tqdm==4.67.1
 
@@ -324,6 +324,15 @@ pur --force -r requirements.txt
 ```bash
 pur --backup -r requirements.txt
 ```
+  - 遇到程序出现依赖错误怎么办，例如如下错误：
+```bash
+245 - yfinance - ERROR - NVDA: No price data found, symbol may be delisted (period=1y)
+```
+  - 解决方法，使用pip手动升级对应的依赖，一般即可解决问题，如果实在解决不了问题，把错误提示发给Cursor，按照引导Debug：
+```bash
+pip install --upgrade yfinance
+```
+
 
 ### 注意事项
 1. 首次运行可能需要较长时间下载依赖包
