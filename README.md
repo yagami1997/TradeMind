@@ -267,6 +267,7 @@ tqdm==4.67.1
 - 检查股票代码是否正确
 - 确认是否在美股交易时间运行
 - 查看logs文件夹下的日志文件获取详细错误信息
+- 检查依赖是否升级到合适版本
 
 ## 使用建议
 1. 建议在美股交易时段运行，获取最新数据
@@ -303,6 +304,15 @@ pur --force -r requirements.txt
 ```bash
 pur --backup -r requirements.txt
 ```
+  - 遇到出现依赖错误怎么办，比如如下提示：
+```bash
+245 - yfinance - ERROR - NVDA: No price data found, symbol may be delisted (period=1y)
+```
+  - 解决方法，使用pip手动升级对应的依赖，一般即可解决问题，如果实在解决不了问题，把错误提示发给Cursor，按照引导Debug：
+```bash
+pip install --upgrade yfinance
+```
+
 
 - 关注项目更新，及时同步最新代码
 
