@@ -35,10 +35,10 @@ multitasking==0.0.11
 nest-asyncio==1.6.0
 
 # 数值计算库
-numpy==1.26.4
+numpy==2.0.2
 
 # 数据分析库
-pandas==2.2.0
+pandas==2.2.3
 
 # 技术分析指标库
 pandas_ta==0.3.14b0
