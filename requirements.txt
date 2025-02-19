@@ -77,7 +77,7 @@ urllib3==1.26.6
 webencodings==0.5.1
 
 # Yahoo Finance数据获取
-yfinance==0.2.36
+yfinance==0.2.54
 
 # 进度条显示
 tqdm==4.67.1
