@@ -14,7 +14,8 @@
 - 基本确定了项目框架和目录结构，文件
 - 剩下功能待开发
 
-**🔔新的目录结构**：
+**🔔新的目录结构**
+
 <img width="690" alt="image" src="https://github.com/user-attachments/assets/cc510917-4d55-4734-90fb-28e84df8ef08" />
 
 ### 2025年2月16日TradeMind重构公告
