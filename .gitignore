@@ -1,6 +1,9 @@
 # 配置文件,Github上传时忽略,部署时请修改config.ini.example
 config/config.ini
 
+#IBKR Gateway测试文件   
+/ibkrtest.py
+
 # 日志文件
 logs/*.log
 

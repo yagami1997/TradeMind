@@ -1,0 +1,26 @@
+# 配置文件示例，本文件规范了Config.ini的格式和内容，部署的时候应首先修改本文件，按照IBKR Gateway的配置修改你自己的端口和客户端ID，客户端ID建议设置为0.
+
+[data_source]
+# 数据源选择 (yahoo 或 ibkr)
+default = yahoo  
+
+# Yahoo Finance 配置
+yahoo_interval = 1d    # 数据间隔 (1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo)
+yahoo_period = 1y      # 数据周期 (1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max)
+
+# IBKR 配置
+ibkr_port = 4001       # IBKR Gateway端口
+ibkr_host = 127.0.0.1  # IBKR Gateway主机
+ibkr_client_id = 1     # 客户端ID
+
+[trading]
+max_positions = 5       # 最大持仓数量
+risk_per_trade = 0.02  # 每笔交易风险比例 (2%)
+stop_loss = 0.05       # 止损比例 (5%)
+take_profit = 0.15     # 止盈比例 (15%)
+initial_capital = 100000  # 初始资金
+
+[logging]
+level = INFO           # 日志级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+file = logs/trading.log  # 日志文件路径
+format = %%(asctime)s - %%(name)s - %%(levelname)s - %%(message)s  # 日志格式
