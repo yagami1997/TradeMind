@@ -1,19 +1,17 @@
-import pandas as pd
-import numpy as np
 import logging
-from typing import Dict, List, Optional, Tuple, Union
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List
 from functools import lru_cache
-import hashlib
 import json
 import argparse
+import numpy as np  # 需要用到numpy
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .strategy_manager import StrategyManager
 from .technical_indicators import TechnicalIndicators
-from ..data.data_manager_yf import YahooFinanceManager
+from .strategy_manager import StrategyManager
 from ..watchlist.watchlist_manager import WatchlistManager
+from ..data.data_manager_yf import YahooFinanceManager
 
 class EnhancedTradingAdvisor:
     """增强型交易顾问：整合数据获取、技术分析和策略管理"""
