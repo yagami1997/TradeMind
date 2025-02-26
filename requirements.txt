@@ -1,83 +1,31 @@
-# 文件系统路径处理
-appdirs==1.4.4
+# 数据获取和处理
+yfinance==0.2.36          # Yahoo Finance API
+ib-insync==0.9.86         # Interactive Brokers API
+pandas==2.2.0             # 数据处理和分析
+numpy==1.26.4             # 数值计算
 
-# HTML解析器
-beautifulsoup4==4.13.3
+# 技术分析
+pandas_ta==0.3.14b0       # 技术分析指标库
+scipy==1.13.1             # 科学计算
 
-# SSL/TLS证书验证
-certifi==2024.2.2
+# 数据可视化
+plotly==5.19.0            # 交互式图表
+mplfinance==0.12.10b0     # K线图绘制
 
-# 字符编码检测
-charset-normalizer==3.4.1
+# 工具库
+python-dateutil==2.9.0    # 日期时间处理
+pytz==2024.1             # 时区处理
+tqdm==4.66.2             # 进度条显示
 
-# 事件处理库
-eventkit==1.0.3
+# HTTP和网络
+requests==2.31.0          # HTTP请求
+urllib3==1.26.6          # URL处理（固定版本，配合yfinance）
 
-# 不可变字典实现
-frozendict==2.4.6
+# 开发工具
+pytest==8.0.1            # 单元测试
+black==24.2.0            # 代码格式化
+pylint==3.0.3            # 代码检查
 
-# HTML解析
-html5lib==1.1
-
-# Interactive Brokers API
-ib-insync==0.9.86
-
-# 国际化域名支持
-idna==3.10
-
-# XML处理库
-lxml==5.3.0
-
-# 多任务处理
-multitasking==0.0.11
-
-# 异步嵌套支持
-nest-asyncio==1.6.0
-
-# 数值计算库
-numpy==2.0.2
-
-# 数据分析库
-pandas==2.2.3
-
-# 技术分析指标库
-pandas_ta==0.3.14b0
-
-# 轻量级ORM
-peewee==3.17.9
-
-# 日期时间处理
-python-dateutil==2.9.0.post0
-
-# 时区处理
-pytz==2024.1
-
-# HTTP请求库
-requests==2.32.3
-
-# 定时任务调度
-schedule==1.2.2
-
-# 科学计算库
-scipy==1.13.1
-
-# Python 2和3兼容库
-six==1.17.0
-
-# Beautiful Soup的HTML解析器
-soupsieve==2.6
-
-# 类型提示扩展
-typing_extensions==4.12.2
-
-# HTTP 客户端库(2.X版本和yfinance0.2.53不兼容，所以只能用1.26.6)
-urllib3==1.26.6
-
-# Web编码工具
-webencodings==0.5.1
-
-# Yahoo Finance数据获取
-yfinance==0.2.54
-
-# 进度条显示
-tqdm==4.67.1
+# 其他工具
+configparser==6.0.0      # 配置文件处理
+logging==0.4.9.6         # 日志处理
