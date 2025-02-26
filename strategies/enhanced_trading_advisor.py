@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List,Optional
 from functools import lru_cache
 import json
 import argparse
@@ -17,7 +17,23 @@ from watchlist.watchlist_manager import WatchlistManager
 from data.data_manager_yf import YahooFinanceManager
 
 class EnhancedTradingAdvisor:
-    """增强型交易顾问：整合数据获取、技术分析和策略管理"""
+    """增强型交易顾问：整合数据获取、技术分析和策略管理
+    
+    该类提供以下功能：
+    - 数据获取和管理
+    - 技术指标计算
+    - 策略应用和评估
+    - 交易信号生成
+    - 报告生成和缓存
+    
+    Attributes:
+        data_manager: 数据管理器
+        strategy_manager: 策略管理器
+        watchlist_manager: 观察列表管理器
+        indicators: 技术指标计算器
+        cache_timeout: 缓存超时时间（秒）
+        logger: 日志记录器
+    """
     
     def __init__(self):
         """初始化交易顾问"""
