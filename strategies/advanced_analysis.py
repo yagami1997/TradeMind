@@ -1,9 +1,8 @@
 import pandas as pd
-import numpy as np
 import logging
-from typing import Dict, List, Optional, Union, Tuple
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, List
 
 from .technical_indicators import TechnicalIndicators
 

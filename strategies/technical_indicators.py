@@ -1,8 +1,7 @@
 import pandas as pd
-import numpy as np
 import pandas_ta as ta
 import logging
-from typing import Union, Tuple
+from typing import Dict, List
 
 class TechnicalIndicators:
     """技术指标计算类"""
