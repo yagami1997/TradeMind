@@ -42,6 +42,11 @@ class TechnicalIndicators:
             # 成交量指标
             df = self.calculate_volume_indicators(df)
             
+            # 添加新的技术指标
+            df = self.calculate_atr(df)
+            df = self.calculate_obv(df)
+            df = self.calculate_vwap(df)
+            
             return df
             
         except Exception as e:
@@ -127,4 +132,31 @@ class TechnicalIndicators:
             return df
         except Exception as e:
             self.logger.error(f"计算成交量指标时出错: {str(e)}")
+            return df
+
+    def calculate_atr(self, df: pd.DataFrame) -> pd.DataFrame:
+        """计算平均真实范围(ATR)"""
+        try:
+            df['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
+            return df
+        except Exception as e:
+            self.logger.error(f"计算ATR指标时出错: {str(e)}")
+            return df
+
+    def calculate_obv(self, df: pd.DataFrame) -> pd.DataFrame:
+        """计算能量潮指标(OBV)"""
+        try:
+            df['obv'] = ta.obv(df['close'], df['volume'])
+            return df
+        except Exception as e:
+            self.logger.error(f"计算OBV指标时出错: {str(e)}")
+            return df
+
+    def calculate_vwap(self, df: pd.DataFrame) -> pd.DataFrame:
+        """计算成交量加权平均价格(VWAP)"""
+        try:
+            df['vwap'] = ta.vwap(df['high'], df['low'], df['close'], df['volume'])
+            return df
+        except Exception as e:
+            self.logger.error(f"计算VWAP指标时出错: {str(e)}")
             return df
