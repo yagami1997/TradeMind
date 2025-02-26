@@ -1,10 +1,14 @@
-import pandas as pd
+# 标准库
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
-from .tech_indicator_calculator import TechIndicatorCalculator as TechnicalIndicators
+# 第三方库
+import pandas as pd
+
+# 项目模块
+from .tech_indicator_calculator import TechIndicatorCalculator
 
 class AdvancedAnalysis:
     """高级技术分析：提供深度市场分析和预测"""
@@ -12,7 +16,7 @@ class AdvancedAnalysis:
     def __init__(self):
         """初始化高级分析器"""
         self.setup_logging()
-        self.indicators = TechnicalIndicators()
+        self.indicators = TechIndicatorCalculator()
         
     def setup_logging(self):
         """设置日志"""
