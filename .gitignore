@@ -1,10 +1,31 @@
-.DS_Store
-logs/
-reports/
-results/
-venv/
-stock_analysis/
+# 配置文件,Github上传时忽略,部署时请修改config.ini.example
+config/config.ini
+
+# 日志文件
+logs/*.log
+
+# 结果文件
+results/*
+!results/.gitkeep
+
+# 报告文件
+reports/*
+!reports/.gitkeep
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.Python
+venv/
 .env
+
+# IDE
+.vscode/
 .idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
