@@ -1,3 +1,4 @@
+# 标准库
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -7,10 +8,12 @@ import json
 import argparse
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import numpy as np  # 需要用到numpy
 
+# 第三方库
+import numpy as np
+
+# 项目模块
 sys.path.append(str(Path(__file__).parent.parent))
-
 from strategies.tech_indicator_calculator import TechIndicatorCalculator
 from strategies.strategy_manager import StrategyManager
 from watchlist.watchlist_manager import WatchlistManager
