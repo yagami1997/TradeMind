@@ -7,9 +7,11 @@ import json
 import argparse
 import numpy as np  # 需要用到numpy
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sys
 
+sys.path.append(str(Path(__file__).parent.parent))
 
-from strategies.technical_indicators import TechnicalIndicators
+from strategies.tech_indicator_calculator import TechIndicatorCalculator
 from strategies.strategy_manager import StrategyManager
 from watchlist.watchlist_manager import WatchlistManager
 from data.data_manager_yf import YahooFinanceManager
@@ -25,6 +27,7 @@ class EnhancedTradingAdvisor:
         self.watchlist_manager = WatchlistManager()
         self.setup_paths()
         self.cache_timeout = 300  # 5分钟缓存
+        self.indicators = TechIndicatorCalculator()
         
     def setup_logging(self):
         """设置日志"""
