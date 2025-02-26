@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
-from .technical_indicators import TechnicalIndicators
+from .tech_indicator_calculator import TechIndicatorCalculator as TechnicalIndicators
 
 class AdvancedAnalysis:
     """高级技术分析：提供深度市场分析和预测"""
