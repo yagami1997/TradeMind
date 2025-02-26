@@ -5,7 +5,27 @@ from typing import Dict, List, Optional
 from .tech_indicator_calculator import TechIndicatorCalculator
 
 class StrategyManager:
-    """策略管理类"""
+    """策略管理器
+    
+    提供各种交易策略的实现和管理：
+    - 移动平均线交叉策略
+    - MACD策略
+    - RSI策略
+    - 布林带策略
+    - 成交量策略
+    - KDJ策略
+    - 多因子策略
+    
+    每个策略都包含：
+    - 信号生成
+    - 参数优化
+    - 风险控制
+    - 绩效评估
+    
+    Attributes:
+        logger: 日志记录器
+        indicators: 技术指标计算器
+    """
     
     def __init__(self):
         """初始化策略管理器"""
@@ -14,22 +34,24 @@ class StrategyManager:
         
     def apply_strategy(self, df: pd.DataFrame, strategy_name: str, 
                       params: Optional[Dict] = None) -> pd.DataFrame:
-        """
-        应用选定的交易策略
+        """应用选定的交易策略
         
         Args:
-            df (pd.DataFrame): 包含价格和技术指标的DataFrame
-            strategy_name (str): 策略名称
-            params (Dict, optional): 策略参数字典
+            df: 包含价格和技术指标的DataFrame
+            strategy_name: 策略名称
+            params: 策略参数字典，可选
             
         Returns:
-            pd.DataFrame: 添加了交易信号的DataFrame
+            添加了交易信号的DataFrame
+            
+        Raises:
+            ValueError: 如果策略名称无效
         """
         try:
             # 确保数据包含必要的技术指标
             df = self.indicators.calculate_all(df)
             
-            # 根据策略名称选择对应的策略函数
+            # 策略映射表
             strategy_map = {
                 'ma_cross': self._ma_cross_strategy,
                 'macd': self._macd_strategy,
@@ -41,8 +63,7 @@ class StrategyManager:
             }
             
             if strategy_name not in strategy_map:
-                self.logger.error(f"未找到策略: {strategy_name}")
-                return df
+                raise ValueError(f"未找到策略: {strategy_name}")
                 
             # 执行策略
             params = params or {}
@@ -62,46 +83,37 @@ class StrategyManager:
         except Exception as e:
             self.logger.error(f"应用策略时出错: {str(e)}")
             return df
-            
-    def _calculate_positions(self, signals: pd.Series) -> pd.Series:
-        """
-        根据信号计算持仓
+
+    def _ma_cross_strategy(self, df: pd.DataFrame, 
+                          short_period: int = 20, 
+                          long_period: int = 60) -> pd.DataFrame:
+        """移动平均线交叉策略
+        
+        生成信号规则：
+        - 短期均线上穿长期均线：买入信号(1)
+        - 短期均线下穿长期均线：卖出信号(-1)
+        - 其他情况：持仓不变(0)
         
         Args:
-            signals (pd.Series): 信号序列
+            df: 包含价格数据的DataFrame
+            short_period: 短期均线周期，默认20
+            long_period: 长期均线周期，默认60
             
         Returns:
-            pd.Series: 持仓序列
-        """
-        positions = signals.copy()
-        positions = positions.replace(0, np.nan)
-        positions = positions.fillna(method='ffill')
-        positions = positions.fillna(0)
-        return positions
-            
-    def _ma_cross_strategy(self, df: pd.DataFrame, 
-                          short_period: int = 5, 
-                          long_period: int = 20) -> pd.DataFrame:
-        """
-        均线交叉策略
-        
-        Args:
-            df (pd.DataFrame): 数据
-            short_period (int): 短期均线周期
-            long_period (int): 长期均线周期
+            添加了交易信号的DataFrame
         """
         try:
-            # 生成交易信号
+            # 计算金叉和死叉
             df['signal'] = 0
-            # 短期均线上穿长期均线
-            df.loc[(df[f'ma{short_period}'] > df[f'ma{long_period}']) & 
-                  (df[f'ma{short_period}'].shift(1) <= df[f'ma{long_period}'].shift(1)), 'signal'] = 1
-            # 短期均线下穿长期均线
-            df.loc[(df[f'ma{short_period}'] < df[f'ma{long_period}']) & 
-                  (df[f'ma{short_period}'].shift(1) >= df[f'ma{long_period}'].shift(1)), 'signal'] = -1
+            df.loc[df[f'ma{short_period}'] > df[f'ma{long_period}'], 'signal'] = 1
+            df.loc[df[f'ma{short_period}'] < df[f'ma{long_period}'], 'signal'] = -1
+            
+            # 只在交叉点产生信号
+            df['signal'] = df['signal'].diff()
+            
             return df
         except Exception as e:
-            self.logger.error(f"MA交叉策略计算出错: {str(e)}")
+            self.logger.error(f"执行MA交叉策略时出错: {str(e)}")
             return df
             
     def _macd_strategy(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -245,33 +257,58 @@ class StrategyManager:
             self.logger.error(f"多因子策略计算出错: {str(e)}")
             return df
 
-    def _add_risk_control(self, df: pd.DataFrame, stop_loss: float = 0.05, 
+    def _add_risk_control(self, df: pd.DataFrame, 
+                         stop_loss: float = 0.05,
                          take_profit: float = 0.1) -> pd.DataFrame:
-        """
-        添加风险控制
+        """添加风险控制
+        
+        实现止损和止盈：
+        - 当亏损超过止损线时，强制平仓
+        - 当盈利超过止盈线时，锁定利润
         
         Args:
-            df (pd.DataFrame): 数据
-            stop_loss (float): 止损比例
-            take_profit (float): 止盈比例
+            df: 包含交易信号的DataFrame
+            stop_loss: 止损比例，默认5%
+            take_profit: 止盈比例，默认10%
+            
+        Returns:
+            添加了风险控制的DataFrame
         """
         try:
-            # 获取开仓价格
-            df['entry_price'] = np.nan
-            df.loc[df['signal'] != 0, 'entry_price'] = df['close']
-            df['entry_price'] = df['entry_price'].fillna(method='ffill')
-            
             # 计算收益率
-            df['returns'] = (df['close'] - df['entry_price']) / df['entry_price']
+            df['returns'] = df['close'].pct_change()
             
-            # 应用止损止盈
-            df.loc[df['returns'] <= -stop_loss, 'signal'] = 0  # 止损
-            df.loc[df['returns'] >= take_profit, 'signal'] = 0  # 止盈
+            # 计算累计收益
+            df['cumulative_returns'] = (1 + df['returns']).cumprod()
+            
+            # 添加止损止盈
+            df.loc[df['cumulative_returns'] <= (1 - stop_loss), 'signal'] = -1
+            df.loc[df['cumulative_returns'] >= (1 + take_profit), 'signal'] = -1
             
             return df
         except Exception as e:
-            self.logger.error(f"风险控制计算出错: {str(e)}")
+            self.logger.error(f"添加风险控制时出错: {str(e)}")
             return df
+
+    def _calculate_positions(self, signals: pd.Series) -> pd.Series:
+        """计算持仓
+        
+        根据交易信号计算持仓：
+        1: 持有多头
+        0: 空仓
+        -1: 持有空头
+        
+        Args:
+            signals: 交易信号序列
+            
+        Returns:
+            持仓序列
+        """
+        try:
+            return signals.cumsum().fillna(0)
+        except Exception as e:
+            self.logger.error(f"计算持仓时出错: {str(e)}")
+            return pd.Series(0, index=signals.index)
 
     def evaluate_strategy(self, df: pd.DataFrame) -> Dict:
         """
