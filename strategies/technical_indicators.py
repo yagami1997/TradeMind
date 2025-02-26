@@ -159,3 +159,6 @@ class TechnicalIndicators:
         except Exception as e:
             self.logger.error(f"计算VWAP指标时出错: {str(e)}")
             return df
+
+if __name__ != "__main__":
+    __all__ = ['TechnicalIndicators']

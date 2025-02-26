@@ -8,10 +8,11 @@ import argparse
 import numpy as np  # 需要用到numpy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .technical_indicators import TechnicalIndicators
-from .strategy_manager import StrategyManager
-from ..watchlist.watchlist_manager import WatchlistManager
-from ..data.data_manager_yf import YahooFinanceManager
+
+from strategies.technical_indicators import TechnicalIndicators
+from strategies.strategy_manager import StrategyManager
+from watchlist.watchlist_manager import WatchlistManager
+from data.data_manager_yf import YahooFinanceManager
 
 class EnhancedTradingAdvisor:
     """增强型交易顾问：整合数据获取、技术分析和策略管理"""
