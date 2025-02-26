@@ -17,7 +17,7 @@
 **🔔新的目录结构**
 
 <img width="698" alt="image" src="https://github.com/user-attachments/assets/7b93dfed-f7da-4d3e-92aa-35a36c8f7171" />
-
+<img width="692" alt="image" src="https://github.com/user-attachments/assets/087fdf3a-27b5-4f91-8be9-f1e42a91fda5" />
 
 
 ### 2025年2月16日TradeMind重构公告
