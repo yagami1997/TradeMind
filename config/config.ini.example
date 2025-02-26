@@ -1,4 +1,6 @@
 # 配置文件示例，本文件规范了Config.ini的格式和内容，部署的时候应首先修改本文件，按照IBKR Gateway的配置修改你自己的端口和客户端ID，客户端ID建议设置为0.
+# 如果你没有IBKR（盈透证券）的账户，只使用Yahoo Finance数据源，请将data_source设置为yahoo，并配置yahoo_interval和yahoo_period。
+# 如果你有IBKR（盈透证券）的账户，请将data_source设置为ibkr，并配置ibkr_port、ibkr_host和ibkr_client_id。
 
 [data_source]
 # 数据源选择 (yahoo 或 ibkr)
