@@ -1,13 +1,13 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List,Optional
+from typing import Dict, List, Optional
 from functools import lru_cache
 import json
 import argparse
-import numpy as np  # 需要用到numpy
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import numpy as np  # 需要用到numpy
 
 sys.path.append(str(Path(__file__).parent.parent))
 
