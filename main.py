@@ -1,5 +1,5 @@
 import logging
-from strategies.backtest_manager import BacktestManager
+from core.backtest_manager import BacktestManager
 from typing import Optional
 import os
 import sys
