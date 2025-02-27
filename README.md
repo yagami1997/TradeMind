@@ -12,10 +12,11 @@
 ### 2025年2月16日更新
 - 我已经着手开始/dev分支的开发，所以/main分支可能会停留在当前版本，仅维护自选股列表，如果算法有改进的话，我会及时同步策略、模型和回测系统，让它更有用一点；
 - /dev的基本架构如下：
-  
-<img width="698" alt="image" src="https://github.com/user-attachments/assets/7b93dfed-f7da-4d3e-92aa-35a36c8f7171" />
-<img width="692" alt="image" src="https://github.com/user-attachments/assets/087fdf3a-27b5-4f91-8be9-f1e42a91fda5" />
+- 
+<img width="741" alt="image" src="https://github.com/user-attachments/assets/3bd6966a-be5e-4800-a742-2b72ad0b59a9" />
+<img width="735" alt="image" src="https://github.com/user-attachments/assets/5155fa2a-1682-478f-ab9d-c1232a4930aa" />
 
+---
 
 如果你对新的架构感兴趣，可以Fork /dev，然后按照这个思路独立开发，🙏🙏
 - 我已经把目前的/main主分支的程序Release了一个版本出来，可以直接下载部署使用，[戳这里下载](https://github.com/yagami1997/TradeMind/releases/tag/Trademind_aplha)。
