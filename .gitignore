@@ -1,5 +1,12 @@
+# 工作计划文件
+WORKPLAN.md
+TODO.md
+
 # 配置文件,Github上传时忽略,部署时请修改config.ini.example
 config/config.ini
+config/backtest_config.json
+config/market_config.json
+config/logging_config.json
 
 #IBKR Gateway测试文件，该测试代码请参阅README.md   
 /ibkrtest.py
@@ -20,12 +27,24 @@ data/cache/*
 !data/cache/.gitkeep
 data/downloads/*
 !data/downloads/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
 
 # 报告输出
 reports/output/*
 !reports/output/.gitkeep
 reports/templates/*
 !reports/templates/.gitkeep
+
+# 回测结果
+backtest_results/*
+!backtest_results/.gitkeep
+
+# 监视列表
+watchlist/*.json
+!watchlist/.gitkeep
 
 # Python
 __pycache__/
@@ -37,6 +56,9 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+*.egg-info/
+dist/
+build/
 
 # IDE
 .vscode/
@@ -47,7 +69,10 @@ htmlcov/
 # 临时文件
 *.tmp
 *.temp
+*.bak
+*.backup
 
 # 系统文件
 .DS_Store
 Thumbs.db
+desktop.ini
