@@ -6,8 +6,7 @@ from typing import Optional, List, Dict
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-import sys
-sys.path.append('..')
+
 from strategies.backtester import Backtester
 import importlib
 
@@ -345,3 +344,156 @@ class BacktestManager:
             return False
             
         return True 
+
+    def _generate_html_report(self, path: Path):
+        """生成HTML格式报告"""
+        try:
+            # 计算当前价格
+            current_prices = {
+                symbol: df.iloc[-1]['close']
+                for symbol, df in self.data_cache.items()
+            }
+            
+            # 基础样式
+            css = """
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .container { max-width: 1200px; margin: 0 auto; }
+                .section { margin-bottom: 30px; }
+                .metric { margin: 10px 0; }
+                .metric-name { font-weight: bold; }
+                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+                th { background-color: #f5f5f5; }
+                .chart { margin: 20px 0; }
+                .positive { color: green; }
+                .negative { color: red; }
+            </style>
+            """
+            
+            # 生成HTML内容
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>回测报告</title>
+                {css}
+                <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>回测报告</h1>
+                    <div class="section">
+                        <h2>回测参数</h2>
+                        <div class="metric">
+                            <span class="metric-name">初始资金:</span> 
+                            {self.backtester.portfolio.initial_capital:,.2f}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">回测区间:</span> 
+                            {min(df.index[0] for df in self.data_cache.values())} 至 
+                            {max(df.index[-1] for df in self.data_cache.values())}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">交易品种:</span> 
+                            {', '.join(self.data_cache.keys())}
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>绩效指标</h2>
+                        <div class="metric">
+                            <span class="metric-name">总收益率:</span> 
+                            <span class="{self._get_color_class(self.backtester.performance_metrics['total_return'])}">
+                                {self.backtester.performance_metrics['total_return']:.2%}
+                            </span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">年化收益率:</span>
+                            <span class="{self._get_color_class(self.backtester.performance_metrics['annual_return'])}">
+                                {self.backtester.performance_metrics['annual_return']:.2%}
+                            </span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">夏普比率:</span>
+                            <span class="{self._get_color_class(self.backtester.performance_metrics['sharpe_ratio'])}">
+                                {self.backtester.performance_metrics['sharpe_ratio']:.2f}
+                            </span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">最大回撤:</span>
+                            <span class="negative">
+                                {self.backtester.performance_metrics['max_drawdown']:.2%}
+                            </span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">波动率:</span>
+                            {self.backtester.performance_metrics['volatility']:.2%}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">胜率:</span>
+                            {self.backtester.performance_metrics['win_rate']:.2%}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-name">盈亏比:</span>
+                            {self.backtester.performance_metrics['profit_factor']:.2f}
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>交易记录</h2>
+                        <table>
+                            <tr>
+                                <th>时间</th>
+                                <th>代码</th>
+                                <th>类型</th>
+                                <th>数量</th>
+                                <th>价格</th>
+                                <th>成本</th>
+                            </tr>
+                            {''.join(
+                                f"<tr><td>{trade['timestamp']}</td>"
+                                f"<td>{trade['symbol']}</td>"
+                                f"<td>{trade['type']}</td>"
+                                f"<td>{trade['quantity']}</td>"
+                                f"<td>{trade['price']:.2f}</td>"
+                                f"<td>{trade['cost']:.2f}</td></tr>"
+                                for trade in self.backtester.portfolio.trade_history[-50:]  # 显示最近50条记录
+                            )}
+                        </table>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>当前持仓</h2>
+                        <table>
+                            <tr>
+                                <th>代码</th>
+                                <th>数量</th>
+                                <th>当前价值</th>
+                                <th>持仓比例</th>
+                            </tr>
+                            {''.join(
+                                f"<tr><td>{symbol}</td>"
+                                f"<td>{quantity}</td>"
+                                f"<td>{quantity * self.data_cache[symbol].iloc[-1]['close']:.2f}</td>"
+                                f"<td>{quantity * self.data_cache[symbol].iloc[-1]['close'] / self.backtester.portfolio.get_portfolio_value(current_prices):.2%}</td></tr>"
+                                for symbol, quantity in self.backtester.portfolio.positions.items()
+                            )}
+                        </table>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            # 保存报告
+            with open(path, 'w') as f:
+                f.write(html_content)
+                
+        except Exception as e:
+            logger.error(f"生成HTML报告失败: {e}")
+            raise
+            
+    def _get_color_class(self, value: float) -> str:
+        """获取数值的颜色类名"""
+        return "positive" if value > 0 else "negative" if value < 0 else "" 

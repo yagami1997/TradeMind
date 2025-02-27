@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import logging
 from typing import Dict, List, Optional
-from .tech_indicator_calculator import TechIndicatorCalculator
+from .technical_analyzer import TechnicalAnalyzer
 
 class StrategyManager:
     """策略管理器
@@ -30,7 +30,7 @@ class StrategyManager:
     def __init__(self):
         """初始化策略管理器"""
         self.logger = logging.getLogger(__name__)
-        self.indicators = TechIndicatorCalculator()
+        self.indicators = TechnicalAnalyzer()
         
     def apply_strategy(self, df: pd.DataFrame, strategy_name: str, 
                       params: Optional[Dict] = None) -> pd.DataFrame:
