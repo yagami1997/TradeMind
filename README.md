@@ -9,16 +9,21 @@
 ---
 ## 更新日志
 
+### 🔔2025年2月27日TradeMind Dev进度公告
+- 全面重新梳理项目结构和交互逻辑，确定目录树
+- 完成核心策略代码的初步开发，设计Main.py主程序的功能
+- 确定相关模块的定义和说明
+- 当前项目目录树及说明：
+<img width="741" alt="image" src="https://github.com/user-attachments/assets/3bd6966a-be5e-4800-a742-2b72ad0b59a9" />
+<img width="735" alt="image" src="https://github.com/user-attachments/assets/5155fa2a-1682-478f-ab9d-c1232a4930aa" />
+
+---
 ### 2025年2月26日TradeMind Dev进度公告：
 - 初步完成了一些代码的重构
 - 基本确定了项目框架和目录结构，文件
 - 剩下功能待开发
 
-**🔔新的目录结构**
-
-<img width="698" alt="image" src="https://github.com/user-attachments/assets/7b93dfed-f7da-4d3e-92aa-35a36c8f7171" />
-<img width="692" alt="image" src="https://github.com/user-attachments/assets/087fdf3a-27b5-4f91-8be9-f1e42a91fda5" />
-
+---
 
 ### 2025年2月16日TradeMind重构公告
 
