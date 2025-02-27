@@ -5,15 +5,27 @@ config/config.ini
 /ibkrtest.py
 
 # 日志文件
-logs/*.log
+logs/*/*.log
+!logs/*/.gitkeep
+*.log
 
 # 结果文件
-results/*
-!results/.gitkeep
+results/*/*
+!results/*/.gitkeep
 
-# 报告文件
-reports/*
-!reports/.gitkeep
+# 数据目录
+data/market_data/*
+!data/market_data/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+data/downloads/*
+!data/downloads/.gitkeep
+
+# 报告输出
+reports/output/*
+!reports/output/.gitkeep
+reports/templates/*
+!reports/templates/.gitkeep
 
 # Python
 __pycache__/
@@ -22,12 +34,19 @@ __pycache__/
 .Python
 venv/
 .env
+.pytest_cache/
+.coverage
+htmlcov/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# 临时文件
+*.tmp
+*.temp
 
 # 系统文件
 .DS_Store
