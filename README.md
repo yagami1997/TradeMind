@@ -15,77 +15,81 @@
 - 确定相关模块的定义和说明，为了维持项目稳定，中期内不打算修改目录结构和已经存在的代码文件名和相关定义
 - 当前项目目录树及说明：
 
-#### 📊 TradeMind 项目结构
+#### 🏦TradeMind Dev项目结构
 
 ```plaintext
-📂 TradeMind/                         # 量化交易系统
-├── 📂 config/                        # ⚙️ 配置文件目录
-│   ├── 📝 logging.ini                 # 日志配置：定义日志级别、格式和输出位置
-│   ├── 📑 report_templates.json       # 报告模板：定义报告格式和样式
-│   ├── 🔧 settings.json               # 系统设置：包含 API 密钥、数据源配置等
-│   └── 📜 watchlists.json             # 股票观察列表：用户自定义的股票分组
+📂 **TradeMind/**                         # 量化交易系统
+├── 📂 **config/**                        # ⚙️ 配置文件目录
+│   ├── 📝 **logging.ini**                 # 日志配置：定义日志级别、格式和输出位置
+│   ├── 📑 **report_templates.json**       # 报告模板：定义报告格式和样式
+│   ├── 🔧 **settings.json**               # 系统设置：包含 API 密钥、数据源配置等
+│   └── 📜 **watchlists.json**             # 股票观察列表：用户自定义的股票分组
 │
-├── 📂 core/                          # 🧠 核心功能模块
-│   ├── 📜 __init__.py                 
-│   ├── 📡 data_manager.py             # 数据管理：数据获取、存储和预处理
-│   ├── 📉 technical_analyzer.py       # 技术分析：技术指标计算和市场分析
-│   ├── 🏦 strategy_manager.py         # 策略管理：交易策略的创建和执行
-│   ├── 🏋️ backtest_manager.py         # 回测管理：回测执行和性能分析
-│   └── 📊 report_manager.py           # 报告管理：生成分析报告和图表
+├── 📂 **core/**                          # 🧠 核心功能模块
+│   ├── 📜 **__init__.py**                
+│   ├── 📡 **data_manager.py**             # 数据管理：数据获取、存储和预处理
+│   ├── 📊 **technical_analyzer.py**       # 技术分析：技术指标计算和市场分析
+│   ├── 🎯 **strategy_manager.py**         # 策略管理：交易策略的创建和执行
+│   ├── 📈 **backtest_manager.py**         # 回测管理：回测执行和性能分析
+│   └── 📋 **report_manager.py**           # 报告管理：生成分析报告和图表
 │
-├── 📂 data/                          # 💾 数据存储
-│   ├── 📂 cache/                      # 缓存数据：临时数据存储
-│   │   └── .gitkeep                  
-│   └── 📂 downloads/                  # 下载数据：历史行情等永久存储
-│       └── .gitkeep                  
+├── 📂 **strategies/**                    # ⚡ 交易策略实现
+│   ├── 📜 **__init__.py**                
+│   ├── 🔄 **backtester.py**               # 回测引擎：实现回测核心逻辑
+│   ├── 📊 **stock_analyzer.py**           # 股票分析：个股分析功能
+│   ├── 📈 **advanced_analysis.py**        # 高级分析：复杂分析策略
+│   ├── 🤖 **enhanced_trading_advisor.py** # 交易顾问：策略整合和建议
+│   └── 📐 **tech_indicator_calculator.py** # 指标计算：技术指标实现
 │
-├── 📂 logs/                          # 📝 日志存储
-│   ├── 📂 backtest/                   # 回测日志：记录回测过程和结果
-│   ├── 📂 trading/                    # 交易日志：记录交易执行情况
-│   └── 📂 system/                     # 系统日志：记录系统运行状态
+├── 📂 **data/**                          # 💾 数据存储目录
+│   ├── 📂 **cache/**                      # 缓存数据：临时数据存储
+│   │   └── **.gitkeep**                  
+│   └── 📂 **downloads/**                  # 下载数据：历史行情等永久存储
+│       └── **.gitkeep**                  
 │
-├── 📂 reports/                       # 📊 报告管理
-│   ├── 📂 templates/                   # 报告模板目录
-│   │   ├── html/                      # HTML 模板
-│   │   └── css/                       # CSS 样式
-│   ├── 📂 assets/                      # 静态资源
-│   │   ├── images/                     # 图片资源
-│   │   └── js/                         # JavaScript 文件
-│   └── 📂 output/                      # 生成的报告
-│       ├── html/                      # HTML 格式
-│       └── pdf/                       # PDF 格式
+├── 📂 **logs/**                          # 📝 日志存储
+│   ├── 📂 **backtest/**                   # 回测日志：记录回测过程和结果
+│   ├── 📂 **trading/**                    # 交易日志：记录交易执行情况
+│   └── 📂 **system/**                     # 系统日志：记录系统运行状态
 │
-├── 📂 strategies/                    # ⚡ 交易策略
-│   ├── 📜 __init__.py                 
-│   ├── 🏋️ backtester.py                # 回测引擎：实现回测核心逻辑
-│   ├── 📈 stock_analyzer.py            # 股票分析：个股分析功能
-│   └── 🔢 tech_indicator_calculator.py # 指标计算：技术指标实现
+├── 📂 **reports/**                       # 📊 报告管理
+│   ├── 📂 **templates/**                   # 报告模板目录
+│   │   ├── 📄 **html/**                    # HTML 模板文件
+│   │   └── 🎨 **css/**                     # CSS 样式文件
+│   ├── 📂 **assets/**                      # 静态资源目录
+│   │   ├── 🖼️ **images/**                  # 图片资源
+│   │   └── 📜 **js/**                      # JavaScript 文件
+│   └── 📂 **output/**                      # 报告输出目录
+│       ├── 📱 **html/**                     # HTML 格式报告
+│       └── 📄 **pdf/**                      # PDF 格式报告
 │
-├── 📂 tests/                         # ✅ 测试模块
-│   ├── 📂 unit/                        # 单元测试：测试独立功能
-│   └── 📂 integration/                  # 集成测试：测试模块交互
+├── 📂 **utils/**                         # 🛠️ 工具函数模块
+│   ├── 📜 **__init__.py**                
+│   ├── ✅ **validators.py**               # 数据验证：输入数据检查
+│   ├── 🔄 **formatters.py**               # 数据格式化：统一数据格式
+│   └── 🔧 **helpers.py**                   # 辅助函数：通用工具函数
 │
-├── 📂 utils/                         # 🛠️ 工具模块
-│   ├── 📜 __init__.py                 
-│   ├── 🔍 validators.py                # 数据验证：输入数据检查
-│   ├── 📦 formatters.py                # 数据格式化：统一数据格式
-│   └── ⚙️ helpers.py                    # 辅助函数：通用工具函数
+├── 📂 **tests/**                         # ✅ 测试模块
+│   ├── 📂 **unit/**                        # 单元测试：测试独立功能
+│   └── 📂 **integration/**                  # 集成测试：测试模块交互
 │
-├── 🚀 main.py                         # 主程序入口
-└── 📖 README.md                       # 项目说明
-
+├── 🚀 **main.py**                        # 主程序入口
+├── 📖 **README.md**                      # 项目说明文档
+└── 📋 **requirements.txt**               # 项目依赖包
 ```
+
+
 #### 📌 目录和模块简介：
 ```plaintext
-config/:      存放系统配置文件，如日志、报告模板、API 密钥等。
-core/:        包含系统核心功能，如数据管理、技术分析、策略管理和回测等。
-data/:        存储缓存数据和下载的市场数据。
-logs/:        记录回测、交易和系统运行日志。
-reports/:     负责报告生成，包括模板、静态资源和最终输出。
-strategies/:  存放交易策略、回测引擎和股票分析模块。
-tests/:       进行单元测试和集成测试，保证系统稳定性。
-utils/:       常用工具函数，如数据验证、格式化和辅助功能。
-main.py:      项目主程序入口，负责系统的整体运行。
+config/: 存放系统配置文件，如日志、报告模板、API 密钥等。
+core/: 包含系统核心功能，如数据管理、技术分析、策略管理和回测等。
+strategies/: 存放交易策略、回测引擎和股票分析模块。
+data/: 存储缓存数据和下载的市场数据。
+logs/: 记录回测、交易和系统运行日志。
+reports/: 负责报告生成，包括模板、静态资源和最终输出。
+utils/: 常用工具函数，如数据验证、格式化和辅助功能。
+tests/: 进行单元测试和集成测试，保证系统稳定性。
+main.py: 项目主程序入口，负责系统的整体运行。
 ```
 ---
 ### 2025年2月26日TradeMind Dev进度公告：
