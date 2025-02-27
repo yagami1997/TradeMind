@@ -1,0 +1,55 @@
+{
+    "backtest": {
+        "html_template": "backtest_report.html",
+        "css_files": ["main.css", "charts.css"],
+        "sections": [
+            "strategy_overview",
+            "performance_metrics",
+            "trade_history",
+            "risk_analysis"
+        ],
+        "charts": [
+            "equity_curve",
+            "drawdown",
+            "monthly_returns",
+            "position_history"
+        ]
+    },
+    "analysis": {
+        "html_template": "analysis_report.html",
+        "css_files": ["main.css", "charts.css"],
+        "sections": [
+            "market_overview",
+            "technical_indicators",
+            "pattern_recognition",
+            "recommendations"
+        ],
+        "charts": [
+            "price_ma",
+            "volume",
+            "indicators",
+            "patterns"
+        ]
+    },
+    "export_options": {
+        "formats": ["html", "pdf"],
+        "pdf_options": {
+            "page_size": "A4",
+            "orientation": "portrait",
+            "margin": "2cm"
+        }
+    },
+    "style": {
+        "colors": {
+            "primary": "#2c3e50",
+            "secondary": "#3498db",
+            "success": "#2ecc71",
+            "warning": "#f1c40f",
+            "danger": "#e74c3c"
+        },
+        "fonts": {
+            "main": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            "monospace": "Monaco, Consolas, 'Courier New', monospace"
+        }
+    }
+} 
