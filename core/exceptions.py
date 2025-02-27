@@ -98,4 +98,24 @@ class DataSourceError(MarketError):
 class ConfigurationError(MarketError):
     """配置错误"""
     def __init__(self, message: str):
-        super().__init__(message, "E010") 
+        super().__init__(message, "E010")
+
+"""
+自定义异常类
+"""
+
+class StrategyError(Exception):
+    """策略错误"""
+    pass
+
+class BacktestError(Exception):
+    """回测错误"""
+    pass
+
+class PortfolioError(Exception):
+    """投资组合错误"""
+    pass
+
+class RiskManagementError(Exception):
+    """风险管理错误"""
+    pass 

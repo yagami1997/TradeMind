@@ -1,109 +1,164 @@
 import re
-import time
-from typing import Optional, Dict, Any
-from datetime import datetime
+from typing import Optional, Dict, Any, List
+from datetime import datetime, date
 import pytz
 import pandas as pd
 import yfinance as yf
+from requests.exceptions import RequestException
+from pandas.errors import EmptyDataError
+import logging
 
 from .data_source import DataSource
-from .exceptions import *
+from .exceptions import (
+    DataSourceError,
+    NetworkError,
+    DataValidationError,
+    SymbolNotFoundError,
+    RateLimitError,
+    MarketNotSupportedError
+)
 from .config import Config as GlobalConfig
+from .market_types import Exchange
+
+logger = logging.getLogger(__name__)
 
 class YahooFinanceSource(DataSource):
-    """美股数据源实现"""
+    """Yahoo Finance数据源"""
     
     def __init__(self):
+        """初始化Yahoo Finance数据源"""
         super().__init__()
+        self._session = None
+        self._init_session()
         self._tz = pytz.timezone(self.market_timezone)
         self.config = GlobalConfig()
         
+    def _init_session(self):
+        """初始化会话"""
+        try:
+            self._session = yf.Tickers("")
+        except Exception as e:
+            logger.error(f"初始化Yahoo Finance会话失败: {e}")
+            raise DataSourceError("初始化数据源失败")
+            
     def get_stock_data(self, 
-                      symbol: str, 
-                      start_date: Optional[str] = None, 
-                      end_date: Optional[str] = None) -> Optional[pd.DataFrame]:
-        """获取股票数据，带重试机制"""
-        normalized_symbol = self.normalize_symbol(symbol)
+                      symbol: str,
+                      start_date: Optional[str | date] = None,
+                      end_date: Optional[str | date] = None,
+                      interval: str = "1d") -> Optional[pd.DataFrame]:
+        """获取股票数据
         
-        for attempt in range(self.config.MAX_RETRIES):
-            try:
-                stock = yf.Ticker(normalized_symbol)
-                data = stock.history(start=start_date, end=end_date)
+        Args:
+            symbol: 股票代码
+            start_date: 开始日期
+            end_date: 结束日期
+            interval: 数据间隔
+            
+        Returns:
+            DataFrame或None
+            
+        Raises:
+            NetworkError: 网络请求错误
+            DataValidationError: 数据验证错误
+            SymbolNotFoundError: 股票代码不存在
+            RateLimitError: 接口调用频率限制
+        """
+        try:
+            # 标准化股票代码
+            symbol = self.normalize_symbol(symbol)
+            
+            # 获取数据
+            ticker = yf.Ticker(symbol)
+            df = ticker.history(
+                start=start_date,
+                end=end_date,
+                interval=interval
+            )
+            
+            # 验证数据
+            if df.empty:
+                raise SymbolNotFoundError(f"未找到股票数据: {symbol}")
                 
-                if data.empty:
-                    raise SymbolNotFoundError(f"未找到股票数据: {symbol}")
-                    
-                if not self.validate_data(data):
-                    raise MarketError(f"数据验证失败: {symbol}")
-                    
-                return data
-                
-            except Exception as e:
-                if attempt == self.config.MAX_RETRIES - 1:
-                    if isinstance(e, MarketError):
-                        raise e
-                    raise NetworkError(f"网络请求失败: {str(e)}")
-                time.sleep(self.config.RETRY_DELAY * (attempt + 1))
-                
+            # 处理数据
+            df.index.name = 'date'
+            df.columns = df.columns.str.lower()
+            
+            # 验证数据质量
+            self.validate_data(df)
+            
+            return df
+            
+        except RequestException as e:
+            logger.error(f"网络请求错误: {e}")
+            raise NetworkError(f"获取数据失败: {str(e)}")
+        except EmptyDataError:
+            logger.error(f"获取到空数据: {symbol}")
+            raise DataValidationError(f"获取到空数据: {symbol}")
+        except RateLimitError:
+            logger.warning("达到API调用限制")
+            raise
+        except Exception as e:
+            logger.error(f"获取股票数据时发生错误: {e}")
+            raise DataSourceError(f"获取数据失败: {str(e)}")
+            
     def get_stock_info(self, symbol: str) -> Optional[Dict[str, Any]]:
-        """获取股票信息，带重试机制"""
-        normalized_symbol = self.normalize_symbol(symbol)
-        
-        for attempt in range(self.config.MAX_RETRIES):
-            try:
-                stock = yf.Ticker(normalized_symbol)
-                info = stock.info
+        """获取股票信息"""
+        try:
+            symbol = self.normalize_symbol(symbol)
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            
+            if not info:
+                raise SymbolNotFoundError(f"未找到股票信息: {symbol}")
                 
-                return {
-                    'symbol': symbol,
-                    'name': info.get('longName', ''),
-                    'sector': info.get('sector', ''),
-                    'industry': info.get('industry', ''),
-                    'market_cap': info.get('marketCap', 0),
-                    'currency': info.get('currency', 'USD'),
-                    'exchange': info.get('exchange', ''),
-                    'country': info.get('country', 'US')
-                }
-                
-            except Exception as e:
-                if attempt == self.config.MAX_RETRIES - 1:
-                    raise NetworkError(f"获取股票信息失败: {str(e)}")
-                time.sleep(self.config.RETRY_DELAY * (attempt + 1))
-                
+            return info
+            
+        except Exception as e:
+            logger.error(f"获取股票信息失败: {e}")
+            return None
+            
     def validate_symbol(self, symbol: str) -> bool:
-        """验证美股代码格式"""
-        pattern = r'^[A-Z]{1,5}$'
-        return bool(re.match(pattern, symbol))
-        
-    def normalize_symbol(self, symbol: str) -> str:
-        """标准化美股代码"""
-        return symbol.upper()
-        
-    def is_market_open(self) -> bool:
-        """检查美股市场是否开市"""
-        now = datetime.now(self._tz)
-        
-        # 检查是否是周末
-        if now.weekday() >= 5:
+        """验证股票代码格式"""
+        try:
+            ticker = yf.Ticker(symbol)
+            return bool(ticker.info)
+        except:
             return False
             
-        # 获取交易时间
-        hours = self.get_trading_hours()
-        market_start = datetime.strptime(hours['start'], '%H:%M').time()
-        market_end = datetime.strptime(hours['end'], '%H:%M').time()
+    def normalize_symbol(self, symbol: str) -> str:
+        """标准化股票代码格式"""
+        # Yahoo Finance格式转换
+        return symbol.upper().replace('_', '-')
         
-        # 检查当前时间是否在交易时间内
-        current_time = now.time()
-        return market_start <= current_time <= market_end
-        
-    def get_trading_hours(self) -> Dict[str, str]:
-        """获取美股交易时间"""
-        return self.config.MARKET_CONFIG['US']['trading_hours']
+    def is_market_open(self) -> bool:
+        """检查市场是否开市"""
+        # Yahoo Finance没有直接的API，使用美股时间
+        try:
+            nyse_config = Exchange.get_config('NYSE')
+            if not nyse_config:
+                return False
+                
+            now = datetime.now()
+            trading_hours = nyse_config['trading_hours']['regular']
+            
+            start_time = datetime.strptime(trading_hours['start'], '%H:%M').time()
+            end_time = datetime.strptime(trading_hours['end'], '%H:%M').time()
+            
+            return start_time <= now.time() <= end_time
+            
+        except Exception as e:
+            logger.error(f"检查市场状态失败: {e}")
+            return False
+            
+    def get_trading_hours(self) -> Dict[str, Dict[str, str]]:
+        """获取交易时间"""
+        # 返回美股交易时间
+        return Exchange.get_config('NYSE')['trading_hours']
         
     @property
     def market_timezone(self) -> str:
-        """获取美股市场时区"""
-        return self.config.MARKET_CONFIG['US']['timezone']
+        """获取市场时区"""
+        return "America/New_York"
 
 class HKStockSource(DataSource):
     """港股数据源实现"""
