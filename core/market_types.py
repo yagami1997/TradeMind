@@ -4,19 +4,25 @@
 from enum import Enum
 from typing import Dict, Any, Optional, List
 from datetime import time
+import re
 
 class MarketType(Enum):
     """市场类型"""
     STOCK = "STOCK"          # 股票
     CRYPTO = "CRYPTO"        # 加密货币
-    FOREX = "FOREX"          # 外汇（预留）
-    FUTURES = "FUTURES"      # 期货（预留）
+    FOREX = "FOREX"          # 外汇
+    FUTURES = "FUTURES"      # 期货
+    BONDS = "BONDS"          # 债券
+    OPTIONS = "OPTIONS"      # 期权
+    ETF = "ETF"             # ETF基金
+    INDEX = "INDEX"         # 指数
 
 class ExchangeType(Enum):
     """交易所类型"""
     # 美洲
     NYSE = "NYSE"           # 纽约证券交易所
     NASDAQ = "NASDAQ"       # 纳斯达克
+    TSX = "TSX"            # 多伦多证券交易所
     
     # 亚洲
     HKEx = "HKEx"          # 香港交易所
@@ -24,12 +30,16 @@ class ExchangeType(Enum):
     SZSE = "SZSE"          # 深圳证券交易所
     JPX = "JPX"            # 日本交易所集团
     SGX = "SGX"            # 新加坡交易所
+    KRX = "KRX"            # 韩国交易所
     
     # 欧洲
     LSE = "LSE"            # 伦敦证券交易所
+    XETRA = "XETRA"        # 德国证券交易所
+    EURONEXT = "EURONEXT"  # 泛欧交易所
     
     # 加密货币
     BINANCE = "BINANCE"    # 币安
+    COINBASE = "COINBASE"  # 比特币基地
 
 class Exchange:
     """交易所配置管理"""
@@ -48,7 +58,14 @@ class Exchange:
             "data_source": "yfinance",
             "currency": "USD",
             "holidays": [],  # 需要实现假期日历
-            "supported_intervals": ["1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"]
+            "supported_intervals": ["1m", "5m", "15m", "30m", "1h", "1d", "1wk", "1mo"],
+            "min_order_size": 1,
+            "price_decimals": 2,
+            "volume_decimals": 0,
+            "fees": {
+                "maker": 0.0,
+                "taker": 0.0
+            }
         },
         ExchangeType.HKEx.value: {
             "name": "Hong Kong Stock Exchange",
@@ -151,4 +168,54 @@ class Exchange:
         if market_type:
             return [code for code, config in cls.CONFIGS.items() 
                    if config["market_type"] == market_type]
-        return list(cls.CONFIGS.keys()) 
+        return list(cls.CONFIGS.keys())
+    
+    @classmethod
+    def validate_symbol(cls, symbol: str, exchange_code: str) -> bool:
+        """验证股票代码格式
+        
+        Args:
+            symbol: 股票代码
+            exchange_code: 交易所代码
+            
+        Returns:
+            bool: 是否符合格式要求
+        """
+        config = cls.get_config(exchange_code)
+        if not config:
+            return False
+            
+        pattern = config.get("symbol_pattern")
+        if not pattern:
+            return True
+            
+        return bool(re.match(pattern, symbol))
+    
+    @classmethod
+    def get_exchange_info(cls, exchange_code: str) -> Dict[str, Any]:
+        """获取交易所详细信息
+        
+        Args:
+            exchange_code: 交易所代码
+            
+        Returns:
+            Dict[str, Any]: 交易所信息
+        """
+        config = cls.get_config(exchange_code)
+        if not config:
+            return {}
+            
+        return {
+            "code": exchange_code,
+            "name": config["name"],
+            "timezone": config["timezone"],
+            "market_type": config["market_type"],
+            "currency": config["currency"],
+            "trading_hours": config["trading_hours"],
+            "supported_intervals": config.get("supported_intervals", []),
+            "min_order_size": config.get("min_order_size"),
+            "price_decimals": config.get("price_decimals"),
+            "volume_decimals": config.get("volume_decimals"),
+            "fees": config.get("fees", {}),
+            "data_source": config.get("data_source")
+        } 

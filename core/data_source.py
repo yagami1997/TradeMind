@@ -2,8 +2,8 @@
 数据源抽象基类定义
 """
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, List, Union
-from datetime import datetime, time
+from typing import Optional, Dict, Any, List
+from datetime import datetime, date, time
 import pandas as pd
 
 from .exceptions import DataValidationError
@@ -18,8 +18,8 @@ class DataSource(ABC):
     @abstractmethod
     def get_stock_data(self, 
                       symbol: str,
-                      start_date: Optional[str] = None,
-                      end_date: Optional[str] = None,
+                      start_date: Optional[str | date] = None,
+                      end_date: Optional[str | date] = None,
                       interval: str = "1d") -> Optional[pd.DataFrame]:
         """获取股票数据
         

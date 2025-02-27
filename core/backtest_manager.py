@@ -1,12 +1,14 @@
+import os
+import json
+import logging
+import webbrowser
 from typing import Optional, List, Dict
 from datetime import datetime
 from pathlib import Path
-import webbrowser
-import logging
 import pandas as pd
-import os
-import json
-from .backtester import Backtester
+import sys
+sys.path.append('..')
+from strategies.backtester import Backtester
 import importlib
 
 logger = logging.getLogger(__name__)
