@@ -12,7 +12,7 @@
 ### 2025年2月16日更新
 - 我已经着手开始/dev分支的开发，所以/main分支可能会停留在当前版本，仅维护自选股列表，如果算法有改进的话，我会及时同步策略、模型和回测系统，让它更有用一点；
 - /dev的基本架构如下：
-- 
+
 <img width="741" alt="image" src="https://github.com/user-attachments/assets/3bd6966a-be5e-4800-a742-2b72ad0b59a9" />
 <img width="735" alt="image" src="https://github.com/user-attachments/assets/5155fa2a-1682-478f-ab9d-c1232a4930aa" />
 
