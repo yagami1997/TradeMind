@@ -7,13 +7,8 @@ import pandas as pd
 import yfinance as yf
 
 from .data_source import DataSource
-from .exceptions import (
-    MarketError, 
-    SymbolNotFoundError, 
-    NetworkError,
-    MarketClosedError
-)
-from .config import Config
+from .exceptions import *
+from .config import Config as GlobalConfig
 
 class YahooFinanceSource(DataSource):
     """美股数据源实现"""
@@ -21,6 +16,7 @@ class YahooFinanceSource(DataSource):
     def __init__(self):
         super().__init__()
         self._tz = pytz.timezone(self.market_timezone)
+        self.config = GlobalConfig()
         
     def get_stock_data(self, 
                       symbol: str, 
