@@ -5,11 +5,7 @@ from typing import Type, Dict, Optional, Any, List
 from functools import lru_cache
 
 from .data_source import DataSource
-from .market_sources import (
-    YahooFinanceSource,
-    HKStockSource,
-    ChinaStockSource
-)
+from .market_sources import YahooFinanceSource
 from .exceptions import MarketNotSupportedError
 from .market_types import Exchange, ExchangeType
 
