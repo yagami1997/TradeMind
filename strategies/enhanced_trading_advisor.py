@@ -15,7 +15,7 @@ import numpy as np
 # 项目模块
 sys.path.append(str(Path(__file__).parent.parent))
 from strategies.tech_indicator_calculator import TechIndicatorCalculator
-from strategies.strategy_manager import StrategyManager
+from core.strategy_manager import StrategyManager
 from watchlist.watchlist_manager import WatchlistManager
 from data.data_manager_yf import YahooFinanceManager
 
