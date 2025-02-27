@@ -1,0 +1,4 @@
+pandas
+numpy
+yfinance
+pandas_market_calendars

@@ -4,7 +4,7 @@ import shutil
 from datetime import datetime, date
 from pathlib import Path
 import pickle
-from typing import Optional, Dict, Any, List, Union
+from typing import Optional, Dict, Any, List
 import os
 
 # 第三方库
@@ -69,8 +69,8 @@ class DataManager:
     def get_stock_data(self,
                       symbol: str,
                       exchange: str,
-                      start_date: Optional[Union[str, date]] = None,
-                      end_date: Optional[Union[str, date]] = None,
+                      start_date: Optional[str | date] = None,
+                      end_date: Optional[str | date] = None,
                       interval: str = "1d") -> Optional[pd.DataFrame]:
         """
         获取股票数据
@@ -110,8 +110,8 @@ class DataManager:
     def get_multiple_stock_data(self,
                               symbols: List[str],
                               exchange: str,
-                              start_date: Optional[Union[str, date]] = None,
-                              end_date: Optional[Union[str, date]] = None,
+                              start_date: Optional[str | date] = None,
+                              end_date: Optional[str | date] = None,
                               interval: str = "1d") -> Dict[str, pd.DataFrame]:
         """
         批量获取多个股票的数据
