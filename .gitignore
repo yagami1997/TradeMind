@@ -131,3 +131,7 @@ coverage.xml
 # 保留
 !time_check.sh
 !.env.example
+
+# 项目控制文件
+project_control/
+!project_control/README.md
