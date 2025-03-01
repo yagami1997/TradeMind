@@ -1,4 +1,0 @@
-core
-data
-strategies
-utils
