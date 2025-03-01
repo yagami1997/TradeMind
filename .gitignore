@@ -50,6 +50,7 @@ watchlist/*.json
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 .Python
 venv/
 .env
@@ -59,6 +60,19 @@ htmlcov/
 *.egg-info/
 dist/
 build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # IDE
 .vscode/
@@ -76,3 +90,44 @@ build/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 项目特定
+*.log
+.env
+.env.*
+config.local.ini
+*.local.py
+
+# 工作计划和控制文件
+WORKPLAN.md
+PROJECT_CONTROL.md
+
+# 数据和缓存
+data/
+cache/
+*.cache
+*.pkl
+*.h5
+*.csv
+
+# 测试覆盖
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# 时间同步相关
+.time_sync.log
+.env
+
+# 保留
+!time_check.sh
+!.env.example
