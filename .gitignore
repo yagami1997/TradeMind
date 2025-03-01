@@ -135,3 +135,11 @@ coverage.xml
 # 项目控制文件
 project_control/
 !project_control/README.md
+
+# Python包构建
+*.egg-info/
+*.egg
+dist/
+build/
+__pycache__/
+*.pyc
