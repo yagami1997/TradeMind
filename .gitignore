@@ -1,44 +1,54 @@
-# 工作计划文件
-WORKPLAN.md
-TODO.md
-
-# 配置文件,Github上传时忽略,部署时请修改config.ini.example
+# 项目配置文件
 config/config.ini
 config/backtest_config.json
 config/market_config.json
 config/logging_config.json
+*.local.py
+config.local.ini
+.env
+.env.*
+!.env.example
 
-#IBKR Gateway测试文件，该测试代码请参阅README.md   
+# 项目控制文件
+/MAIN_CONTROL.md
+/DAILY_LOG.md
+/WEEKLY_LOG.md
+project_control/*
+!project_control/README.md
+!project_control/templates/
+!project_control/templates/*
+
+# IBKR Gateway测试
 /ibkrtest.py
 
 # 日志文件
 logs/*/*.log
 !logs/*/.gitkeep
 *.log
-
-# 结果文件
-results/*/*
-!results/*/.gitkeep
+.time_sync.log
 
 # 数据目录
 data/market_data/*
-!data/market_data/.gitkeep
 data/cache/*
-!data/cache/.gitkeep
 data/downloads/*
-!data/downloads/.gitkeep
 data/raw/*
-!data/raw/.gitkeep
 data/processed/*
-!data/processed/.gitkeep
+!data/*/README.md
+!data/*/.gitkeep
 
-# 报告输出
+# 缓存文件
+*.cache
+*.pkl
+*.h5
+*.csv
+
+# 结果和报告
+results/*/*
+!results/*/.gitkeep
 reports/output/*
 !reports/output/.gitkeep
 reports/templates/*
 !reports/templates/.gitkeep
-
-# 回测结果
 backtest_results/*
 !backtest_results/.gitkeep
 
@@ -46,21 +56,15 @@ backtest_results/*
 watchlist/*.json
 !watchlist/.gitkeep
 
-# Python
+# Python开发
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-venv/
-.env
-.pytest_cache/
-.coverage
-htmlcov/
-*.egg-info/
-dist/
 build/
 develop-eggs/
+dist/
 downloads/
 eggs/
 .eggs/
@@ -73,12 +77,30 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+htmlcov/
+.tox/
+.nox/
+venv/
+nosetests.xml
 
-# IDE
+# IDE和编辑器
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # 临时文件
 *.tmp
@@ -86,60 +108,5 @@ wheels/
 *.bak
 *.backup
 
-# 系统文件
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# 项目特定
-*.log
-.env
-.env.*
-config.local.ini
-*.local.py
-
-# 工作计划和控制文件
-WORKPLAN.md
-PROJECT_CONTROL.md
-
-# 数据和缓存
-data/
-cache/
-*.cache
-*.pkl
-*.h5
-*.csv
-
-# 测试覆盖
-.coverage
-htmlcov/
-.tox/
-.nox/
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# 时间同步相关
-.time_sync.log
-.env
-
-# 保留
+# 保留脚本
 !time_check.sh
-!.env.example
-
-# 项目控制文件
-project_control/
-!project_control/README.md
-
-# Python包构建
-*.egg-info/
-*.egg
-dist/
-build/
-__pycache__/
-*.pyc
