@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union, Tuple, Callable, Any
 import logging
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
@@ -12,10 +12,141 @@ import os
 from pathlib import Path
 import json
 import itertools
+from core.portfolio import Portfolio
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
+import threading
+from queue import Queue
+import time
+from functools import partial
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+class ThreadPoolManager:
+    """线程池管理器"""
+    def __init__(self, max_workers: int = None, task_timeout: int = 30):
+        """
+        初始化线程池管理器
+        
+        Args:
+            max_workers: 最大工作线程数，默认为 CPU 核心数 * 2
+            task_timeout: 任务超时时间（秒）
+        """
+        self.max_workers = max_workers or (os.cpu_count() * 2)
+        self.task_timeout = task_timeout
+        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
+        self.results_queue = Queue()
+        self.lock = threading.Lock()
+        
+    def submit_task(self, task_func: Callable, *args, **kwargs) -> Any:
+        """
+        提交任务到线程池
+        
+        Args:
+            task_func: 要执行的任务函数
+            args: 位置参数
+            kwargs: 关键字参数
+            
+        Returns:
+            future: Future对象
+        """
+        return self.executor.submit(task_func, *args, **kwargs)
+        
+    def process_batch(self, task_func: Callable, items: List[Any], 
+                     callback: Callable = None, error_handler: Callable = None) -> List[Any]:
+        """
+        批量处理任务
+        
+        Args:
+            task_func: 要执行的任务函数
+            items: 要处理的项目列表
+            callback: 可选的回调函数，处理每个任务的结果
+            error_handler: 可选的错误处理函数
+            
+        Returns:
+            List[Any]: 处理结果列表
+        """
+        futures = []
+        results = []
+        
+        try:
+            # 提交所有任务
+            for item in items:
+                future = self.submit_task(task_func, item)
+                futures.append(future)
+            
+            # 收集结果
+            for future in as_completed(futures, timeout=self.task_timeout):
+                try:
+                    result = future.result()
+                    if callback:
+                        result = callback(result)
+                    results.append(result)
+                except TimeoutError:
+                    logger.error(f"任务执行超时")
+                    if error_handler:
+                        error_handler(TimeoutError("任务执行超时"))
+                except Exception as e:
+                    logger.error(f"任务执行出错: {str(e)}")
+                    if error_handler:
+                        error_handler(e)
+                        
+        except Exception as e:
+            logger.error(f"批处理任务出错: {str(e)}")
+            if error_handler:
+                error_handler(e)
+                
+        return results
+        
+    def process_parallel(self, func: Callable, data: Dict[str, Any], 
+                        chunk_size: int = None) -> Dict[str, Any]:
+        """
+        并行处理数据
+        
+        Args:
+            func: 要执行的函数
+            data: 要处理的数据字典
+            chunk_size: 每个任务处理的数据量
+            
+        Returns:
+            Dict[str, Any]: 处理结果字典
+        """
+        if chunk_size is None:
+            chunk_size = max(1, len(data) // (self.max_workers * 2))
+            
+        results = {}
+        chunks = [list(data.items())[i:i + chunk_size] 
+                 for i in range(0, len(data), chunk_size)]
+        
+        def process_chunk(chunk):
+            chunk_results = {}
+            for key, value in chunk:
+                try:
+                    chunk_results[key] = func(value)
+                except Exception as e:
+                    logger.error(f"处理 {key} 时出错: {str(e)}")
+            return chunk_results
+        
+        # 并行处理所有分块
+        futures = [self.submit_task(process_chunk, chunk) for chunk in chunks]
+        
+        # 收集结果
+        for future in as_completed(futures, timeout=self.task_timeout):
+            try:
+                chunk_results = future.result()
+                with self.lock:
+                    results.update(chunk_results)
+            except Exception as e:
+                logger.error(f"处理分块时出错: {str(e)}")
+                
+        return results
+        
+    def __enter__(self):
+        return self
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.executor.shutdown(wait=True)
 
 @dataclass
 class BacktestResult:
@@ -43,13 +174,26 @@ class TradePosition:
     take_profit: Optional[float] = None
 
 @dataclass
+class SlippageConfig:
+    """滑点模型配置"""
+    base_rate: float = 0.0002          # 基础滑点率
+    volume_impact: float = 0.1         # 成交量影响因子
+    max_volume_ratio: float = 0.1      # 最大成交量比例
+    min_volume: int = 1000            # 最小可交易成交量
+    max_slippage: float = 0.05        # 最大滑点率
+    price_impact_factor: float = 0.3   # 价格影响因子
+    volatility_multiplier: float = 1.5  # 波动率影响因子
+    liquidity_threshold: float = 0.05   # 流动性阈值
+    market_impact_decay: float = 0.85   # 市场冲击衰减因子
+    min_tick_size: float = 0.01        # 最小价格变动单位
+    
+@dataclass
 class TransactionCosts:
-    """交易成本配置"""
-    commission_rate: float = 0.0003  # 佣金率（双向）
-    slippage_rate: float = 0.0002    # 滑点率
-    min_commission: float = 5.0       # 最小佣金
-    stamp_duty: float = 0.001        # 印花税（卖出时收取）
-
+    """交易成本"""
+    commission_rate: float  # 佣金率
+    min_commission: float  # 最小佣金
+    tax_rate: float = 0.001  # 印花税率
+    
 class Portfolio:
     """投资组合管理类"""
     def __init__(self, initial_capital: float = 100000.0):
@@ -374,14 +518,62 @@ class BacktestReport:
         return charts
 
 class Backtester:
-    """回测系统主类"""
-    def __init__(self, initial_capital: float = 100000.0):
+    """
+    回测器：执行策略回测
+    
+    功能：
+    1. 模拟订单执行
+    2. 计算交易成本
+    3. 动态滑点模型
+    4. 流动性检查
+    """
+    
+    def __init__(
+        self,
+        initial_capital: float,
+        commission_rate: float = 0.0003,
+        min_commission: float = 5.0,
+        slippage_config: Optional[SlippageConfig] = None,
+        volume_window: int = 20,
+        max_workers: int = None,
+        task_timeout: int = 30
+    ):
+        """
+        初始化回测器
+        
+        Args:
+            initial_capital: 初始资金
+            commission_rate: 佣金率
+            min_commission: 最小佣金
+            slippage_config: 滑点配置
+            volume_window: 成交量计算窗口
+            max_workers: 最大工作线程数
+            task_timeout: 任务超时时间（秒）
+        """
+        self.initial_capital = initial_capital
+        self.transaction_costs = TransactionCosts(
+            commission_rate=commission_rate,
+            min_commission=min_commission
+        )
+        self.slippage_config = slippage_config or SlippageConfig()
+        self.volume_window = volume_window
+        
+        # 缓存数据
+        self._volume_cache = {}
+        self._volatility_cache = {}
+        
         self.portfolio = Portfolio(initial_capital)
         self.risk_manager = RiskManager()
         self.performance_analyzer = PerformanceAnalyzer()
         self.data: Dict[str, pd.DataFrame] = {}
         self.results: Dict[str, BacktestResult] = {}
         self.report_generator = BacktestReport(self)
+        
+        # 初始化线程池管理器
+        self.thread_pool = ThreadPoolManager(
+            max_workers=max_workers,
+            task_timeout=task_timeout
+        )
         
     def load_data(self, symbol: str, data: pd.DataFrame):
         """加载历史数据"""
@@ -398,6 +590,10 @@ class Backtester:
                 logger.error("没有可用的回测数据")
                 return
                 
+            # 并行计算技术指标
+            logger.info("计算技术指标...")
+            data_with_indicators = self._calculate_technical_indicators_parallel(self.data)
+            
             # 计算波动率（用于风险管理）
             volatility = aligned_data.pct_change().std()
             
@@ -405,20 +601,38 @@ class Backtester:
             from tqdm import tqdm
             for timestamp, current_data in tqdm(aligned_data.iterrows(), total=len(aligned_data), desc="回测进度"):
                 try:
-                    # 更新当前价格
-                    for symbol in self.data.keys():
-                        if symbol in self.portfolio.positions:
-                            position = self.portfolio.positions[symbol]
-                            position.current_price = current_data[symbol]
+                    # 并行更新当前价格和持仓状态
+                    if self.portfolio.positions:
+                        self._update_portfolio_state_parallel(
+                            self.portfolio.positions,
+                            {symbol: data.loc[timestamp] for symbol, data in self.data.items()}
+                        )
                     
-                    # 生成交易信号
-                    signals = strategy.generate_signals(current_data)
+                    # 并行生成交易信号
+                    current_data_dict = {
+                        symbol: data_with_indicators[symbol].loc[:timestamp]
+                        for symbol in self.data.keys()
+                    }
+                    signals = self._generate_signals_parallel(strategy, current_data_dict)
                     
                     # 执行交易信号
-                    self._execute_signals(signals, timestamp, current_data, volatility[signals.keys()])
-                    
-                    # 更新投资组合状态
-                    self._update_portfolio_state(timestamp)
+                    for symbol, signal in signals.items():
+                        if symbol not in current_data or signal.iloc[-1] == 0:
+                            continue
+                            
+                        price = current_data[symbol]
+                        signal_value = signal.iloc[-1]
+                        
+                        # 计算交易数量（考虑波动率）
+                        quantity = self.risk_manager.calculate_position_size(
+                            self.portfolio.current_capital,
+                            price,
+                            volatility[symbol]
+                        )
+                        quantity *= signal_value  # signal 应该是 1 (买入) 或 -1 (卖出)
+                        
+                        # 执行交易
+                        self.portfolio.update_position(symbol, quantity, price, timestamp)
                     
                     # 风险检查
                     if not self.risk_manager.check_risk_limits(self.portfolio):
@@ -429,14 +643,18 @@ class Backtester:
                     logger.error(f"处理时间点 {timestamp} 时出错: {e}")
                     continue
             
-            # 计算性能指标
-            performance_metrics = self.performance_analyzer.calculate_metrics(self.portfolio)
+            # 并行计算性能指标
+            logger.info("计算性能指标...")
+            performance_metrics = self._calculate_performance_metrics_parallel(self.data)
             self._print_results(performance_metrics)
             
         except Exception as e:
             logger.error(f"回测过程中出错: {e}")
             self._save_checkpoint()
             raise
+        finally:
+            # 确保线程池正确关闭
+            self.thread_pool.executor.shutdown(wait=True)
             
     def _align_data(self, start_date: str, end_date: str) -> pd.DataFrame:
         """对齐所有数据到相同的时间索引（优化性能）"""
@@ -706,3 +924,383 @@ class Backtester:
         with open(checkpoint_path, 'w') as f:
             json.dump(checkpoint, f, indent=4, default=str)
         logger.info(f"检查点已保存到: {checkpoint_path}")
+
+    def _calculate_volume_profile(
+        self, 
+        symbol: str,
+        market_data: pd.Series,
+        lookback_period: int = 20
+    ) -> Tuple[float, float, float]:
+        """
+        计算成交量特征
+        
+        Args:
+            symbol: 股票代码
+            market_data: 市场数据
+            lookback_period: 回溯期
+            
+        Returns:
+            Tuple[float, float, float]: (平均成交量, 成交量波动率, 相对流动性)
+        """
+        if symbol not in self._volume_cache:
+            # 计算成交量移动平均
+            volume_ma = market_data['volume'].rolling(window=lookback_period).mean()
+            
+            # 计算成交量波动率
+            volume_std = market_data['volume'].rolling(window=lookback_period).std()
+            
+            # 计算相对流动性（当前成交量/平均成交量）
+            relative_liquidity = market_data['volume'] / volume_ma
+            
+            self._volume_cache[symbol] = {
+                'avg_volume': volume_ma.mean(),
+                'vol_std': volume_std.mean() / volume_ma.mean() if volume_ma.mean() > 0 else 1.0,
+                'rel_liquidity': relative_liquidity.mean()
+            }
+            
+        return (
+            self._volume_cache[symbol]['avg_volume'],
+            self._volume_cache[symbol]['vol_std'],
+            self._volume_cache[symbol]['rel_liquidity']
+        )
+        
+    def _check_liquidity(
+        self,
+        quantity: int,
+        market_data: pd.Series,
+        avg_volume: float,
+        rel_liquidity: float
+    ) -> Tuple[bool, str, float]:
+        """
+        检查流动性条件并计算流动性调整因子
+        
+        Args:
+            quantity: 交易数量
+            market_data: 市场数据
+            avg_volume: 平均成交量
+            rel_liquidity: 相对流动性
+            
+        Returns:
+            Tuple[bool, str, float]: (是否可交易, 原因, 流动性调整因子)
+        """
+        current_volume = market_data['volume']
+        
+        # 计算流动性调整因子
+        liquidity_factor = 1.0
+        
+        # 检查最小成交量
+        if current_volume < self.slippage_config.min_volume:
+            return False, "成交量过低", liquidity_factor
+        
+        # 检查相对成交量
+        volume_ratio = quantity / avg_volume
+        if volume_ratio > self.slippage_config.max_volume_ratio:
+            return False, "交易量超过限制", liquidity_factor
+        
+        # 根据相对流动性调整因子
+        if rel_liquidity < self.slippage_config.liquidity_threshold:
+            liquidity_factor = (self.slippage_config.liquidity_threshold / rel_liquidity) ** 2
+        
+        # 检查价格波动
+        if 'high' in market_data and 'low' in market_data:
+            price_range = (market_data['high'] - market_data['low']) / market_data['low']
+            if price_range > self.slippage_config.max_slippage:
+                return False, "价格波动过大", liquidity_factor
+        
+        return True, "", liquidity_factor
+        
+    def _calculate_dynamic_slippage(
+        self,
+        quantity: int,
+        price: float,
+        market_data: pd.Series,
+        avg_volume: float,
+        volume_std: float,
+        liquidity_factor: float
+    ) -> float:
+        """
+        计算动态滑点
+        
+        Args:
+            quantity: 交易数量
+            price: 交易价格
+            market_data: 市场数据
+            avg_volume: 平均成交量
+            volume_std: 成交量波动率
+            liquidity_factor: 流动性调整因子
+            
+        Returns:
+            float: 滑点率
+        """
+        # 基础滑点
+        slippage = self.slippage_config.base_rate
+        
+        # 计算市场冲击成本
+        market_impact = self._calculate_market_impact(
+            quantity, price, avg_volume, volume_std
+        )
+        
+        # 价格波动影响
+        price_impact = 0
+        if 'high' in market_data and 'low' in market_data:
+            price_range = (market_data['high'] - market_data['low']) / market_data['low']
+            price_impact = price_range * market_impact
+        
+        # 应用流动性调整
+        total_slippage = (slippage + market_impact + price_impact) * liquidity_factor
+        
+        # 确保滑点符合最小价格变动单位
+        ticks = round(total_slippage / self.slippage_config.min_tick_size)
+        total_slippage = ticks * self.slippage_config.min_tick_size
+        
+        # 限制最大滑点
+        return min(total_slippage, self.slippage_config.max_slippage)
+
+    def execute_trades(
+        self,
+        signals: List[Dict],
+        market_data: Dict[str, pd.Series],
+        portfolio: Portfolio
+    ) -> List[Dict]:
+        """
+        执行交易信号
+        
+        Args:
+            signals: 交易信号列表
+            market_data: 市场数据
+            portfolio: 当前投资组合
+            
+        Returns:
+            List[Dict]: 实际执行的交易列表
+        """
+        executed_trades = []
+        
+        for signal in signals:
+            symbol = signal['symbol']
+            quantity = signal['quantity']
+            
+            if symbol not in market_data:
+                continue
+                
+            # 获取成交量特征
+            avg_volume, volume_std, rel_liquidity = self._calculate_volume_profile(
+                symbol, 
+                market_data[symbol]
+            )
+            
+            # 检查流动性
+            can_trade, reason, liquidity_factor = self._check_liquidity(
+                quantity,
+                market_data[symbol],
+                avg_volume,
+                rel_liquidity
+            )
+            
+            if not can_trade:
+                continue
+                
+            # 计算动态滑点
+            slippage = self._calculate_dynamic_slippage(
+                quantity,
+                signal['price'],
+                market_data[symbol],
+                avg_volume,
+                volume_std,
+                liquidity_factor
+            )
+            
+            # 调整价格
+            if signal['type'] == 'buy':
+                executed_price = signal['price'] * (1 + slippage)
+            else:
+                executed_price = signal['price'] * (1 - slippage)
+                
+            # 计算交易成本
+            commission = max(
+                executed_price * quantity * self.transaction_costs.commission_rate,
+                self.transaction_costs.min_commission
+            )
+            
+            tax = (
+                executed_price * quantity * self.transaction_costs.tax_rate
+                if signal['type'] == 'sell'
+                else 0
+            )
+            
+            total_cost = commission + tax
+            
+            # 检查资金是否足够
+            if signal['type'] == 'buy':
+                total_cost += executed_price * quantity
+                if total_cost > portfolio.cash:
+                    continue
+                    
+            # 记录交易
+            trade = {
+                'date': signal['date'],
+                'symbol': symbol,
+                'type': signal['type'],
+                'quantity': quantity,
+                'price': executed_price,
+                'slippage': slippage,
+                'commission': commission,
+                'tax': tax,
+                'cost': total_cost
+            }
+            
+            executed_trades.append(trade)
+            
+        return executed_trades
+        
+    def get_transaction_summary(self) -> Dict:
+        """获取交易统计信息"""
+        return {
+            'transaction_costs': self.transaction_costs,
+            'slippage_config': self.slippage_config,
+            'volume_window': self.volume_window
+        }
+
+    def _calculate_market_impact(
+        self,
+        quantity: int,
+        price: float,
+        avg_volume: float,
+        volume_std: float
+    ) -> float:
+        """
+        计算市场冲击成本
+        
+        Args:
+            quantity: 交易数量
+            price: 交易价格
+            avg_volume: 平均成交量
+            volume_std: 成交量波动率
+            
+        Returns:
+            float: 市场冲击成本
+        """
+        # 计算订单相对规模
+        relative_size = quantity / avg_volume if avg_volume > 0 else 1.0
+        
+        # 使用指数衰减模型计算市场冲击
+        impact = (
+            self.slippage_config.volume_impact * 
+            (1 - np.exp(-relative_size / self.slippage_config.market_impact_decay))
+        )
+        
+        # 考虑成交量波动性的影响
+        impact *= (1 + volume_std * self.slippage_config.volatility_multiplier)
+        
+        return impact
+
+    def _process_data_parallel(self, func: Callable, data: Dict[str, pd.DataFrame], 
+                              chunk_size: int = None) -> Dict[str, Any]:
+        """
+        并行处理数据
+        
+        Args:
+            func: 处理函数
+            data: 要处理的数据字典
+            chunk_size: 数据分块大小
+            
+        Returns:
+            Dict[str, Any]: 处理结果
+        """
+        return self.thread_pool.process_parallel(func, data, chunk_size)
+        
+    def _calculate_technical_indicators_parallel(self, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        """
+        并行计算技术指标
+        
+        Args:
+            data: 股票数据字典
+            
+        Returns:
+            Dict[str, pd.DataFrame]: 计算结果
+        """
+        def calculate_indicators(df: pd.DataFrame) -> pd.DataFrame:
+            try:
+                # 在这里添加技术指标计算逻辑
+                result = df.copy()
+                # 示例：计算移动平均
+                result['MA5'] = df['close'].rolling(window=5).mean()
+                result['MA10'] = df['close'].rolling(window=10).mean()
+                result['MA20'] = df['close'].rolling(window=20).mean()
+                # 添加更多指标...
+                return result
+            except Exception as e:
+                logger.error(f"计算技术指标时出错: {str(e)}")
+                return df
+                
+        return self._process_data_parallel(calculate_indicators, data)
+        
+    def _generate_signals_parallel(self, strategy, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.Series]:
+        """
+        并行生成交易信号
+        
+        Args:
+            strategy: 策略对象
+            data: 股票数据字典
+            
+        Returns:
+            Dict[str, pd.Series]: 交易信号
+        """
+        def generate_signal(df: pd.DataFrame) -> pd.Series:
+            try:
+                return strategy.generate_signals(df)
+            except Exception as e:
+                logger.error(f"生成交易信号时出错: {str(e)}")
+                return pd.Series(index=df.index)
+                
+        return self._process_data_parallel(generate_signal, data)
+        
+    def _calculate_performance_metrics_parallel(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Dict]:
+        """
+        并行计算性能指标
+        
+        Args:
+            data: 股票数据字典
+            
+        Returns:
+            Dict[str, Dict]: 性能指标
+        """
+        def calculate_metrics(df: pd.DataFrame) -> Dict:
+            try:
+                returns = df['close'].pct_change()
+                return {
+                    'total_return': (1 + returns).prod() - 1,
+                    'annual_return': self._calculate_annual_return(returns.values),
+                    'sharpe_ratio': self._calculate_sharpe_ratio(returns.values),
+                    'max_drawdown': self._calculate_max_drawdown(returns.values),
+                    'volatility': returns.std() * np.sqrt(252)
+                }
+            except Exception as e:
+                logger.error(f"计算性能指标时出错: {str(e)}")
+                return {}
+                
+        return self._process_data_parallel(calculate_metrics, data)
+        
+    def _update_portfolio_state_parallel(self, positions: Dict[str, TradePosition], 
+                                       current_data: Dict[str, pd.Series]) -> None:
+        """
+        并行更新投资组合状态
+        
+        Args:
+            positions: 当前持仓
+            current_data: 当前市场数据
+        """
+        def update_position(position: TradePosition) -> float:
+            try:
+                if position.symbol in current_data:
+                    position.current_price = current_data[position.symbol]['close']
+                    return (position.current_price - position.entry_price) * position.position
+                return 0
+            except Exception as e:
+                logger.error(f"更新持仓状态时出错: {str(e)}")
+                return 0
+                
+        with self.thread_pool as pool:
+            pnl_results = pool.process_batch(update_position, list(positions.values()))
+            
+        total_pnl = sum(pnl_results)
+        self.portfolio.current_capital += total_pnl
