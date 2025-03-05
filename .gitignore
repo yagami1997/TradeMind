@@ -15,8 +15,10 @@ config.local.ini
 /WEEKLY_LOG.md
 project_control/*
 !project_control/README.md
+!project_control/MAIN_CONTROL.md
 !project_control/templates/
 !project_control/templates/*
+project_control/reports/
 
 # IBKR Gateway测试
 /ibkrtest.py
@@ -107,6 +109,3 @@ desktop.ini
 *.temp
 *.bak
 *.backup
-
-# 保留脚本
-!time_check.sh
