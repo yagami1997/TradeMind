@@ -21,7 +21,16 @@ project_management/*
 !project_management/control/*
 !project_management/templates/
 !project_management/templates/*
-project_management/actuals/
+!project_management/actuals/
+project_management/actuals/*
+!project_management/actuals/reports/
+project_management/actuals/reports/*
+!project_management/actuals/reports/daily/
+!project_management/actuals/reports/weekly/
+project_management/actuals/reports/daily/*.md
+project_management/actuals/reports/weekly/*.md
+!project_management/actuals/reports/daily/.gitkeep
+!project_management/actuals/reports/weekly/.gitkeep
 
 # IBKR Gateway测试
 /ibkrtest.py
