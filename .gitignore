@@ -9,18 +9,12 @@ config.local.ini
 .env.*
 !.env.example
 
-# 项目控制文件
+# 旧项目控制文件
 /MAIN_CONTROL.md
 /DAILY_LOG.md
 /WEEKLY_LOG.md
-project_control/*
-!project_control/README.md
-!project_control/MAIN_CONTROL.md
-!project_control/templates/
-!project_control/templates/*
-project_control/reports/
 
-# 项目管理文件
+# 项目管理文件（按照Cursor规则集）
 project_management/*
 !project_management/README.md
 !project_management/control/
