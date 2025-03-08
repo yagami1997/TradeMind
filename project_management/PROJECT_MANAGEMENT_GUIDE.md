@@ -1,14 +1,15 @@
-# TradeMind 项目管理
+# TradeMind 项目管理指南
 
-本目录包含 TradeMind 项目的管理文档和控制文件，用于跟踪项目进度、记录开发活动和管理项目风险。
+本文档提供 TradeMind 项目的管理指南，详细说明项目管理文档的组织结构、命名规范和使用方法。
 
 ## 目录结构
 
 ```
 project_management/
-├── README.md                 # 本文件
+├── PROJECT_MANAGEMENT_GUIDE.md  # 本文件（项目管理指南）
 ├── control/                  # 项目控制文档
-│   └── MAIN_CONTROL.md       # 主控制文档
+│   ├── MAIN_CONTROL.md       # 项目总纲要（技术架构和开发流程）
+│   └── PROJECT_CHARTER.md    # 项目立项计划书（项目管理和进度跟踪）
 ├── actuals/                  # 实际项目记录
 │   └── reports/              # 项目报告
 │       ├── daily/            # 日报
@@ -31,13 +32,14 @@ project_management/
 
 所有文档中的时间戳格式为：`[PST:YYYY-MM-DD HH:mm:ss]`
 
-例如：`[PST:2025-03-04 22:30:00]`
+例如：`[PST:2025-03-07 20:56:23]`
 
 ## 文档更新频率
 
 - 日报：每个工作日更新
 - 周报：每周末更新
-- 主控制文档：根据需要更新，至少每周一次
+- 项目总纲要：根据需要更新，至少每周一次
+- 项目立项计划书：在项目阶段性完成或里程碑达成时更新
 - 项目进度文档：每周更新一次
 
 ## 项目控制命令
@@ -52,7 +54,8 @@ project_management/
 ## 相关文档
 
 - 项目进度跟踪：[PROJECT_PROGRESS.md](../PROJECT_PROGRESS.md)
-- 主控制文档：[MAIN_CONTROL.md](control/MAIN_CONTROL.md)
+- 项目总纲要：[MAIN_CONTROL.md](control/MAIN_CONTROL.md)
+- 项目立项计划书：[PROJECT_CHARTER.md](control/PROJECT_CHARTER.md)
 
 ## 注意事项
 
@@ -61,4 +64,4 @@ project_management/
 - 定期更新文档以反映最新的项目状态
 - 报告目录下的文件不会被 Git 跟踪，仅用于本地记录
 
-**最后更新：** [PST:2025-03-04 22:30:00] 
+**最后更新：** [PST:2025-03-07 21:00:22] 

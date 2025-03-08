@@ -1,4 +1,6 @@
-# TradeMind 主控制文档
+# TradeMind 项目总纲要
+
+**最后更新时间：** [PST:2025-03-07 21:00:22]
 
 ## 时间戳规范
 - 所有时间戳格式：[PST:YYYY-MM-DD HH:mm:ss]
@@ -19,7 +21,7 @@
 3. 提交前强制时间检查
 4. 保持时间戳的一致性和准确性
 
-> 注意：详细的日常开发记录请查看reports目录下的日报文件（DAILY_LOG_YYYY-MM-DD.md），周度总结请查看reports目录下的周报文件（WEEKLY_LOG_YYYY-MM-DD.md）
+> 注意：详细的项目管理信息请参阅 [项目管理指南](../PROJECT_MANAGEMENT_GUIDE.md)，日常开发记录请查看 project_management/actuals/reports/daily/ 目录下的日报文件，周度总结请查看 project_management/actuals/reports/weekly/ 目录下的周报文件
 
 ## 月度工作总结
 
