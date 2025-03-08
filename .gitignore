@@ -16,7 +16,7 @@ config.local.ini
 
 # 项目管理文件（按照Cursor规则集）
 project_management/*
-!project_management/README.md
+!project_management/PROJECT_MANAGEMENT_GUIDE.md
 !project_management/control/
 !project_management/control/*
 !project_management/templates/
