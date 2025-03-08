@@ -20,6 +20,15 @@ project_control/*
 !project_control/templates/*
 project_control/reports/
 
+# 项目管理文件
+project_management/*
+!project_management/README.md
+!project_management/control/
+!project_management/control/*
+!project_management/templates/
+!project_management/templates/*
+project_management/actuals/
+
 # IBKR Gateway测试
 /ibkrtest.py
 
