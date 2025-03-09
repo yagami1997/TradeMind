@@ -28,9 +28,9 @@
   * 设计了蒙特卡洛模拟和Bootstrap方法的测试框架
   * 规划了Kelly准则和动态风险管理的实现
 
-> **🔔开发者注意**: 请查看 `project_management/control/` 目录下的 `MAIN_CONTROL.md` 和 `PROJECT_CHARTER.md` 文件，了解详细的工程设计计划和算法实现路线图。这些文档提供了系统架构优化、开发流程优化和风险管理增强的全面指南。
+> **🔔请开发者注意**: 请查看 `project_management/control/` 目录下的 `MAIN_CONTROL.md` 和 `PROJECT_CHARTER.md` 文件，了解详细的工程设计计划和算法实现路线图。这些文档提供了系统架构优化、开发流程优化和风险管理增强的全面指南。
 
-最后更新：[PST:2025-03-08 22:50:14]
+最后更新：[PST:2025-03-09 08:41:16]
 
 ---
 
