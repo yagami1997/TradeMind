@@ -1508,10 +1508,45 @@ class StockAnalyzer:
                 .footer {{
                     text-align: center;
                     margin-top: 30px;
+                    margin-bottom: 20px;
                     color: #666;
                     padding: 15px;
                     background-color: #f8f9fa;
                     border-radius: 8px;
+                    position: relative;
+                }}
+                .footer p {{
+                    margin-bottom: 0;
+                }}
+                .watermark {{
+                    color: #9E9E9E; /* 从#e0e0e0改为#9E9E9E，更深的灰色 */
+                    font-size: 14px;
+                    font-style: italic;
+                    text-align: center;
+                    margin-top: 15px;
+                    line-height: 1.5;
+                    font-weight: 400; /* 从300改为400，更粗一些 */
+                    letter-spacing: 0.5px;
+                }}
+                .risk-banner {{
+                    margin-top: 30px;
+                    padding: 18px 20px;
+                    background-color: #E8EAF6; /* 深青蓝色背景，呼应整体风格 */
+                    border-radius: 8px;
+                    color: #37474F; /* 深青灰色文字 */
+                    font-size: 14px;
+                    line-height: 1.6;
+                    text-align: center; /* 文本居中 */
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }}
+                .risk-banner h4 {{
+                    margin-top: 0;
+                    margin-bottom: 10px;
+                    color: #1A237E; /* 深蓝色标题 */
+                    font-weight: 600;
+                }}
+                .risk-banner p {{
+                    margin-bottom: 8px;
                 }}
                 @media (max-width: 768px) {{
                     .stock-grid {{
@@ -1711,7 +1746,7 @@ class StockAnalyzer:
                             <li><strong>动量反转系统</strong> - 基于Wilder的RSI和Lane的随机指标，捕捉市场超买超卖状态和潜在反转点。</li>
                             <li><strong>价格波动系统</strong> - 基于Bollinger带和Donchian通道，分析价格波动性和突破模式。</li>
                         </ul>
-                        </div>
+                    </div>
                     
                     <div class="manual-section">
                         <div class="manual-section-title">交易建议生成</div>
@@ -1741,11 +1776,22 @@ class StockAnalyzer:
                             <strong>免责声明：</strong> 本工具仅供参考，不构成投资建议。投资有风险，入市需谨慎。
                         </div>
                     </div>
-            </div>
-            
+                </div>
+                
+                <div class="risk-banner">
+                    <h4>风险提示:</h4>
+                    <p>本报告基于雅虎财经API技术分析生成，仅供学习，不构成任何投资建议。</p>
+                    <p>投资者应当独立判断，自主决策，自行承担投资风险，投资是修行，不要指望单边信息。</p>
+                    <p>过往市场表现不代表未来收益，市场有较大风险，投资需理性谨慎。</p>
+                </div>
+                
                 <div class="footer">
                     <p>美股技术面分析工具 Alpha v0.2.5 | &copy; 2025</p>
-            </div>
+                    <div class="watermark">
+                        In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
+                        Long live the Free Software Movement!
+                    </div>
+                </div>
             </div>
         </body>
         </html>
