@@ -1,4 +1,4 @@
-# TradeMind美股技术面简单分析工具 Alpha v 0.2
+# TradeMind美股技术面简单分析工具 Alpha v 0.2.5
 
 ## 重要声明
 1. 本工具99%的代码由Cursor自动生成，Coding模型Claude3.5，当然也可以用别的。对我来说，更像个赛博念经的，负责规划设计调试。
@@ -8,6 +8,15 @@
 5. 市场有风险，投资需谨慎，成熟的交易者不会把决策简单归因于信息差或者技术操作，投资是修行。
 ---
 ## 更新日志
+
+### 2025年3月9日重大更新
+- **技术指标算法优化**：采用权威模型实现各指标，包括Wilder原始RSI设计、Lane随机指标KDJ、Appel原始MACD和Bollinger带设计
+- **回测系统升级**：基于Markowitz投资组合理论和Kestner评估方法，增强回测结果的专业性和可靠性
+- **HTML报告全面改进**：优化视觉设计，采用现代卡片布局和温和配色方案，增加彩色信号标签分类
+- **报告管理功能**：新增按时间范围清理历史报告的功能，提高用户体验
+- **布局与排版优化**：统一各区域高度，优化内部间距，增强立体感和视觉层次
+
+---
 
 ### 2025年2月16日更新
 - 我已经着手开始/dev分支的开发，所以/main分支可能会停留在当前版本，仅维护自选股列表，如果算法有改进的话，我会及时同步策略、模型和回测系统，让它更有用一点；
@@ -404,13 +413,13 @@ This project  is licensed under the GNU General Public License v3.0 (GPL-3.0). T
 ```
 **中文含义为：**
 ```bash
-本项目采用 GNU 通用公共许可证 v3.0 (GPL-3.0) 许可。本软件按“现状”提供，不提供任何形式的明示或暗示的保证，包括但不限于适销性或特定用途适用性的保证。在任何情况下，作者或版权持有者均不对任何损害负责。
+本项目采用 GNU 通用公共许可证 v3.0 (GPL-3.0) 许可。本软件按"现状"提供，不提供任何形式的明示或暗示的保证，包括但不限于适销性或特定用途适用性的保证。在任何情况下，作者或版权持有者均不对任何损害负责。
 ```
 - 我已经可以预感到很多大佬沿用这个思路，可以开发出更强更完善的系统造福散户，谢谢你们！🙏🙏🙏
   
 ---
 <p align="right">
-  <em>“In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!”</em><br>
+  <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
   <span style="font-size: 14px; color: #888;">2025-02-11</span>
 </p>
