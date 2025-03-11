@@ -186,6 +186,29 @@ python stock_analyzer.py
      ```bash
      pip install -r requirements.txt
      ```
+   - 使用虚拟环境安装(推荐)
+
+      **使用 [uv](https://docs.astral.sh/uv/) 管理虚拟环境**
+      ```
+      # 创建虚拟环境
+      uv venv .venv
+      ```
+      **常规方式管理依赖**
+      ```
+      python -m venv .venv
+      ```
+      
+      ```
+      # 激活虚拟环境
+      source .venv/Scripts/activate 
+      ```
+      
+      ```
+      # 将依赖安装到虚拟环境
+      pip install -r requirements.txt
+      # or
+      uv pip install -r requirements.txt 
+      ```
 
 4. **运行程序**
    - 在命令提示符中输入：
