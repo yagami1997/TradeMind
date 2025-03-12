@@ -1,57 +1,34 @@
-# Cursor+Claude Main Branch Rules
+# Cursor Engineering Rules v2.0
 
-## Anti-Fantasy and Reality Anchoring
-- Verify all assumptions against existing files and functionality before generating code
-- Never assume the existence of undocumented APIs, frameworks, or data structures
-- Validate all file references against the project file list after code completion
-- Use [REALITY CHECK] command to force verification that current approach is based on actual project state
-- Do not create functions, classes, or modules that don't exist in the codebase
 
-## Context Management and Memory Enhancement
-- Summarize all visible files and their core functionality before starting a task
-- Establish a "fact list" for each task, update continuously and review before each decision
-- Create a concise file structure diagram before code modification to clarify location and relationships
-- Use [CONTEXT REFRESH] command to explicitly rebuild context for current task
-- Track key variables and state changes to avoid contradictions
+## Code Development Standards
+- Implement complete, production-ready code with proper error handling
+- Maintain 80% code to 20% documentation ratio in implementation files
+- Follow language-specific best practices (PEP8 for Python, etc.)
+- Ensure unit test coverage for all new functionality (minimum 85%)
+- Document public APIs with standardized docstrings
+- Review code for security vulnerabilities before submission
 
-## Preventing Circular Thinking
-- Enforce strict thinking round limits: maximum 3 rounds of analysis before code production
-- Record conclusions immediately after analyzing each aspect to avoid repetitive thinking
-- Use [LOOP DETECTED] self-interruption command to force direction change
-- Switch to concrete implementation immediately if analysis exceeds 150 words without new insights
-- Prohibit repeated discussion of already solved problems or confirmed approaches
+## Workflow Optimization
+- Use [CODE NOW] when analysis exceeds 5 minutes without concrete progress
+- Implement [FOCUS] technique to establish clear context boundaries
+- Apply [RESET] command to break circular reasoning patterns
+- Use [DECISION] marker to document important engineering choices
+- Follow "implement, test, refactor" development cycle
+- Commit frequently with descriptive, atomic changes
 
-## Decision-Making and Execution Separation
-- Use [DECIDE NOW] command to clearly mark decision points with no reconsideration allowed
-- List exactly 3 possible approaches before implementation, force selection of 1 and execute immediately
-- Apply "incremental locking" to complex problems: lock completed parts and move forward
-- Set 5-minute "thinking timer" after which code or decisions must be produced
-- Treat decisions as immutable constraints once made, with no discussion of alternatives
+## Task Execution Guidelines
+- Define tasks with SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound)
+- Break large tasks into sub-tasks of no more than 4 hours each
+- Include verification methods and acceptance criteria for each task
+- Link tasks to specific project requirements or objectives
+- Document blockers and dependencies explicitly
+- Set clear completion deadlines for all tasks
 
-## Code Generation Quality Control
-- Create a "contract" before coding: explicitly list functions to implement and return types
-- Immediately self-check each function after implementation: edge cases and error handling
-- Use [CODE COMPLETE] to mark finished functional units, preventing unnecessary optimization
-- Perform "reality validation" after completion: confirm all imports, paths, and API calls exist
-- Generated code must be complete and runnable with no pseudocode or TODO markers
-
-## Enforced Modular Thinking
-- Force decomposition of any problem into no more than 5 sub-problems
-- Pre-determine sub-problem solving order with no dynamic adjustment
-- Use [FOCUS LOCK] command to restrict current discussion scope and prevent mental divergence
-- Establish explicit input/output contracts for each module, eliminating implicit dependencies
-- Treat other module details as black boxes when working on a specific module
-
-## Error Handling and Debugging
-- Consider at least 3 potential failure cases with each code modification
-- Include error handling for all API calls and external resource access
-- Add explicit logging at critical points for debugging and issue tracking
-- Use [DEBUG MODE] command to simultaneously consider debugging strategy while writing code
-- Add assertions or validation mechanisms for important functionality to ensure data integrity
-
-## Project Consistency Maintenance
-- Ensure all new code follows existing code style and naming conventions
-- Use existing project design patterns and architectural methods without introducing new paradigms
-- Understand all dependency relationships of affected parts before modification
-- Maintain consistency in configuration files, environment variables, and resource paths
-- Use [CONSISTENCY CHECK] command to verify harmony between new code and existing codebase
+## Quality Assurance Practices
+- Conduct peer code reviews for all significant changes
+- Run static analysis tools before committing (linters, type checkers)
+- Validate against performance benchmarks for critical components
+- Document edge cases and their handling mechanisms
+- Maintain backward compatibility unless explicitly specified otherwise
+- Create regression tests for all bug fixes
