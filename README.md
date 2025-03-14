@@ -244,7 +244,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 ![image](https://github.com/user-attachments/assets/23dfcb33-5c8a-4c67-86a9-d23b83ebfb50)
    - 程序会显示进度条
    - 数据获取和处理可能需要几秒到2分钟不等
-   - 分析完成后会自动打开HTML报告
+   - 分析完成后点击查看报告按钮打开HTML报告；或者点击列表里的过往报告查看
 
 ### 报告解读指南
 ![image](https://github.com/user-attachments/assets/1179f396-9bbf-4d09-b534-4f9cffb9456c)
