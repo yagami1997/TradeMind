@@ -1,6 +1,7 @@
 .DS_Store
 logs/
-reports/
+reports/output/*
+!reports/output/.gitkeep
 results/
 venv/
 stock_analysis/
@@ -34,3 +35,5 @@ build/
 *.egg-info/
 # 临时创意文件
 project_management/ideaguide.md
+# 版本命名指南（仅供内部使用）
+project_management/version_naming_guide.md

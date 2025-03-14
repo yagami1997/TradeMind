@@ -601,15 +601,16 @@ def generate_performance_charts(trades: List[Dict], equity: List[float],
 
 def generate_stock_card_html(result: Dict) -> str:
     """生成单个股票卡片的HTML"""
-    stock_code = result['symbol']
-    stock_name = result['name']
+    # 获取股票代码和名称，兼容不同的键名
+    stock_code = result.get('stock_code', result.get('symbol', '未知'))
+    stock_name = result.get('stock_name', result.get('name', '未知'))
     
     # 处理股价显示，确保最多显示两位小数
     try:
-        current_price = float(result['price'])
+        current_price = float(result.get('last_price', result.get('price', 0)))
         current_price_display = f"{current_price:.2f}"
     except (ValueError, TypeError):
-        current_price_display = str(result['price'])
+        current_price_display = str(result.get('last_price', result.get('price', 'N/A')))
     
     # 获取价格变化百分比 - 完全重写这部分逻辑
     try:
@@ -621,6 +622,10 @@ def generate_stock_card_html(result: Dict) -> str:
             else:
                 price_change_pct = 0.0
                 print(f"price_change_pct字段无效: {result['price_change_pct']}, 使用默认值0.0%")
+        # 从change_percent获取
+        elif 'change_percent' in result and result['change_percent'] is not None:
+            price_change_pct = float(result['change_percent'])
+            print(f"从change_percent字段获取涨跌幅: {price_change_pct:.2f}%")
         # 从price_change和prev_close计算
         elif 'price_change' in result and 'prev_close' in result and result['prev_close'] is not None and float(result['prev_close']) > 0:
             price_change = float(result['price_change'])
@@ -663,37 +668,40 @@ def generate_stock_card_html(result: Dict) -> str:
     
     print(f"最终涨跌幅: {price_change_pct:.2f}%, 颜色: {price_change_color}, 符号: {price_change_symbol}")
     
-    # 获取建议
-    advice = result['advice']['advice']
-    confidence = result['advice'].get('confidence', 50)
+    # 获取建议，使用get方法避免KeyError
+    advice = result.get('advice', {})
+    advice_text = advice.get('advice', advice.get('type', '观望'))
+    confidence = advice.get('confidence', 50)
+    # 使用get方法获取explanation，避免KeyError
+    explanation = advice.get('explanation', '无详细解释')
     
     # 根据建议设置背景颜色和文本
-    if '强烈买入' in advice:
+    if '强烈买入' in advice_text:
         header_bg = '#008000'  # 强烈买入 - 深绿色
         advice_text = '强烈买入'
         advice_bg = '#008000'
         advice_color = 'white'
-    elif '买入' in advice:
+    elif '买入' in advice_text:
         header_bg = '#00FF00'  # 买入 - 鲜绿色
         advice_text = '买入'
         advice_bg = '#00FF00'
         advice_color = 'black'  # 鲜绿色背景配深色文字更易读
-    elif '观望偏多' in advice:
+    elif '观望偏多' in advice_text:
         header_bg = '#32CD32'  # 观望偏多 - 酸橙绿
         advice_text = '观望偏多'
         advice_bg = '#32CD32'
         advice_color = 'white'
-    elif '观望偏空' in advice:
+    elif '观望偏空' in advice_text:
         header_bg = '#FF6347'  # 观望偏空 - 番茄红
         advice_text = '观望偏空'
         advice_bg = '#FF6347'
         advice_color = 'white'
-    elif '卖出' in advice:
+    elif '卖出' in advice_text:
         header_bg = '#FF0000'  # 卖出 - 红色
         advice_text = '卖出'
         advice_bg = '#FF0000'
         advice_color = 'white'
-    elif '强烈卖出' in advice:
+    elif '强烈卖出' in advice_text:
         header_bg = '#8B0000'  # 强烈卖出 - 深红色
         advice_text = '强烈卖出'
         advice_bg = '#8B0000'
@@ -796,7 +804,7 @@ def generate_stock_card_html(result: Dict) -> str:
     signals = []
     if result.get('signals'):
         signals = result['signals']
-    elif result['advice'].get('signals'):
+    elif result.get('advice', {}).get('signals'):
         signals = result['advice']['signals']
     
     # 生成信号标签HTML - 使用更清晰的配色方案
@@ -874,6 +882,7 @@ def generate_stock_card_html(result: Dict) -> str:
                         置信度: {confidence}%
                     </div>
                 </div>
+                <p>{explanation}</p>
             </div>
             
             <div class="backtest-results" style="background-color: #fff8e1; padding: 12px; border-radius: 5px;">

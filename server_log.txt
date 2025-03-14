@@ -1,0 +1,92 @@
+2025-03-14 21:05:12,166 - trademind_web - INFO - 启动TradeMind Lite Web服务器
+                  ╭────────────────────────────────────────────────────────────────────╮                   
+                  │                                                                    │                   
+                  │   _____           _      __  __ _           _   _     _ _          │                   
+                  │  |_   _|_ _ _ __ | | ___|  \/  (_)_ __   __| | | |   (_) |_ ___    │                   
+                  │    | |/ _` | '_ \| |/ _ \ |\/| | | '_ \ / _` | | |   | | __/ _ \   │                   
+                  │    | | (_| | | | | |  __/ |  | | | | | | (_| | | |___| | ||  __/   │                   
+                  │    |_|\__,_|_| |_|_|\___|_|  |_|_|_| |_|\__,_| |_____|_|\__\___|   │                   
+                  │                                                                    │                   
+                  ╰────────────────────────────────────────────────────────────────────╯                   
+                                                                                                           
+                     版本              Beta 0.3.0                                                          
+                     作者              Yagami                                                              
+                     仓库              https://github.com/yagami1997/TradeMind                             
+                     许可证            GPL-3.0                                                             
+                     Web模式           启动中...                                                           
+                                                                                                           
+
+启动Web服务器在 http://0.0.0.0:3336/
+按 Ctrl+C 停止服务器
+
+ * Serving Flask app 'trademind.ui.web'
+ * Debug mode: off
+2025-03-14 21:05:12,182 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:3336
+ * Running on http://198.18.0.1:3336
+2025-03-14 21:05:12,182 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-14 21:05:13,849 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:13] "GET / HTTP/1.1" 200 -
+2025-03-14 21:05:13,869 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:13] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-14 21:05:13,869 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:13] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-14 21:05:13,923 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:13] "GET /api/reports HTTP/1.1" 200 -
+2025-03-14 21:05:17,328 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:17] "GET /watchlists HTTP/1.1" 200 -
+2025-03-14 21:05:17,332 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:17] "POST /api/analyze HTTP/1.1" 200 -
+2025-03-14 21:05:18,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:18] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:19,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:19] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:20,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:20] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:21,335 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:21] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:22,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:22] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:23,335 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:23] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:24,339 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:24] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:25,335 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:25] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:25,795 - trademind_web - ERROR - 分析过程中发生错误: 'explanation'
+Traceback (most recent call last):
+  File "/Users/kinglee/Documents/Projects/Trading/trademind/ui/web.py", line 188, in run_analysis
+    report_path = analyzer.generate_report(results, title)
+  File "/Users/kinglee/Documents/Projects/Trading/trademind/core/analyzer.py", line 201, in generate_report
+    return generate_html_report(results, title, output_dir=self.results_path)
+  File "/Users/kinglee/Documents/Projects/Trading/trademind/reports/generator.py", line 317, in generate_html_report
+    card = generate_stock_card_html(result)
+  File "/Users/kinglee/Documents/Projects/Trading/trademind/reports/generator.py", line 749, in generate_stock_card_html
+    <p>{result['advice']['explanation']}</p>
+KeyError: 'explanation'
+2025-03-14 21:05:26,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:26] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:27,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:27] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:28,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:28] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:29,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:29] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:30,339 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:30] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:31,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:31] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:32,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:32] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:33,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:33] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:34,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:34] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:35,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:35] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:36,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:36] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:37,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:37] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:38,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:38] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:39,335 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:39] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:39,803 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:39] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:40,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:40] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:41,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:41] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:42,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:42] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:43,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:43] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:44,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:44] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:45,340 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:45] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:46,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:46] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:47,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:47] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:48,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:48] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:49,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:49] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:50,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:50] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:51,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:51] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:52,335 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:52] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:53,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:53] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:54,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:54] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:55,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:55] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:56,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:56] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:57,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:57] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:58,340 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:58] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:05:59,336 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:05:59] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:06:00,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:06:00] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:06:01,341 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:06:01] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:06:02,337 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:06:02] "GET /api/progress HTTP/1.1" 200 -
+2025-03-14 21:06:03,338 - werkzeug - INFO - 127.0.0.1 - - [14/Mar/2025 21:06:03] "GET /api/progress HTTP/1.1" 200 -
