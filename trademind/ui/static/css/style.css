@@ -1,0 +1,285 @@
+/* TradeMind Lite - 样式表 */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    padding: 15px 20px;
+}
+
+.card-title {
+    font-weight: 600;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+/* 股票卡片样式 - 从原HTML报告迁移 */
+.stock-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.stock-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.stock-card .card-header {
+    padding: 15px;
+    color: white;
+    font-weight: 600;
+    height: 80px;
+    display: flex;
+    align-items: center;
+}
+
+.stock-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.stock-name {
+    font-size: 16px;
+    font-weight: 600;
+    max-width: 65%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stock-price {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: right;
+}
+
+.price-change {
+    font-size: 14px;
+    margin-left: 5px;
+}
+
+.positive {
+    color: #28a745;
+}
+
+.negative {
+    color: #dc3545;
+}
+
+.neutral {
+    color: #ffc107;
+}
+
+/* 指标块色彩方案 */
+.indicator-section {
+    margin-bottom: 12px;
+    background-color: #E8F5E9; /* 温和的薄荷绿 */
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.pattern-section {
+    margin-bottom: 12px;
+    background-color: #F3E5F5; /* 温和的淡紫色 */
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.advice-section {
+    margin-bottom: 12px;
+    padding: 15px;
+    background: #E3F2FD; /* 温和的天蓝色 */
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.backtest-section {
+    margin-bottom: 12px;
+    background-color: #FFF8E1; /* 温和的浅黄色 */
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.section-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+    color: #2E8B57; /* 海绿色标题 */
+}
+
+/* 按钮样式 */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #3A7CA5;
+    border-color: #3A7CA5;
+}
+
+.btn-primary:hover {
+    background-color: #2C6384;
+    border-color: #2C6384;
+}
+
+/* 说明书样式 */
+.manual-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.manual-title {
+    font-weight: 600;
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #2E8B57;
+    border-bottom: 2px solid #88BDBC;
+    padding-bottom: 8px;
+}
+
+.manual-section {
+    margin-bottom: 15px;
+}
+
+.manual-section-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #2E8B57;
+}
+
+/* 风险提示横幅 */
+.risk-banner {
+    margin-top: 30px;
+    padding: 18px 20px;
+    background-color: #E8EAF6; /* 深青蓝色背景 */
+    border-radius: 8px;
+    color: #37474F; /* 深青灰色文字 */
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.risk-banner h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #1A237E; /* 深蓝色标题 */
+    font-weight: 600;
+}
+
+.risk-banner p {
+    margin-bottom: 8px;
+}
+
+/* 页脚和水印 */
+footer {
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    color: #666;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.watermark {
+    color: #9E9E9E;
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    margin-top: 15px;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+/* 自定义颜色 */
+.bg-primary {
+    background-color: #3A7CA5 !important; /* 更重的青蓝色 */
+}
+
+.bg-success {
+    background-color: #2E8B57 !important; /* 海绿色 */
+}
+
+.bg-info {
+    background-color: #5BC0DE !important; /* 天蓝色 */
+}
+
+.header-banner {
+    background-color: #3A7CA5; /* 更重的青蓝色 */
+    padding: 30px 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    color: white;
+}
+
+.header-banner h1 {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.header-banner p {
+    color: rgba(255,255,255,0.9);
+    font-size: 16px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .card {
+        margin-bottom: 15px;
+    }
+}
+
+/* 加载动画 */
+.spinner-border {
+    margin-right: 5px;
+} 

@@ -1,4 +1,4 @@
-# TradeMind美股技术面简单分析工具 Alpha v 0.2.5
+# TradeMind Lite 轻量版美股技术分析工具 Beta 0.3.0
 
 ## 重要声明
 1. 本工具99%的代码由Cursor自动生成，Coding模型Claude3.5，当然也可以用别的。对我来说，更像个赛博念经的，负责规划设计调试。
@@ -6,431 +6,583 @@
 3. 本工具完全开源、免费、无论是Clone、再开发甚至商业化我都不反对，但必须遵守FSF的GPLv3许可证协议。
 4. 后续其他二次开发版本和我无关，我亦不承担任何责任，本代码仓库仅供学习研究。
 5. 市场有风险，投资需谨慎，成熟的交易者绝对不会把决策简单归因于信息差或者技术操作，投资是修行。
+
 ---
+
+## 项目简介
+TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面分析。它采用多个技术指标和形态识别算法，为投资者提供客观的市场分析和交易建议。本工具特别适合对技术分析感兴趣的个人投资者和研究人员。
+
 ## 更新日志
 
-### 2025年3月10日更新
-- **制定Cursor+Claude协作规范**：建立标准化的AI协作指南，提升开发效率
-  - 通过现实检查机制防止AI幻觉现象
-  - 加强上下文跟踪和内存管理能力 
-  - 使用明确指令避免循环思维模式
-  - 将决策过程与执行过程分离
-  - 强化代码质量控制和模块化思维
-  - 确保项目一致性和异常处理规范
+### 2025年3月14日重构级更新 (Beta 0.3.0)
+- **架构全面重构**：优化代码结构，提升性能，降低内存占用，支持更大规模的股票分析
+- **用户界面改进**：全新的命令行和Web查询双界面，更直观的操作流程，支持多级菜单和快捷命令
+- **技术指标升级**：引入更精准的算法模型，支持自定义参数和信号阈值设置
+- **回测系统增强**：新增多策略组合回测，支持自定义交易规则和风险管理参数
+- **报告系统优化**：全新HTML报告设计，更清晰的数据可视化，支持批量报告生成
+- **多平台兼容**：全面支持Windows、macOS和Linux系统，提供详细的安装和使用指南
+- **错误处理增强**：完善的异常捕获和日志系统，提供详细的故障排除指南
+- **文档全面更新**：详尽的使用说明和API文档，帮助用户快速上手和进行二次开发
 
-### 2025年3月9日重大更新
-- **技术指标算法优化**：采用权威模型实现各指标，包括Wilder原始RSI设计、Lane随机指标KDJ、Appel原始MACD和Bollinger带设计
-- **回测系统升级**：基于Markowitz投资组合理论和Kestner评估方法，增强回测结果的专业性和可靠性
-- **HTML报告全面改进**：优化视觉设计，采用现代卡片布局和温和配色方案，增加彩色信号标签分类
-- **报告管理功能**：新增按时间范围清理历史报告的功能，提高用户体验
-- **布局与排版优化**：统一各区域高度，优化内部间距，增强立体感和视觉层次
+## 核心特性
 
----
+### 🎯 技术指标分析
+- **RSI指标**: 基于Wilder原始设计，准确识别超买超卖
+- **MACD指标**: 采用Appel原创算法，把握趋势动量
+- **KDJ指标**: 使用Lane随机指标方法，预测价格转折
+- **布林带**: 动态跟踪价格波动区间
+- **成交量分析**: 验证价格趋势有效性
 
-### 2025年2月16日更新
-- 我已经着手开始/dev分支的开发，所以/main分支可能会停留在当前版本，仅维护自选股列表，如果算法有改进的话，我会及时同步策略、模型和回测系统，让它更有用一点；
-- /dev的基本架构如下：
+### 📊 智能信号系统
+- 多维度交叉验证
+- 信号可信度量化评分
+- 清晰的操作建议展示
 
-#### 📊 TradeMind Dev 项目结构
+### 🔄 专业回测框架
+- 支持多股票组合回测
+- 灵活的参数优化系统
+- 完整的绩效评估报告
 
-```plaintext
-📂 TradeMind/                         # 量化交易系统
-├── 📂 config/                        # ⚙️ 配置文件目录
-│   ├── logging.ini                   # 日志配置：定义日志级别、格式和输出位置
-│   ├── report_templates.json         # 报告模板：定义报告格式和样式
-│   ├── settings.json                  # 系统设置：包含 API 密钥、数据源配置等
-│   └── watchlists.json                # 股票观察列表：用户自定义的股票分组
-│
-├── 📂 core/                          # 🧠 核心功能模块
-│   ├── __init__.py                   
-│   ├── data_manager.py               # 数据管理：数据获取、存储和预处理
-│   ├── technical_analyzer.py         # 技术分析：技术指标计算和市场分析
-│   ├── strategy_manager.py           # 策略管理：交易策略的创建和执行
-│   ├── backtest_manager.py           # 回测管理：回测执行和性能分析
-│   └── report_manager.py             # 报告管理：生成分析报告和图表
-│
-├── 📂 strategies/                    # ⚡ 交易策略实现
-│   ├── __init__.py                   
-│   ├── backtester.py                 # 回测引擎：实现回测核心逻辑
-│   ├── stock_analyzer.py             # 股票分析：个股分析功能
-│   ├── advanced_analysis.py          # 高级分析：复杂分析策略
-│   ├── enhanced_trading_advisor.py   # 交易顾问：策略整合和建议
-│   └── tech_indicator_calculator.py  # 指标计算：技术指标实现
-│
-├── 📂 data/                          # 💾 数据存储目录
-│   ├── 📂 cache/                      # 缓存数据：临时数据存储
-│   │   └── .gitkeep                  
-│   └── 📂 downloads/                  # 下载数据：历史行情等永久存储
-│       └── .gitkeep                  
-│
-├── 📂 logs/                          # 📝 日志存储
-│   ├── 📂 backtest/                   # 回测日志：记录回测过程和结果
-│   ├── 📂 trading/                    # 交易日志：记录交易执行情况
-│   └── 📂 system/                     # 系统日志：记录系统运行状态
-│
-├── 📂 reports/                       # 📊 报告管理
-│   ├── 📂 templates/                  # 报告模板目录
-│   │   ├── html/                      # HTML 模板文件
-│   │   └── css/                       # CSS 样式文件
-│   ├── 📂 assets/                     # 静态资源目录
-│   │   ├── images/                    # 图片资源
-│   │   └── js/                        # JavaScript 文件
-│   └── 📂 output/                     # 报告输出目录
-│       ├── html/                      # HTML 格式报告
-│       └── pdf/                       # PDF 格式报告
-│
-├── 📂 utils/                         # 🛠️ 工具函数模块
-│   ├── __init__.py                   
-│   ├── validators.py                  # 数据验证：输入数据检查
-│   ├── formatters.py                  # 数据格式化：统一数据格式
-│   └── helpers.py                     # 辅助函数：通用工具函数
-│
-├── 📂 tests/                         # ✅ 测试模块
-│   ├── 📂 unit/                       # 单元测试：测试独立功能
-│   └── 📂 integration/                # 集成测试：测试模块交互
-│
-├── 🚀 main.py                         # 主程序入口
-├── 📖 README.md                       # 项目说明文档
-└── 📋 requirements.txt                # 项目依赖包
-```
+### 📈 可视化报告
+- 自动生成HTML分析报告
+- 专业的图表展示
+- 详尽的分析说明
 
----
+## 详细安装指南
 
-如果你对新的架构感兴趣，可以Fork /dev，然后按照这个思路独立开发，🙏🙏
-- 我已经把目前的/main主分支的程序Release了一个版本出来，可以直接下载部署使用，[戳这里下载](https://github.com/yagami1997/TradeMind/releases/tag/Trademind_aplha)。
+### Windows 详细安装步骤
 
-### 2025年2月11日更新
-- 解决了MACD值显示错误的算法BUG，修复了KDJ算法错误，解决了一个不重要的告警提示；
-- 重新优化了回测系统，显示回测结果，并且在报告的最后详细说明参数，策略和回测指标；
-- 重新大幅度优化了K线形态特征的判定，优化了显示效果；
-- 更新了股票决策的算法，目前操作结论偏积极，决策偏向布林带和RSI，这是我个人的偏好，大家可以根据自己偏好调整算法；
-- 改进了HTML的显示方式，色彩搭配，采用紧凑型卡片显示更多的个股技术信息和操作指南，命令行分析完成之后，自动打开HTML报告，无需手动；
-- 优化改进了其他问题，提高了分析速度；
-- ⚠️项目目录中main.py是个更简单的快速遍历股票程序，我会重新思考Main程序的功能，架构和体现方式，目前不推荐使用该程序分析股票。主要推荐使用stock_analyzer.py。请在Shell下执行如下命令：（MacOS请开启Shell虚拟化：source venv/bin/activate）
- 
- ```Shell下执行命令
-python stock_analyzer.py
- ```
----
+1. **安装 Python 环境**
+   - 访问 [Python官网](https://www.python.org/downloads/windows/)
+   - 下载最新的 Python 3.9.x 安装包
+   - 运行安装程序，**务必勾选** "Add Python to PATH" 选项
+   - 选择"Customize installation"，确保勾选"pip"和"tcl/tk"
+   - 完成安装后，打开命令提示符(Win+R 输入cmd)，输入`python --version`验证安装
 
-## 项目介绍
-这是一个基于Python开发的股票纯技术面分析工具，目前主要用于美股市场分析。本工具通过分析多个技术指标，识别价格形态，结合成交量分析来生成交易信号，并以直观的HTML报告形式展示分析结果。
+2. **下载 TradeMind Lite**
+   - 方法一: 使用Git (推荐)
+     ```bash
+     # 安装Git (如果尚未安装)
+     # 从 https://git-scm.com/download/win 下载并安装
+     
+     # 克隆仓库
+     git clone https://github.com/your-username/trademind-lite.git
+     cd trademind-lite
+     ```
+   
+   - 方法二: 直接下载
+     - 访问项目GitHub页面
+     - 点击"Code"按钮，选择"Download ZIP"
+     - 解压下载的ZIP文件到合适的位置
+     - 使用命令提示符进入解压后的目录
 
-<img width="1114" alt="image" src="https://github.com/user-attachments/assets/64b79263-c7fe-4291-b942-5774fd445770" />
+3. **创建虚拟环境 (强烈推荐)**
+   ```bash
+   # 进入项目目录
+   cd path\to\trademind-lite
+   
+   # 创建虚拟环境
+   python -m venv venv
+   
+   # 激活虚拟环境
+   venv\Scripts\activate
+   
+   # 确认激活成功 (命令行前应出现(venv)前缀)
+   ```
 
-## 核心功能
+4. **安装依赖包**
+   ```bash
+   # 确保pip是最新版本
+   python -m pip install --upgrade pip
+   
+   # 安装所有依赖
+   pip install -r requirements.txt
+   
+   # 验证关键依赖安装
+   pip list | findstr pandas
+   pip list | findstr numpy
+   pip list | findstr yfinance
+   ```
 
-### 1. 技术指标分析
-- RSI（相对强弱指标）：判断股票是否超买或超卖
-- MACD（移动平均线趋同散度）：判断趋势变化和动量
-- KDJ（随机指标）：提供超买超卖信号
-- 布林带：分析价格波动范围
-- 成交量分析：确认价格趋势的有效性
+5. **首次运行测试**
+   ```bash
+   # 运行主程序
+   python trademind.py
+   
+   # 如果遇到问题，尝试运行诊断脚本
+   python scripts/diagnose.py
+   ```
 
-### 2. 形态识别
-- 吞没形态：预测趋势反转
-- 十字星：表示市场犹豫不决
-- 锤子线：潜在的底部反转信号
-- 上吊线：潜在的顶部反转信号
+### macOS 详细安装步骤
 
-### 3. 信号系统
-- 多指标交叉验证，确保信号可靠
-- 信号可信度评级评分
-- 清晰的买入/卖出建议
+1. **安装必备工具**
+   ```bash
+   # 安装Homebrew (如果尚未安装)
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   
+   # 安装Python
+   brew install python@3.9
+   
+   # 安装Git (如果尚未安装)
+   brew install git
+   
+   # 验证安装
+   python3 --version
+   git --version
+   ```
 
-### 4. 回测系统
-- 使用Pandas + NumPy这个最简单的组合做回测框架；
-- 回测系统支持多股票，多参数，多策略回测；
-- 回测系统支持多种指标，如：RSI，MACD，KDJ，布林带，成交量等；
-- 回测系统支持多种策略，如：金叉买入，死叉卖出，金叉买入，死叉卖出等；
-- 回测系统支持多种参数，如：RSI，MACD，KDJ，布林带，成交量等；
+2. **下载 TradeMind Lite**
+   ```bash
+   # 克隆仓库
+   git clone https://github.com/your-username/trademind-lite.git
+   cd trademind-lite
+   ```
 
-### 5. 自动化HTML分析报告
-- 自动生成HTML格式报告，未来会支持PDF格式；
-- 包含图表和详细分析说明；
-- 支持批量股票分析；
-  
-<img width="1242" alt="image" src="https://github.com/user-attachments/assets/f4b90186-2ff1-4221-87ce-d3cae4573e28" />
-<img width="1228" alt="image" src="https://github.com/user-attachments/assets/a55a7d55-fa63-4e65-a167-45dd1a319a29" />
-<img width="1226" alt="image" src="https://github.com/user-attachments/assets/f94c6cec-3581-4702-a186-5b8a51d715c5" />
-<img width="1229" alt="image" src="https://github.com/user-attachments/assets/31ac852c-d907-4f2a-b165-439e190fe92f" />
-<img width="1021" alt="image" src="https://github.com/user-attachments/assets/55e61df4-be2b-4f3f-896c-6a8b3ac2842a" />
+3. **创建并激活虚拟环境**
+   ```bash
+   # 创建虚拟环境
+   python3 -m venv venv
+   
+   # 激活虚拟环境
+   source venv/bin/activate
+   
+   # 确认激活成功 (命令行前应出现(venv)前缀)
+   ```
 
----
-## 使用指南
+4. **安装依赖包**
+   ```bash
+   # 更新pip
+   pip install --upgrade pip
+   
+   # 安装依赖
+   pip install -r requirements.txt
+   
+   # 如果lxml安装失败，先安装开发工具
+   xcode-select --install
+   pip install lxml
+   ```
 
-### 环境要求
-- Python 3.8 或更高版本
-- pip 包管理工具
-- 稳定的网络连接（访问 Yahoo Finance）
+5. **首次运行**
+   ```bash
+   # 运行主程序
+   python trademind.py
+   ```
 
-### Windows 系统安装步骤
+### Linux (Ubuntu/Debian) 详细安装步骤
 
-1. **安装 Python**
-   - 访问 [Python官网](https://www.python.org/downloads/)
-   - 下载并安装 Python 3.8 或更高版本
-   - 安装时勾选 "Add Python to PATH"
+1. **安装系统依赖**
+   ```bash
+   # 更新包索引
+   sudo apt update
+   
+   # 安装Python和开发工具
+   sudo apt install -y python3.9 python3.9-venv python3-pip git build-essential python3-dev
+   
+   # 安装图形库依赖 (matplotlib需要)
+   sudo apt install -y libfreetype6-dev pkg-config
+   
+   # 验证安装
+   python3.9 --version
+   ```
 
 2. **下载项目**
-   - 克隆或下载本项目到本地
-   - 解压文件（如果是下载的 ZIP）
-
-3. **安装依赖包**
-   - 打开命令提示符 (Win + R，输入 cmd)
-   - 进入项目目录：
-     ```bash
-     cd 项目所在路径
-     ```
-   - 安装所有依赖：
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - 使用虚拟环境安装(推荐)
-
-      **使用 [uv](https://docs.astral.sh/uv/) 管理虚拟环境**
-      ```
-      # 创建虚拟环境
-      uv venv .venv
-      ```
-      **常规方式管理依赖**
-      ```
-      python -m venv .venv
-      ```
-      
-      ```
-      # 激活虚拟环境
-      source .venv/Scripts/activate 
-      ```
-      
-      ```
-      # 将依赖安装到虚拟环境
-      pip install -r requirements.txt
-      # or
-      uv pip install -r requirements.txt 
-      ```
-
-4. **运行程序**
-   - 在命令提示符中输入：
-     ```bash
-     python stock_analyzer.py
-     ```
-
-### Mac 系统安装步骤
-
-1. **安装Python环境**
-   - 打开终端
-   - 安装Homebrew（如果没有）：
-     ```bash
-     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-     ```
-   - 安装Python：
-     ```bash
-     brew install python
-     ```
-   - 安装虚拟化环境
-     ```bash
-     python3 -m venv venv  #创建虚拟化环境
-     source venv/bin/activate
-     ```
-
-2. **下载项目代码**
-   - 点击本页面右上角的绿色"Code"按钮
-   - 选择"Download ZIP"
-   - 解压下载的文件
-
-3. **安装依赖包**
-   - 打开终端
-   - 进入项目目录：
-     ```bash
-     cd 项目所在路径
-     ```
-   - 安装依赖：
-     ```bash
-     pip3 install -r requirements.txt
-
-     ```
-
-4. **运行程序**
-    #确保安装了Venv虚拟化环境之后，先激活虚拟化，再运行程序
-
-   - 在终端中输入：
-     ```bash
-     source venv/bin/activate 
-     python stock_analyzer.py
-    
-     ```
-  - 或者在终端中输入，执行main.py，这是另一个快速分析结果：
-    ```bash
-     source venv/bin/activate 
-     python main.py
-     
-     ```
-
-### 主要依赖包说明
-- 用于处理操作系统中的文件路径
-appdirs==1.4.4
-- Python 的网页解析库，用于提取网页数据
-beautifulsoup4==4.13.3
-- 提供 SSL/TLS 证书验证功能
-certifi==2025.1.31
-- 字符编码检测库
-charset-normalizer==3.4.1
-- 事件驱动编程库
-eventkit==1.0.3
-- 不可变字典实现
-frozendict==2.4.6
-- HTML 和 XML 文件解析器
-html5lib==1.1
-- Interactive Brokers Python API 的异步封装库，用于股票交易
-ib-insync==0.9.86
-- 国际化域名支持库
-idna==3.10
-- XML 和 HTML 处理库，性能优秀
-lxml==5.3.1
-- Python 多任务处理库
-multitasking==0.0.11
-- 解决 Jupyter 中的异步嵌套问题
-nest-asyncio==1.6.0
-- 数值计算库，提供多维数组支持
-numpy==2.0.2
-- 数据分析处理库，提供 DataFrame 数据结构
-pandas==2.2.3
-- 基于 Pandas 的技术分析指标库，用于金融市场分析
-pandas_ta==0.3.14b0
-- 简单而小巧的 ORM 数据库框架
-peewee==3.17.9
-- 日期时间处理工具库
-python-dateutil==2.9.0.post0
-- 时区处理库
-pytz==2025.1
-- HTTP 请求库
-requests==2.32.3
-- 任务调度库
-schedule==1.2.2
-- 科学计算库
-scipy==1.13.1
-- Python 2 和 3 兼容性工具库
-six==1.17.0
-- beautifulsoup4 的依赖库
-soupsieve==2.6
-- 类型提示扩展库
-typing_extensions==4.12.2
-- HTTP 客户端库(2.X版本和yfinance0.2.54不兼容，所以只能用1.26.6)
-urllib3==1.26.6
-- 处理 HTML 和 XML 编码的库
-webencodings==0.5.1
-- Yahoo Finance 数据获取库，用于获取股票市场数据
-yfinance==0.2.54
-- 进度条显示库，用于显示循环进度
-tqdm==4.67.1
-
-
-### 可能遇到的问题和解决方案
-
-1. **安装依赖失败**
    ```bash
-   # 如果安装失败，可以尝试更新 pip
-   # Windows:
-   python -m pip install --upgrade pip
-   # Mac:
-   pip3 install --upgrade pip
+   # 克隆仓库
+   git clone https://github.com/your-username/trademind-lite.git
+   cd trademind-lite
+   ```
+
+3. **创建并激活虚拟环境**
+   ```bash
+   # 创建虚拟环境
+   python3.9 -m venv venv
    
-   # 然后重新安装依赖
+   # 激活虚拟环境
+   source venv/bin/activate
+   ```
+
+4. **安装依赖**
+   ```bash
+   # 更新pip
+   pip install --upgrade pip
+   
+   # 安装依赖
    pip install -r requirements.txt
    ```
 
-2. **lxml 安装问题**
-   - Windows: 可能需要安装 Visual C++ Build Tools
-   - Mac: 可能需要安装 Xcode Command Line Tools
+5. **运行程序**
+   ```bash
+   python trademind.py
+   ```
+
+## 详细使用指南
+
+### 启动与配置
+
+1. **启动程序**
+   - 确保已激活虚拟环境
+   - 运行主程序: `python trademind.py`
+   - 首次运行会创建配置文件和必要的目录结构
+
+2. **主菜单导航**
+   - 使用数字键选择功能
+   - 按`q`或`Ctrl+C`退出程序
+   - 主菜单选项说明:
+     - `1` - 单股票分析: 分析单个股票的技术指标
+     - `2` - 批量分析: 分析多个股票并生成比较报告
+     - `3` - 回测模式: 使用历史数据测试交易策略
+     - `4` - 配置设置: 调整分析参数和报告设置
+     - `5` - 查看历史报告: 浏览之前生成的分析报告
+
+### 股票分析流程
+
+1. **输入股票代码**
+   - 单个股票: 直接输入代码，如 `AAPL`
+   - 多个股票: 用空格分隔，如 `AAPL MSFT GOOGL`
+   - 支持的格式:
+     - 美股: 直接输入代码 (如 `AAPL`)
+     - 特殊市场: 使用后缀 (如 `.HK` 表示香港股市)
+
+2. **选择分析周期**
+   - `1` - 短期分析 (7天)
+   - `2` - 中期分析 (30天)
+   - `3` - 长期分析 (90天)
+   - `4` - 自定义周期 (输入具体天数)
+
+3. **选择分析深度**
+   - `1` - 基础分析: 仅计算主要指标
+   - `2` - 标准分析: 包含形态识别和信号生成
+   - `3` - 深度分析: 包含所有指标和详细解释
+
+4. **等待分析完成**
+   - 程序会显示进度条
+   - 数据获取和处理可能需要几秒到几分钟不等
+   - 分析完成后会自动打开HTML报告
+
+### 报告解读指南
+
+1. **报告结构**
+   - 顶部: 股票基本信息和分析摘要
+   - 中部: 技术指标图表和形态识别结果
+   - 底部: 交易信号和建议操作
+
+2. **技术指标解读**
+   - **RSI**: 
+     - 70以上: 超买区域，可能回调
+     - 30以下: 超卖区域，可能反弹
+     - 50线穿越: 趋势转变信号
+   
+   - **MACD**:
+     - 金叉(DIFF线上穿DEA线): 买入信号
+     - 死叉(DIFF线下穿DEA线): 卖出信号
+     - 柱状图由负转正: 上涨动能增强
+   
+   - **KDJ**:
+     - K线和D线同时在80以上: 超买
+     - K线和D线同时在20以下: 超卖
+     - J线极值: 反转信号
+   
+   - **布林带**:
+     - 价格触及上轨: 可能回落
+     - 价格触及下轨: 可能反弹
+     - 带宽扩大: 波动性增加
+
+3. **信号系统说明**
+   - 信号强度: 1-5星评级
+   - 信号类型: 买入/卖出/观望
+   - 建议操作: 具体的交易建议和风险提示
+
+### 回测系统使用
+
+1. **创建回测任务**
+   - 选择股票池: 单个或多个股票
+   - 设置时间范围: 开始日期和结束日期
+   - 选择策略: 内置策略或自定义策略
+
+2. **配置回测参数**
+   - 初始资金: 设置模拟交易的起始资金
+   - 交易费用: 设置佣金和滑点
+   - 仓位管理: 设置每次交易的资金比例
+
+3. **运行回测**
+   - 等待回测完成
+   - 查看回测报告和性能指标
+   - 分析交易记录和盈亏情况
+
+4. **优化策略**
+   - 调整参数重新回测
+   - 比较不同参数的回测结果
+   - 导出最优参数设置
+
+## 高级功能
+
+### 自定义分析参数
+
+1. **修改技术指标参数**
+   ```bash
+   # 打开配置文件
+   python -m trademind.config --edit indicators
+   ```
+
+2. **自定义报告模板**
+   ```bash
+   # 编辑HTML模板
+   python -m trademind.config --edit templates
+   ```
+
+3. **设置自动分析计划**
+   ```bash
+   # 配置定时任务
+   python -m trademind.scheduler --setup
+   ```
+
+### 数据导出功能
+
+1. **导出分析数据**
+   ```bash
+   # 导出为CSV格式
+   python -m trademind.export --format csv --stocks AAPL,MSFT
+   
+   # 导出为Excel格式
+   python -m trademind.export --format excel --stocks AAPL,MSFT
+   ```
+
+2. **批量生成报告**
      ```bash
-     xcode-select --install
+   # 为股票列表生成报告
+   python -m trademind.batch --file watchlist.txt
+   ```
+
+## 故障排除指南
+
+### 安装问题
+
+1. **Python版本冲突**
+   - **症状**: 安装依赖时出现版本不兼容错误
+   - **解决方案**:
+     ```bash
+     # 确认Python版本
+     python --version
+     
+     # 如果不是3.8或更高版本，安装正确版本
+     # Windows: 从Python官网下载并安装
+     # macOS: brew install python@3.9
+     # Linux: sudo apt install python3.9
+     
+     # 创建新的虚拟环境
+     python3.9 -m venv venv_new
+     source venv_new/bin/activate  # Linux/Mac
+     venv_new\Scripts\activate     # Windows
+     
+     # 重新安装依赖
+     pip install -r requirements.txt
      ```
 
-3. **数据获取超时**
-   - 检查网络连接
-   - 确保能够访问 Yahoo Finance
-   - 考虑使用代理服务器
+2. **依赖安装失败**
+   - **症状**: `pip install -r requirements.txt` 命令失败
+   - **解决方案**:
+     ```bash
+     # 逐个安装核心依赖
+     pip install numpy
+     pip install pandas
+     pip install matplotlib
+     pip install yfinance
+     
+     # 如果lxml安装失败
+     # Windows: 安装Visual C++ Build Tools
+     # macOS: xcode-select --install
+     # Linux: sudo apt install libxml2-dev libxslt-dev
+     
+     pip install lxml
+     
+     # 使用国内镜像源(中国用户)
+     pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+     ```
+
+3. **虚拟环境问题**
+   - **症状**: 激活虚拟环境失败或找不到命令
+   - **解决方案**:
+     ```bash
+     # Windows
+     # 如果提示"无法加载文件 venv\Scripts\activate.ps1，因为在此系统上禁止运行脚本"
+     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+     
+     # 如果venv目录损坏，重新创建
+     rmdir /s /q venv
+     python -m venv venv
+     venv\Scripts\activate
+     
+     # Linux/macOS
+     # 如果提示"source: not found"
+     bash -c "source venv/bin/activate"
+     ```
+
+### 运行时问题
+
+1. **数据获取失败**
+   - **症状**: 程序报错"无法获取股票数据"
+   - **解决方案**:
+     ```bash
+     # 检查网络连接
+     ping yahoo.com
+     
+     # 检查股票代码是否正确
+     python -m trademind.tools.verify_ticker AAPL
+     
+     # 使用代理(如果需要)
+     export HTTPS_PROXY=http://your-proxy:port  # Linux/macOS
+     set HTTPS_PROXY=http://your-proxy:port     # Windows
+     
+     # 手动更新yfinance
+     pip install --upgrade yfinance
+     ```
+
+2. **程序崩溃**
+   - **症状**: 程序意外退出或冻结
+   - **解决方案**:
+     ```bash
+     # 运行诊断工具
+     python -m trademind.diagnose
+     
+     # 检查日志文件
+     cat logs/error.log  # Linux/macOS
+     type logs\error.log # Windows
+     
+     # 清理缓存
+     python -m trademind.tools.clean_cache
+     
+     # 以调试模式运行
+     python -m trademind --debug
+     ```
+
+3. **报告生成失败**
+   - **症状**: 分析完成但没有生成HTML报告
+   - **解决方案**:
+     ```bash
+     # 检查reports目录权限
+     # 确保程序有写入权限
+     
+     # 手动生成最近的分析报告
+     python -m trademind.report --regenerate
+     
+     # 检查模板文件
+     python -m trademind.tools.verify_templates
+     ```
+
+4. **性能问题**
+   - **症状**: 程序运行缓慢
+   - **解决方案**:
+     ```bash
+     # 减少分析的股票数量
+     # 缩短分析周期
+     # 关闭不必要的指标
+     
+     # 清理历史数据
+     python -m trademind.tools.cleanup --older-than 30
+     ```
+
+### 常见错误代码解释
+
+- **错误 E001**: API访问限制 - 等待几分钟后重试
+- **错误 E002**: 股票代码无效 - 检查输入的代码是否正确
+- **错误 E003**: 数据不足 - 选择更长的时间周期或更知名的股票
+- **错误 E004**: 配置文件损坏 - 运行`python -m trademind.config --reset`重置配置
+- **错误 E005**: 内存不足 - 关闭其他应用程序或减少分析的股票数量
 
 ## 常见问题解答
 
-### 1. 如何输入股票代码？
-- 直接输入股票代码，如：AAPL, GOOGL
-- 支持同时分析多个股票（最多10个）
-- 股票代码之间用空格分隔
+### 1. 基本使用问题
 
-### 2. 在哪里查看分析结果？
-- 分析完成后会自动在reports文件夹下生成HTML报告，使用浏览器打开HTML文件即可查看详细分析
-- 如果你对HTML报告形式，样式，色彩不满意，可以在stock_analyzer.py中修改，不会改代码就让Cursor帮你改
-- 当然了，Cursor也可以帮你输出PDF格式的报告，也可以分目录分时间的输出，看你的想象力了
+- **问**: 如何分析多个股票?
+  **答**: 在股票代码输入提示处，输入多个代码并用空格分隔，如`AAPL MSFT GOOGL`。最多支持同时分析10个股票。
 
+- **问**: 如何保存分析结果?
+  **答**: 分析结果会自动保存在`reports`目录下，文件名格式为`股票代码_日期时间.html`。您也可以在查看报告时使用浏览器的"另存为"功能保存报告。
 
-### 3. 报错怎么办？
-- 确保网络连接正常
-- 检查股票代码是否正确
-- 确认是否在美股交易时间运行
-- 查看logs文件夹下的日志文件获取详细错误信息
-- 检查依赖是否升级到合适版本
+- **问**: 如何分析非美股市场?
+  **答**: 添加适当的后缀，例如香港股票添加`.HK`，如`0700.HK`；伦敦股票添加`.L`，如`BP.L`。
 
-## 使用建议
-1. 建议在美股交易时段运行，获取最新数据
-2. 定期更新Python和依赖包
-3. 分析结果仅供参考，请结合其他因素做出投资决策
+- **问**: 程序支持哪些技术指标?
+  **答**: 目前支持RSI、MACD、KDJ、布林带、移动平均线、成交量分析等主要技术指标。可以通过配置文件添加更多指标。
 
-### 依赖库更新说明
-- 建议定期更新依赖包，建议用下列指令更新：
- - 安装 pur
+### 2. 数据与分析问题
+
+- **问**: 数据来源是什么?
+  **答**: 本程序使用Yahoo Finance API获取股票数据，数据可能有15-20分钟的延迟。
+
+- **问**: 为什么某些股票无法获取数据?
+  **答**: 可能是因为:
+  1. 股票代码输入错误
+  2. 该股票在Yahoo Finance上不可用
+  3. 网络连接问题
+  4. API访问限制(短时间内请求过多)
+
+- **问**: 技术分析结果准确吗?
+  **答**: 技术分析基于历史数据和统计模型，不能保证未来表现。结果仅供参考，不构成投资建议。实际交易决策应结合基本面分析和风险管理。
+
+- **问**: 如何解读"信号强度"?
+  **答**: 信号强度(1-5星)表示多个技术指标的一致性程度。5星表示所有指标都指向同一方向，1星表示仅有少数指标支持该信号。
+
+### 3. 高级功能问题
+
+- **问**: 如何自定义交易策略?
+  **答**: 
+  1. 在`strategies`目录下创建新的策略文件
+  2. 继承`BaseStrategy`类并实现`generate_signals`方法
+  3. 在配置文件中注册新策略
+  4. 详细说明请参考`docs/custom_strategy.md`
+
+- **问**: 如何导出历史数据进行离线分析?
+  **答**: 使用导出工具:
  ```bash
-pip install pur 
- ```
-  - 更新 requirements.txt
- ```bash
-pur -r requirements.txt 
-```
+  python -m trademind.export --ticker AAPL --start 2020-01-01 --end 2023-01-01 --format csv
+  ```
 
-- pur 是一个专门用于更新 requirements.txt 文件的 Python 工具。下面是用法：
+- **问**: 如何修改报告样式?
+  **答**: 
+  1. 编辑`templates/report.html`文件修改HTML结构
+  2. 编辑`static/css/style.css`文件修改样式
+  3. 运行`python -m trademind.tools.rebuild_templates`应用更改
 
- - 只更新指定的包
-```bash
-pur django pytest -r requirements.txt
-```
-  - 预览会更新什么（不实际更新）
-```bash
-pur --dry-run -r requirements.txt
-```
-  - 强制更新到最新版本（忽略版本限制
-```bash
-pur --force -r requirements.txt
-```
+- **问**: 如何设置自动运行分析任务?
+  **答**: 
+  1. 配置`config/scheduler.json`文件设置分析任务
+  2. 使用系统的任务调度器(Windows的Task Scheduler或Linux的cron)运行程序
+  3. 例如，在Linux上每天早上9点运行:
+     ```
+     0 9 * * * cd /path/to/trademind && source venv/bin/activate && python -m trademind.batch --auto
+     ```
 
-  - 更新时保存备份
-```bash
-pur --backup -r requirements.txt
-```
-  - 遇到出现依赖错误怎么办，比如如下提示：
-```bash
-245 - yfinance - ERROR - NVDA: No price data found, symbol may be delisted (period=1y)
-```
-  - 解决方法，使用pip手动升级对应的依赖，一般即可解决问题，如果实在解决不了问题，把错误提示发给Cursor，按照引导Debug：
-```bash
-pip install --upgrade yfinance
-```
+### 4. 故障排除问题
 
+- **问**: 程序启动后立即崩溃怎么办?
+  **答**: 
+  1. 检查Python版本是否兼容(3.8+)
+  2. 确认所有依赖都已正确安装
+  3. 查看`logs/error.log`文件了解错误详情
+  4. 尝试以调试模式运行: `python -m trademind --debug`
 
-- 关注项目更新，及时同步最新代码
+- **问**: 分析过程中卡住怎么办?
+  **答**: 
+  1. 按`Ctrl+C`中断程序
+  2. 检查网络连接
+  3. 减少同时分析的股票数量
+  4. 清理缓存: `python -m trademind.tools.clean_cache`
+  5. 重新启动程序
 
-### 注意事项
-1. 首次运行可能需要较长时间下载依赖包
-2. 确保安装的 Python 版本兼容所有依赖
-3. 如遇到 SSL 证书问题，请确保系统时间正确
-4. 建议在虚拟环境中运行项目
+- **问**: 如何解决"内存不足"错误?
+  **答**: 
+  1. 关闭其他内存密集型应用程序
+  2. 减少分析的股票数量或缩短时间周期
+  3. 增加系统虚拟内存(Windows)或交换空间(Linux)
+  4. 使用`--low-memory`选项运行: `python -m trademind --low-memory`
 
-## 问题反馈
-如果使用中遇到问题，欢迎提交Issue或Pull Request。
+- **问**: 更新后程序无法运行怎么办?
+  **答**: 
+  1. 更新依赖: `pip install -r requirements.txt --upgrade`
+  2. 重置配置: `python -m trademind.config --reset`
+  3. 如果问题持续，回滚到之前的版本或查看GitHub上的issue
 
-## 免责声明
-本工具仅供学习和研究使用，不构成任何投资建议和风险控制依据。该工具可能会对行业研究员，公司研究员和注重价值投资的个人投资者提供价值。但是，无论如何，投资者应当对自己的投资决策独立负责。
-
-最后强调：市场有风险，投资需谨慎，不要轻信任何信息，要有自己的独立价值体系和判断能力。
 
 ##  GPLv3 许可证（GNU 通用公共许可证）声明
 
@@ -453,5 +605,5 @@ This project  is licensed under the GNU General Public License v3.0 (GPL-3.0). T
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-02-11</span>
+  <span style="font-size: 14px; color: #888;">2025-03-14 11:01:11 PDT</span>
 </p>
