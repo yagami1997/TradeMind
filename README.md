@@ -508,7 +508,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 
 - **问**: 技术分析结果准确吗?
   **答**: 技术分析基于历史数据和统计模型，不能保证未来表现。结果仅供参考，不构成投资建议。实际交易决策应结合基本面分析和风险管理。
-
+</details>
 
 <details>
 <summary><b>故障排除问题</b>（点击展开）</summary>
@@ -534,6 +534,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
   2. 重置配置: `python -m trademind.config --reset`
   3. 如果问题持续，回滚到之前的版本或查看GitHub上的issue
 </details>
+
 
 ## 📄 GPLv3 许可证（GNU 通用公共许可证）声明
 
