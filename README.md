@@ -1,6 +1,7 @@
-# TradeMind Lite 轻量版美股技术分析工具 Beta 0.3.0
+# 🚀 TradeMind Lite 轻量版美股技术分析工具 Beta 0.3.0
 
-## 重要声明
+## ⚠️ 重要声明
+
 1. 本工具99%的代码由Cursor自动生成，Coding模型Claude3.5，当然也可以用别的。对我来说，更像个赛博念经的，负责规划设计调试。
 2. 本工具的分析结果仅供参考，仅代表我不成熟的策略设计思路，所以不构成任何投资建议和风险控制依据。
 3. 本工具完全开源、免费、无论是Clone、再开发甚至商业化我都不反对，但必须遵守FSF的GPLv3许可证协议。
@@ -9,12 +10,13 @@
 
 ---
 
-## 项目简介
+## 📋 项目简介
+
 TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面分析。它采用多个技术指标和形态识别算法，为投资者提供客观的市场分析和交易建议。本工具特别适合对技术分析感兴趣的个人投资者和研究人员。
 
-## 更新日志
+## 📝 更新日志
 
-### 2025年3月14日重构级更新 (Beta 0.3.0)
+### 🆕 2025年3月14日重构级更新 (Beta 0.3.0)
 - **架构全面重构**：优化代码结构，提升性能，降低内存占用，支持更大规模的股票分析
 - **用户界面改进**：全新的命令行和Web查询双界面，更直观的操作流程，支持多级菜单和快捷命令
 - **技术指标升级**：引入更精准的算法模型，支持自定义参数和信号阈值设置
@@ -24,16 +26,16 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 - **错误处理增强**：完善的异常捕获和日志系统，提供详细的故障排除指南
 - **文档全面更新**：详尽的使用说明和API文档，帮助用户快速上手和进行二次开发
 
-## 核心特性
+## ✨ 核心特性
 
-### 🎯 技术指标分析
+### 📊 技术指标分析
 - **RSI指标**: 基于Wilder原始设计，准确识别超买超卖
 - **MACD指标**: 采用Appel原创算法，把握趋势动量
 - **KDJ指标**: 使用Lane随机指标方法，预测价格转折
 - **布林带**: 动态跟踪价格波动区间
 - **成交量分析**: 验证价格趋势有效性
 
-### 📊 智能信号系统
+### 🎯 智能信号系统
 - 多维度交叉验证
 - 信号可信度量化评分
 - 清晰的操作建议展示
@@ -48,9 +50,10 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 - 专业的图表展示
 - 详尽的分析说明
 
-## 详细安装指南
+## 💻 详细安装指南
 
-### Windows 详细安装步骤
+<details>
+<summary><b>Windows 安装步骤</b>（点击展开）</summary>
 
 1. **安装 Python 环境**
    - 访问 [Python官网](https://www.python.org/downloads/windows/)
@@ -112,8 +115,10 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    # 如果遇到问题，尝试运行诊断脚本
    python scripts/diagnose.py
    ```
+</details>
 
-### macOS 详细安装步骤
+<details>
+<summary><b>macOS 安装步骤</b>（点击展开）</summary>
 
 1. **安装必备工具**
    ```bash
@@ -167,8 +172,10 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    # 运行主程序
    python trademind.py
    ```
+</details>
 
-### Linux (Ubuntu/Debian) 详细安装步骤
+<details>
+<summary><b>Linux (Ubuntu/Debian) 安装步骤</b>（点击展开）</summary>
 
 1. **安装系统依赖**
    ```bash
@@ -214,10 +221,11 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    ```bash
    python trademind.py
    ```
+</details>
 
-## 详细使用指南
+## 📚 详细使用指南
 
-### 启动与配置
+### 🚀 启动与配置
 
 1. **启动程序**
    - 确保已激活虚拟环境
@@ -225,15 +233,23 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    - 首次运行会创建配置文件和必要的目录结构
 
 2. **主菜单导航**
-![image](https://github.com/user-attachments/assets/5eb94899-1edc-4c17-851d-4211823855af)
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/5eb94899-1edc-4c17-851d-4211823855af" alt="主菜单界面" width="700px"/>
+</div>
+
    - 使用数字键选择功能
    - 按`q`或`Ctrl+C`退出程序
    - 主菜单选项说明:
      - `1` - 命令行模式: 进入命令行快速分析
      - `2` - Web模式: 启动一个虚拟的Web服务器，图形界面操作
 
-### 股票分析流程
-![image](https://github.com/user-attachments/assets/0c7f3de4-a15e-4b60-8a39-a6544ab9dda8)
+### 📈 股票分析流程
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/0c7f3de4-a15e-4b60-8a39-a6544ab9dda8" alt="股票分析流程" width="700px"/>
+</div>
+
 1. **输入股票代码**
    - 单个股票: 直接输入代码，如 `AAPL`
    - 多个股票: 用空格分隔，如 `AAPL MSFT GOOGL`
@@ -241,13 +257,21 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      - 美股: 直接输入代码 (如 `AAPL`)
 
 2. **等待分析完成**
-![image](https://github.com/user-attachments/assets/23dfcb33-5c8a-4c67-86a9-d23b83ebfb50)
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/23dfcb33-5c8a-4c67-86a9-d23b83ebfb50" alt="分析进度" width="700px"/>
+</div>
+
    - 程序会显示进度条
    - 数据获取和处理可能需要几秒到2分钟不等
    - 分析完成后点击查看报告按钮打开HTML报告；或者点击列表里的过往报告查看
 
-### 报告解读指南
-![image](https://github.com/user-attachments/assets/1179f396-9bbf-4d09-b534-4f9cffb9456c)
+### 📊 报告解读指南
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/1179f396-9bbf-4d09-b534-4f9cffb9456c" alt="报告示例" width="700px"/>
+</div>
+
 1. **报告结构**
    - 顶部: 股票基本信息和分析摘要
    - 中部: 技术指标图表和形态识别结果
@@ -278,7 +302,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    - 信号类型: 买入/卖出/观望
    - 建议操作: 具体的交易建议和风险提示
 
-### 回测系统使用
+### 🔄 回测系统使用
 
 1. **创建回测任务**
    - 选择股票池: 单个或多个股票
@@ -300,9 +324,9 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    - 比较不同参数的回测结果
    - 导出最优参数设置
 
-## 高级功能
+## ⚙️ 高级功能
 
-### 自定义分析参数
+### 🛠️ 自定义分析参数
 
 1. **修改技术指标参数**
    ```bash
@@ -322,10 +346,10 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    python -m trademind.scheduler --setup
    ```
 
+## 🔧 故障排除指南
 
-## 故障排除指南
-
-### 安装问题
+<details>
+<summary><b>安装问题</b>（点击展开）</summary>
 
 1. **Python版本冲突**
    - **症状**: 安装依赖时出现版本不兼容错误
@@ -386,8 +410,10 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      # 如果提示"source: not found"
      bash -c "source venv/bin/activate"
      ```
+</details>
 
-### 运行时问题
+<details>
+<summary><b>运行时问题</b>（点击展开）</summary>
 
 1. **数据获取失败**
    - **症状**: 程序报错"无法获取股票数据"
@@ -450,10 +476,12 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      # 清理历史数据
      python -m trademind.tools.cleanup --older-than 30
      ```
+</details>
 
-## 常见问题解答
+## ❓ 常见问题解答
 
-### 1. 基本使用问题
+<details>
+<summary><b>基本使用问题</b>（点击展开）</summary>
 
 - **问**: 如何分析多个股票?
   **答**: 在股票代码输入提示处，输入多个代码并用空格分隔，如`AAPL MSFT GOOGL`。最多支持同时分析10个股票。当然我更建议你编辑批量查询列表来方便查询
@@ -461,53 +489,29 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 - **问**: 如何保存分析结果?
   **答**: 分析结果会自动保存在`reports/stocks`目录下，文件名格式为`股票代码_日期时间.html`。您也可以在查看报告时使用浏览器的"另存为"功能保存报告。
 
-- **问**: 如何分析非美股市场?
-  **答**: 添加适当的后缀，例如香港股票添加`.HK`，如`0700.HK`；伦敦股票添加`.L`，如`BP.L`。
-
 - **问**: 程序支持哪些技术指标?
   **答**: 目前支持RSI、MACD、KDJ、布林带、移动平均线、成交量分析等主要技术指标。可以通过配置文件添加更多指标。
+</details>
 
-### 2. 数据与分析问题
+<details>
+<summary><b>数据与分析问题</b>（点击展开）</summary>
 
 - **问**: 数据来源是什么?
-  **答**: 本程序使用Yahoo Finance API获取股票数据，数据可能有15-20分钟的延迟。
+  **答**: 本程序使用Yahoo Finance API获取股票数据，相对IBKR的数据，YF数据偶尔略有几秒钟延迟。
 
 - **问**: 为什么某些股票无法获取数据?
   **答**: 可能是因为:
   1. 股票代码输入错误
   2. 该股票在Yahoo Finance上不可用
-  3. 网络连接问题
+  3. 网络连接问
   4. API访问限制(短时间内请求过多)
 
 - **问**: 技术分析结果准确吗?
   **答**: 技术分析基于历史数据和统计模型，不能保证未来表现。结果仅供参考，不构成投资建议。实际交易决策应结合基本面分析和风险管理。
 
-- **问**: 如何解读"信号强度"?
-  **答**: 信号强度(1-5星)表示多个技术指标的一致性程度。5星表示所有指标都指向同一方向，1星表示仅有少数指标支持该信号。
 
-### 3. 高级功能问题
-
-- **问**: 如何自定义交易策略?
-  **答**: 
-  1. 在`strategies`目录下创建新的策略文件
-  2. 继承`BaseStrategy`类并实现`generate_signals`方法
-  3. 在配置文件中注册新策略
-  4. 详细说明请参考`docs/custom_strategy.md`
-
-- **问**: 如何导出历史数据进行离线分析?
-  **答**: 使用导出工具:
- ```bash
-  python -m trademind.export --ticker AAPL --start 2020-01-01 --end 2023-01-01 --format csv
-  ```
-
-- **问**: 如何修改报告样式?
-  **答**: 
-  1. 编辑`templates/report.html`文件修改HTML结构
-  2. 编辑`static/css/style.css`文件修改样式
-  3. 运行`python -m trademind.tools.rebuild_templates`应用更改
-  4. 当然我建议你最好让Cursor去改，自己改容易崩溃
-
-### 4. 故障排除问题
+<details>
+<summary><b>故障排除问题</b>（点击展开）</summary>
 
 - **问**: 程序启动后立即崩溃怎么办?
   **答**: 
@@ -529,23 +533,24 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
   1. 更新依赖: `pip install -r requirements.txt --upgrade`
   2. 重置配置: `python -m trademind.config --reset`
   3. 如果问题持续，回滚到之前的版本或查看GitHub上的issue
+</details>
 
-
-##  GPLv3 许可证（GNU 通用公共许可证）声明
+## 📄 GPLv3 许可证（GNU 通用公共许可证）声明
 
 本项目采用 **GPLv3 许可证** - 详情请参见 [LICENSE](LICENSE) 文件。下面是我的声明：
 
-- 我在 [MIT 许可证](https://opensource.org/licenses/MIT) 和 [GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html) 的选择上，希望采用[自由软件基金会 (FSF)](https://www.fsf.org/)
-的方式处理许可证问题。希望大家遵守 **GPLv3** 条款，开源你们的成果，并且沿用 **GPLv3** 协议，让更多的人从中受益。
+- 我在 [MIT 许可证](https://opensource.org/licenses/MIT) 和 [GPLv3 许可证](https://www.gnu.org/licenses/gpl-3.0.html) 的选择上，希望采用[自由软件基金会 (FSF)](https://www.fsf.org/)的方式处理许可证问题。希望大家遵守 **GPLv3** 条款，开源你们的成果，并且沿用 **GPLv3** 协议，让更多的人从中受益。
   
 - 我在标准 **GPLv3** 许可证的末尾追加了一段遵循协议的免责声明，全文如下：（本项目特指：[TradeMind](https://github.com/yagami1997/TradeMind)）
 ```bash
-This project  is licensed under the GNU General Public License v3.0 (GPL-3.0). This software is provided 'as-is' without any warranty of any kind, express or implied, including but not limited to the warranties of merchantability or fitness for a particular purpose. In no event will the authors or copyright holders be liable for any damages.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). This software is provided 'as-is' without any warranty of any kind, express or implied, including but not limited to the warranties of merchantability or fitness for a particular purpose. In no event will the authors or copyright holders be liable for any damages.
 ```
+
 **中文含义为：**
 ```bash
 本项目采用 GNU 通用公共许可证 v3.0 (GPL-3.0) 许可。本软件按"现状"提供，不提供任何形式的明示或暗示的保证，包括但不限于适销性或特定用途适用性的保证。在任何情况下，作者或版权持有者均不对任何损害负责。
 ```
+
 - 我已经可以预感到很多大佬沿用这个思路，可以开发出更强更完善的系统造福散户，谢谢你们！🙏🙏🙏
   
 ---
