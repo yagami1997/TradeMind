@@ -225,6 +225,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    - 首次运行会创建配置文件和必要的目录结构
 
 2. **主菜单导航**
+![image](https://github.com/user-attachments/assets/5eb94899-1edc-4c17-851d-4211823855af)
    - 使用数字键选择功能
    - 按`q`或`Ctrl+C`退出程序
    - 主菜单选项说明:
@@ -235,32 +236,21 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      - `5` - 查看历史报告: 浏览之前生成的分析报告
 
 ### 股票分析流程
-
+![image](https://github.com/user-attachments/assets/0c7f3de4-a15e-4b60-8a39-a6544ab9dda8)
 1. **输入股票代码**
    - 单个股票: 直接输入代码，如 `AAPL`
    - 多个股票: 用空格分隔，如 `AAPL MSFT GOOGL`
    - 支持的格式:
      - 美股: 直接输入代码 (如 `AAPL`)
-     - 特殊市场: 使用后缀 (如 `.HK` 表示香港股市)
 
-2. **选择分析周期**
-   - `1` - 短期分析 (7天)
-   - `2` - 中期分析 (30天)
-   - `3` - 长期分析 (90天)
-   - `4` - 自定义周期 (输入具体天数)
-
-3. **选择分析深度**
-   - `1` - 基础分析: 仅计算主要指标
-   - `2` - 标准分析: 包含形态识别和信号生成
-   - `3` - 深度分析: 包含所有指标和详细解释
-
-4. **等待分析完成**
+2. **等待分析完成**
+![image](https://github.com/user-attachments/assets/23dfcb33-5c8a-4c67-86a9-d23b83ebfb50)
    - 程序会显示进度条
-   - 数据获取和处理可能需要几秒到几分钟不等
+   - 数据获取和处理可能需要几秒到2分钟不等
    - 分析完成后会自动打开HTML报告
 
 ### 报告解读指南
-
+![image](https://github.com/user-attachments/assets/1179f396-9bbf-4d09-b534-4f9cffb9456c)
 1. **报告结构**
    - 顶部: 股票基本信息和分析摘要
    - 中部: 技术指标图表和形态识别结果
@@ -288,7 +278,6 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      - 带宽扩大: 波动性增加
 
 3. **信号系统说明**
-   - 信号强度: 1-5星评级
    - 信号类型: 买入/卖出/观望
    - 建议操作: 具体的交易建议和风险提示
 
@@ -336,22 +325,6 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    python -m trademind.scheduler --setup
    ```
 
-### 数据导出功能
-
-1. **导出分析数据**
-   ```bash
-   # 导出为CSV格式
-   python -m trademind.export --format csv --stocks AAPL,MSFT
-   
-   # 导出为Excel格式
-   python -m trademind.export --format excel --stocks AAPL,MSFT
-   ```
-
-2. **批量生成报告**
-     ```bash
-   # 为股票列表生成报告
-   python -m trademind.batch --file watchlist.txt
-   ```
 
 ## 故障排除指南
 
@@ -497,7 +470,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
   **答**: 在股票代码输入提示处，输入多个代码并用空格分隔，如`AAPL MSFT GOOGL`。最多支持同时分析10个股票。
 
 - **问**: 如何保存分析结果?
-  **答**: 分析结果会自动保存在`reports`目录下，文件名格式为`股票代码_日期时间.html`。您也可以在查看报告时使用浏览器的"另存为"功能保存报告。
+  **答**: 分析结果会自动保存在`reports/stocks`目录下，文件名格式为`股票代码_日期时间.html`。您也可以在查看报告时使用浏览器的"另存为"功能保存报告。
 
 - **问**: 如何分析非美股市场?
   **答**: 添加适当的后缀，例如香港股票添加`.HK`，如`0700.HK`；伦敦股票添加`.L`，如`BP.L`。
@@ -543,15 +516,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
   1. 编辑`templates/report.html`文件修改HTML结构
   2. 编辑`static/css/style.css`文件修改样式
   3. 运行`python -m trademind.tools.rebuild_templates`应用更改
-
-- **问**: 如何设置自动运行分析任务?
-  **答**: 
-  1. 配置`config/scheduler.json`文件设置分析任务
-  2. 使用系统的任务调度器(Windows的Task Scheduler或Linux的cron)运行程序
-  3. 例如，在Linux上每天早上9点运行:
-     ```
-     0 9 * * * cd /path/to/trademind && source venv/bin/activate && python -m trademind.batch --auto
-     ```
+  4. 当然我建议你最好让Cursor去改，自己改容易崩溃
 
 ### 4. 故障排除问题
 
@@ -569,13 +534,6 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
   3. 减少同时分析的股票数量
   4. 清理缓存: `python -m trademind.tools.clean_cache`
   5. 重新启动程序
-
-- **问**: 如何解决"内存不足"错误?
-  **答**: 
-  1. 关闭其他内存密集型应用程序
-  2. 减少分析的股票数量或缩短时间周期
-  3. 增加系统虚拟内存(Windows)或交换空间(Linux)
-  4. 使用`--low-memory`选项运行: `python -m trademind --low-memory`
 
 - **问**: 更新后程序无法运行怎么办?
   **答**: 
