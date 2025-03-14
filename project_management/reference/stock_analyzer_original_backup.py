@@ -110,11 +110,11 @@ class StockAnalyzer:
                     description="开盘价和收盘价接近，位于下降趋势之后，可能预示着反转"
                 ))
             else:
-                patterns.append(TechnicalPattern(
-                    name="十字星",
+            patterns.append(TechnicalPattern(
+                name="十字星",
                     confidence=70,
-                    description="开盘价和收盘价接近，表示市场犹豫不决"
-                ))
+                description="开盘价和收盘价接近，表示市场犹豫不决"
+            ))
         
         # 锤子线 - 改进判断标准
         if (lower_shadow > body * 2) and (upper_shadow < body * 0.3) and (body > 0):
@@ -1223,11 +1223,12 @@ class StockAnalyzer:
         返回:
             str: HTML报告内容
         """
-        timestamp = datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now(pytz.timezone('America/Los_Angeles')).strftime('%Y%m%d_%H%M%S')
         report_file = self.results_path / f"stock_analysis_{timestamp}.html"
         
-        # 生成时间戳
-        formatted_time = datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
+        # 生成时间戳（美国洛杉矶时间）
+        formatted_time = datetime.now(pytz.timezone('America/Los_Angeles')).strftime('%Y-%m-%d %H:%M:%S')
+        formatted_time_with_timezone = f"{formatted_time} (美国洛杉矶时间)"
         
         # HTML头部
         html = f"""<!DOCTYPE html>
@@ -1562,7 +1563,7 @@ class StockAnalyzer:
             <div class="container">
                 <div class="header-banner">
                     <h1>{title}</h1>
-                    <p>生成时间: {formatted_time}</p>
+                    <p>生成时间: {formatted_time_with_timezone}</p>
                 </div>
                 
                 <div class="stock-grid">
@@ -1746,7 +1747,7 @@ class StockAnalyzer:
                             <li><strong>动量反转系统</strong> - 基于Wilder的RSI和Lane的随机指标，捕捉市场超买超卖状态和潜在反转点。</li>
                             <li><strong>价格波动系统</strong> - 基于Bollinger带和Donchian通道，分析价格波动性和突破模式。</li>
                         </ul>
-                    </div>
+                        </div>
                     
                     <div class="manual-section">
                         <div class="manual-section-title">交易建议生成</div>
@@ -1776,8 +1777,8 @@ class StockAnalyzer:
                             <strong>免责声明：</strong> 本工具仅供参考，不构成投资建议。投资有风险，入市需谨慎。
                         </div>
                     </div>
-                </div>
-                
+            </div>
+            
                 <div class="risk-banner">
                     <h4>风险提示:</h4>
                     <p>本报告基于雅虎财经API技术分析生成，仅供学习，不构成任何投资建议。</p>
@@ -1788,10 +1789,10 @@ class StockAnalyzer:
                 <div class="footer">
                     <p>美股技术面分析工具 Alpha v0.2.5 | &copy; 2025</p>
                     <div class="watermark">
-                        In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
+                In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
                         Long live the Free Software Movement!
                     </div>
-                </div>
+            </div>
             </div>
         </body>
         </html>
@@ -1799,7 +1800,7 @@ class StockAnalyzer:
         
         # 保存HTML报告
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
                 f.write(html)
             print(f"\n✅ 报告已生成: {report_file}")
             
@@ -1918,21 +1919,21 @@ if __name__ == "__main__":
         while True:  # 添加主循环
             print("\n")
             print("=" * 50)
-            print("美股技术面分析工具 Alpha v0.2.5".center(50))
+            print("美股技术面分析工具 Alpha v0.3.0".center(50))
             print("=" * 50)
             
             print("请选择操作模式：")
-            print("1. 手动输入股票代码")
-            print("2. 使用预设股票组合")  
+        print("1. 手动输入股票代码")
+        print("2. 使用预设股票组合")  
             print("3. 清理历史报告文件")
-            print("0. 退出程序")      
+        print("0. 退出程序")      
             mode = input("\n请输入模式编号 (0-3): ").strip()
-            
-            if mode == "0":
-                print("\n正在退出程序...")
-                print("提示：如需关闭虚拟环境，请在终端输入 'deactivate'")
-                sys.exit(0)
-            
+        
+        if mode == "0":
+            print("\n正在退出程序...")
+            print("提示：如需关闭虚拟环境，请在终端输入 'deactivate'")
+            sys.exit(0)
+        
             elif mode == "3":
                 analyzer.show_clean_menu()
                 continue  # 返回主循环
@@ -1942,124 +1943,130 @@ if __name__ == "__main__":
             title = "美股技术面分析工具Alpha v0.3"
             
             if mode == "1":
-                print("\n请输入股票代码（最多10个，每行一个，支持自定义名称，格式：代码=名称）")
-                print("示例：")
-                print("AAPL=苹果")
-                print("MSFT=微软")
-                print("输入空行结束\n")
-                
-                count = 0
-                while count < 10:
-                    line = input().strip()
-                    if not line:
-                        break
-                        
-                    if "=" in line:
-                        code, name = line.split("=", 1)
-                        code = code.strip().upper()
-                        name = name.strip()
-                    else:
-                        code = line.strip().upper()
-                        name = code
+                print("\n请输入股票代码（最多20个，每行一个，支持自定义名称，格式：代码=名称）")
+            print("示例：")
+            print("AAPL=苹果")
+            print("MSFT=微软")
+            print("输入空行结束\n")
+            
+            count = 0
+                while count < 20:
+                line = input().strip()
+                if not line:
+                    break
                     
-                    if code:
-                        symbols.append(code)
-                        names[code] = name
-                        count += 1
-                
-                title = "自选股票分析报告"
-                
-            elif mode == "2":
-                config_file = Path("config/watchlists.json")
-                if not config_file.exists():
-                    config_dir = Path("config")
-                    config_dir.mkdir(exist_ok=True)
-                    
-                    watchlists_example = {
-                        "美股科技": {
-                            "AAPL": "苹果",
-                            "MSFT": "微软",
-                            "GOOGL": "谷歌",
-                            "AMZN": "亚马逊",
-                            "META": "Meta",
-                            "NVDA": "英伟达",
-                            "TSLA": "特斯拉"
-                        },
-                        "中概股": {
-                            "BABA": "阿里巴巴",
-                            "PDD": "拼多多",
-                            "JD": "京东",
-                            "BIDU": "百度",
-                            "NIO": "蔚来",
-                            "XPEV": "小鹏汽车",
-                            "LI": "理想汽车"
-                        },
-                        "新能源": {
-                            "TSLA": "特斯拉",
-                            "NIO": "蔚来",
-                            "XPEV": "小鹏汽车",
-                            "LI": "理想汽车",
-                            "RIVN": "Rivian",
-                            "LCID": "Lucid"
-                        }
-                    }
-                    
-                    with open(config_file, 'w', encoding='utf-8') as f:
-                        json.dump(watchlists_example, f, ensure_ascii=False, indent=4)
-                
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    watchlists = json.load(f)
-                
-                print("\n可用的股票组合：")
-                for i, group in enumerate(watchlists.keys(), 1):
-                    print(f"{i}. {group} ({len(watchlists[group])}支)")
-                print(f"{len(watchlists) + 1}. 分析所有股票")
-                
-                choice = input("\n请选择要分析的组合 (输入编号): ").strip()
-                
-                if choice.isdigit():
-                    choice_idx = int(choice)
-                    if choice_idx <= len(watchlists):
-                        group_name = list(watchlists.keys())[choice_idx - 1]
-                        symbols = list(watchlists[group_name].keys())
-                        names = watchlists[group_name]
-                        title = f"{group_name}分析报告"
-                    elif choice_idx == len(watchlists) + 1:
-                        for group_stocks in watchlists.values():
-                            for code, name in group_stocks.items():
-                                if code not in names:  # 避免重复
-                                    symbols.append(code)
-                                    names[code] = name
-                        title = "全市场分析报告（预置股票列表）"
-                    else:
-                        raise ValueError("无效的选择")
+                if "=" in line:
+                    code, name = line.split("=", 1)
+                    code = code.strip().upper()
+                    name = name.strip()
                 else:
-                    raise ValueError("无效的输入")
+                    code = line.strip().upper()
+                    name = code
+                
+                if code:
+                    symbols.append(code)
+                    names[code] = name
+                    count += 1
             
+            title = "自选股票分析报告"
+            
+        elif mode == "2":
+            config_file = Path("config/watchlists.json")
+            if not config_file.exists():
+                config_dir = Path("config")
+                config_dir.mkdir(exist_ok=True)
+                
+                watchlists_example = {
+                    "美股科技": {
+                        "AAPL": "苹果",
+                        "MSFT": "微软",
+                        "GOOGL": "谷歌",
+                        "AMZN": "亚马逊",
+                        "META": "Meta",
+                        "NVDA": "英伟达",
+                        "TSLA": "特斯拉"
+                    },
+                    "中概股": {
+                        "BABA": "阿里巴巴",
+                        "PDD": "拼多多",
+                        "JD": "京东",
+                        "BIDU": "百度",
+                        "NIO": "蔚来",
+                        "XPEV": "小鹏汽车",
+                        "LI": "理想汽车"
+                    },
+                    "新能源": {
+                        "TSLA": "特斯拉",
+                        "NIO": "蔚来",
+                        "XPEV": "小鹏汽车",
+                        "LI": "理想汽车",
+                        "RIVN": "Rivian",
+                        "LCID": "Lucid"
+                    }
+                }
+                
+                with open(config_file, 'w', encoding='utf-8') as f:
+                    json.dump(watchlists_example, f, ensure_ascii=False, indent=4)
+            
+            with open(config_file, 'r', encoding='utf-8') as f:
+                watchlists = json.load(f)
+            
+            print("\n可用的股票组合：")
+            for i, group in enumerate(watchlists.keys(), 1):
+                print(f"{i}. {group} ({len(watchlists[group])}支)")
+                
+                # 计算所有股票的总数（去重）
+                all_stocks = set()
+                for group_stocks in watchlists.values():
+                    all_stocks.update(group_stocks.keys())
+                
+                print(f"{len(watchlists) + 1}. 分析所有股票（{len(all_stocks)}支）")
+            
+            choice = input("\n请选择要分析的组合 (输入编号): ").strip()
+            
+            if choice.isdigit():
+                choice_idx = int(choice)
+                if choice_idx <= len(watchlists):
+                    group_name = list(watchlists.keys())[choice_idx - 1]
+                    symbols = list(watchlists[group_name].keys())
+                    names = watchlists[group_name]
+                    title = f"{group_name}分析报告"
+                elif choice_idx == len(watchlists) + 1:
+                    for group_stocks in watchlists.values():
+                        for code, name in group_stocks.items():
+                            if code not in names:  # 避免重复
+                                symbols.append(code)
+                                names[code] = name
+                    title = "全市场分析报告（预置股票列表）"
+                else:
+                    raise ValueError("无效的选择")
             else:
-                raise ValueError("无效的模式选择")
+                raise ValueError("无效的输入")
+        
+        else:
+            raise ValueError("无效的模式选择")
+        
+        if not symbols:
+            raise ValueError("没有选择任何股票")
+        
+        print(f"\n开始分析 {len(symbols)} 支股票...")
+        
+        results = analyzer.analyze_stocks(symbols, names)
+        
+        if results:
+            report_path = analyzer.generate_html_report(results, title)
+            abs_path = os.path.abspath(report_path)
             
-            if not symbols:
-                raise ValueError("没有选择任何股票")
+            print(f"\n✅ 分析完成！")
+            print(f"📊 报告已生成：{abs_path}")
             
-            print(f"\n开始分析 {len(symbols)} 支股票...")
-            
-            results = analyzer.analyze_stocks(symbols, names)
-            
-            if results:
-                report_path = analyzer.generate_html_report(results, title)
-                abs_path = os.path.abspath(report_path)
-                
-                print(f"\n✅ 分析完成！")
-                print(f"📊 报告已生成：{abs_path}")
-                
-                # 在这里打开浏览器，确保只打开一次
-                try:
-                    webbrowser.open(f'file://{abs_path}')
-                    print("🌐 报告已在浏览器中打开")
-                except Exception as e:
-                    print(f"⚠️ 无法自动打开报告：{str(e)}")
-                    print("请手动打开上述文件查看报告")
+                    # 在这里打开浏览器，确保只打开一次
+            try:
+                webbrowser.open(f'file://{abs_path}')
+                print("🌐 报告已在浏览器中打开")
+            except Exception as e:
+                print(f"⚠️ 无法自动打开报告：{str(e)}")
+                print("请手动打开上述文件查看报告")
         
     except KeyboardInterrupt:
         print("\n\n⚠️ 程序被用户中断")

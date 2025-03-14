@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeMind Lite 集成测试报告</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 200px;
+            margin: 10px;
+            text-align: center;
+        }
+        .success { background-color: #2ecc71; color: white; }
+        .failure { background-color: #e74c3c; color: white; }
+        .error { background-color: #f39c12; color: white; }
+        .skipped { background-color: #95a5a6; color: white; }
+        
+        .details {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-item {
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .test-item.failure {
+            border-left-color: #e74c3c;
+        }
+        .test-item.error {
+            border-left-color: #f39c12;
+        }
+        .test-item.skipped {
+            border-left-color: #95a5a6;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #2ecc71;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TradeMind Lite 集成测试报告</h1>
+        <p>生成时间: 2025-03-14 13:07:37</p>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-card">
+            <h3>测试总数</h3>
+            <p style="font-size: 24px;">8</p>
+        </div>
+        <div class="summary-card success">
+            <h3>成功</h3>
+            <p style="font-size: 24px;">8</p>
+        </div>
+        <div class="summary-card failure">
+            <h3>失败</h3>
+            <p style="font-size: 24px;">0</p>
+        </div>
+        <div class="summary-card error">
+            <h3>错误</h3>
+            <p style="font-size: 24px;">0</p>
+        </div>
+        <div class="summary-card skipped">
+            <h3>跳过</h3>
+            <p style="font-size: 24px;">0</p>
+        </div>
+    </div>
+    
+    <div class="details">
+        <h2>测试结果摘要</h2>
+        <p>测试执行时间: 42.61秒</p>
+        <p>成功率: 100.00%</p>
+        
+        <div class="progress-bar">
+            <div class="progress" style="width: 100.00%;">100.00%</div>
+        </div>
+        
+        <h3>失败的测试 (0)</h3>
+        <p>没有失败的测试</p>
+        
+        <h3>错误的测试 (0)</h3>
+        <p>没有错误的测试</p>
+        
+        <h3>跳过的测试 (0)</h3>
+        <p>没有跳过的测试</p>
+    </div>
+    
+    <div class="footer">
+        <p>TradeMind Lite 集成测试系统 &copy; 2025</p>
+    </div>
+</body>
+</html>

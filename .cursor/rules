@@ -32,3 +32,11 @@
 - Document edge cases and their handling mechanisms
 - Maintain backward compatibility unless explicitly specified otherwise
 - Create regression tests for all bug fixes
+
+## Documentation and Timestamp Standards
+- ALWAYS use scripts/generate_timestamp.py to generate timestamps for documentation
+- NEVER manually type timestamps in any project documentation files
+- Run generate_timestamp.py before updating any "last updated" fields
+- Use format 'YYYY-MM-DD HH:MM:SS TZ' for all timestamps in documentation
+- Include timestamp generation in documentation update checklist
+- Verify timestamp format consistency across all project documents

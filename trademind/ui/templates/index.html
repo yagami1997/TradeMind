@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeMind Lite - 美股技术面分析工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">TradeMind Lite</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="cleanReportsBtn">清理报告</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- 头部横幅 -->
+        <div class="header-banner">
+            <h1>TradeMind Lite - 美股技术面分析工具</h1>
+            <p>基于多系统量化模型的美股技术分析工具</p>
+            <p id="current-time">当前时间: <span id="la-time">加载中...</span></p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">美股技术分析</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="analyzeForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="symbols" class="form-label">股票代码</label>
+                                    <textarea class="form-control" id="symbols" name="symbols" rows="3" placeholder="输入股票代码，每行一个，例如：AAPL&#10;MSFT&#10;GOOG"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="watchlist" class="form-label">或选择观察列表</label>
+                                    <select class="form-select" id="watchlist" name="watchlist">
+                                        <option value="">-- 选择观察列表 --</option>
+                                        {% for group_name in watchlists %}
+                                        <option value="{{ group_name }}">{{ group_name }} ({{ watchlists[group_name]|length }}个股票)</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="analyzeAll" name="analyzeAll">
+                                        <label class="form-check-label" for="analyzeAll">
+                                            分析所有股票（所有预设列表）
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="title" class="form-label">报告标题</label>
+                                <input type="text" class="form-control" id="title" name="title" value="美股技术面分析报告">
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="analyzeSpinner" role="status" aria-hidden="true"></span>
+                                    分析股票
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card d-none" id="resultCard">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">分析结果</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success" id="resultMessage"></div>
+                        <div class="d-grid gap-2">
+                            <a href="#" class="btn btn-primary" id="viewReportBtn" target="_blank">查看报告</a>
+                        </div>
+                        <div class="alert alert-info mt-3" style="display: none;">
+                            <h5>回测结果说明</h5>
+                            <p>当回测结果显示为零时，这并不意味着策略无效，而是表明在当前数据和参数条件下没有产生交易。可能的原因包括：</p>
+                            <ul>
+                                <li>历史数据量不足（少于50个交易日）</li>
+                                <li>策略没有生成买入或卖出信号</li>
+                                <li>信号和价格数据不匹配</li>
+                                <li>当前参数设置不适合该股票特性</li>
+                            </ul>
+                            <p>建议：尝试调整参数或使用更长的历史数据来获得更有意义的回测结果。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近报告列表 -->
+        <div class="row mt-4 d-none" id="recentReports">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">最近生成的报告</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group" id="recentReportsList">
+                            <!-- 报告列表将通过JavaScript动态加载 -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析方法说明 - 从原HTML报告迁移 -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="manual-card">
+                    <div class="manual-title">分析方法说明</div>
+                    
+                    <div class="manual-section">
+                        <div class="manual-section-title">技术指标分析</div>
+                        <p>本工具采用多系统量化模型进行技术分析，基于以下权威交易系统：</p>
+                        <ul>
+                            <li><strong>趋势确认系统</strong> - 基于Dow理论和Appel的MACD原始设计，通过分析价格趋势和动量变化，识别市场主导方向。</li>
+                            <li><strong>动量反转系统</strong> - 基于Wilder的RSI和Lane的随机指标，捕捉市场超买超卖状态和潜在反转点。</li>
+                            <li><strong>价格波动系统</strong> - 基于Bollinger带和Donchian通道，分析价格波动性和突破模式。</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="manual-section">
+                        <div class="manual-section-title">交易建议生成</div>
+                        <p>交易建议基于多因子模型理论，综合评估各系统信号，置信度表示信号强度：</p>
+                        <ul>
+                            <li><strong>强烈买入/卖出</strong>: 置信度≥75%或≤25%，表示多个系统高度一致的信号</li>
+                            <li><strong>建议买入/卖出</strong>: 置信度在60-75%或25-40%之间，表示系统间存在较强共识</li>
+                            <li><strong>观望</strong>: 置信度在40-60%之间，表示系统间信号不明确或相互矛盾</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="manual-section">
+                        <div class="manual-section-title">回测分析方法</div>
+                        <p>回测采用行业标准方法论，包括：</p>
+                        <ul>
+                            <li><strong>Markowitz投资组合理论</strong> - 科学的风险管理方法，优化资产配置和风险控制</li>
+                            <li><strong>Kestner交易系统评估</strong> - 专业的回撤计算和系统性能评估方法</li>
+                            <li><strong>Sharpe/Sortino比率</strong> - 标准化风险调整收益指标，衡量策略的风险回报效率</li>
+                            <li><strong>Van K. Tharp头寸模型</strong> - 优化资金管理和头寸规模，控制单笔交易风险</li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                            <p><strong>回测结果为零的说明：</strong></p>
+                            <p>当回测结果显示为零时，这并不意味着策略无效，而是表明在当前数据和参数条件下没有产生交易。可能的原因包括：</p>
+                            <ul>
+                                <li>历史数据量不足（少于50个交易日）</li>
+                                <li>策略没有生成买入或卖出信号</li>
+                                <li>信号和价格数据不匹配</li>
+                                <li>当前参数设置不适合该股票特性</li>
+                            </ul>
+                            <p>建议：尝试调整参数或使用更长的历史数据来获得更有意义的回测结果。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="manual-section">
+                        <div class="manual-section-title">使用建议</div>
+                        <p>本工具提供的分析结果应作为投资决策的参考，而非唯一依据。建议结合基本面分析、市场环境和个人风险偏好综合考量。交易策略的有效性可能随市场环境变化而改变，请定期评估策略表现。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 风险提示横幅 - 从原HTML报告迁移 -->
+        <div class="risk-banner">
+            <h4>风险提示:</h4>
+            <p>本工具基于雅虎财经API技术分析生成，仅供学习，不构成任何投资建议。</p>
+            <p>投资者应当独立判断，自主决策，自行承担投资风险，投资是修行，不要指望单边信息。</p>
+            <p>过往市场表现不代表未来收益，市场有较大风险，投资需理性谨慎。</p>
+        </div>
+    </div>
+
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <p class="text-muted mb-0">TradeMind Lite Beta 0.3.0 © 2025 | <a href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a></p>
+        </div>
+    </footer>
+
+    <!-- 清理报告模态框 -->
+    <div class="modal fade" id="cleanReportsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">清理旧报告</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cleanReportsForm">
+                        <div class="mb-3">
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary clean-option" data-days="7">清理7天前的报告</button>
+                                <button type="button" class="btn btn-outline-primary clean-option" data-days="30">清理一个月前的报告</button>
+                                <button type="button" class="btn btn-outline-danger clean-option" data-days="0">清理所有报告</button>
+                            </div>
+                            <div class="mt-3">
+                                <label for="days" class="form-label">或手动输入天数</label>
+                                <input type="number" class="form-control" id="days" name="days" value="30" min="0">
+                                <div class="form-text">输入0表示清理所有报告</div>
+                            </div>
+                            <div class="mt-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="forceAll" name="forceAll">
+                                <label class="form-check-label" for="forceAll">强制删除所有报告（无视日期限制）</label>
+                                <div class="form-text text-danger">警告：此操作将删除所有报告文件，无法恢复！</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmCleanBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="cleanSpinner" role="status" aria-hidden="true"></span>
+                        确认清理
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            // 获取洛杉矶时间
+            const la_time = new Date(now.toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+            
+            // 使用更准确的夏令时判断方法
+            const year = la_time.getFullYear();
+            const dst_start = new Date(year, 2, 14); // 3月第二个星期日
+            const dst_end = new Date(year, 10, 7);   // 11月第一个星期日
+            
+            // 调整到正确的星期日
+            dst_start.setDate(14 - dst_start.getDay());
+            dst_end.setDate(7 - dst_end.getDay());
+            
+            // 判断当前是否在夏令时范围内
+            const is_dst = la_time >= dst_start && la_time < dst_end;
+            const tz_suffix = is_dst ? "PDT" : "PST";
+            
+            document.getElementById('la-time').textContent = 
+                la_time.getFullYear() + '/' + 
+                String(la_time.getMonth() + 1).padStart(2, '0') + '/' + 
+                String(la_time.getDate()).padStart(2, '0') + ' ' + 
+                String(la_time.getHours()).padStart(2, '0') + ':' + 
+                String(la_time.getMinutes()).padStart(2, '0') + ':' + 
+                String(la_time.getSeconds()).padStart(2, '0') + 
+                ` (${tz_suffix} Time)`;
+        }
+        
+        // 每秒更新一次时间
+        setInterval(updateTime, 1000);
+        updateTime();  // 立即更新一次
+    </script>
+</body>
+</html> 
