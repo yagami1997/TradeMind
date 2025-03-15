@@ -125,6 +125,11 @@ def analyze_stocks():
                 total = len(symbols)
                 
                 for index, symbol in enumerate(symbols, 1):
+                    # 检查服务器是否已停止
+                    if not server_running.is_set():
+                        print("\n检测到服务器停止信号，正在安全终止分析...")
+                        break
+                        
                     try:
                         # 更新进度信息
                         analysis_progress["current_index"] = index
@@ -225,10 +230,17 @@ def analyze_stocks():
                         continue
                 
                 # 生成报告
-                report_path = analyzer.generate_report(results, title)
-                analysis_progress["last_report_path"] = report_path
+                if results and server_running.is_set():  # 只有在服务器仍在运行且有结果时才生成报告
+                    report_path = analyzer.generate_report(results, title)
+                    analysis_progress["last_report_path"] = report_path
+                
+                # 更新分析状态
                 analysis_progress["in_progress"] = False
                 analysis_progress["percent"] = 1.0
+                
+                # 检查服务器是否已停止
+                if not server_running.is_set():
+                    print("\n分析已完成，但服务器已停止，不生成报告")
                 
             except Exception as e:
                 logger.exception(f"分析过程中发生错误: {str(e)}")
@@ -423,7 +435,7 @@ def clean_reports():
             days = 30
         
         # 获取报告目录
-        reports_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'reports')
+        reports_dir = analyzer.results_path
         
         # 如果目录不存在，创建它
         if not os.path.exists(reports_dir):
@@ -476,12 +488,17 @@ def shutdown_server():
     """
     关闭服务器API
     """
-    global server_running
+    global server_running, analysis_progress
     try:
         # 设置服务器停止标志
         if 'server_running' in globals() and server_running is not None:
             server_running.clear()
-            print("\n浏览器已关闭，服务器正在停止...")
+            # 如果正在分析，标记分析为已完成
+            if analysis_progress["in_progress"]:
+                analysis_progress["in_progress"] = False
+                print("\n浏览器已关闭，但分析任务正在进行。正在安全停止...")
+            else:
+                print("\n浏览器已关闭，服务器正在停止...")
         return jsonify({'success': True, 'message': '服务器正在关闭'})
     except Exception as e:
         logger.exception(f"关闭服务器时出错: {str(e)}")
@@ -638,6 +655,9 @@ def start_server(host, port):
     
     def handle_commands():
         """处理用户输入的命令"""
+        last_check_time = time.time()
+        check_interval = 1.0  # 每秒检查一次服务器状态
+        
         while server_running.is_set():
             try:
                 # 使用非阻塞的方式检查输入
@@ -645,7 +665,16 @@ def start_server(host, port):
                 import sys
                 
                 # 检查是否有输入可用（非阻塞）
-                ready, _, _ = select.select([sys.stdin], [], [], 1.0)  # 1秒超时
+                ready, _, _ = select.select([sys.stdin], [], [], 0.5)  # 0.5秒超时，更频繁地检查
+                
+                # 定期检查服务器状态，即使没有用户输入
+                current_time = time.time()
+                if current_time - last_check_time >= check_interval:
+                    last_check_time = current_time
+                    if not server_running.is_set():
+                        print("\n检测到浏览器已关闭，服务器正在停止...")
+                        print("服务器已停止，返回主菜单...")
+                        return False
                 
                 # 如果有输入可用
                 if ready:
@@ -699,7 +728,7 @@ def start_server(host, port):
                         
                     else:
                         print("\n未知命令。输入 1 或 help 查看可用命令。")
-                        
+                    
             except (EOFError, KeyboardInterrupt):
                 print("\n使用 2 或 stop 命令来停止服务器")
                 continue
