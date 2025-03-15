@@ -4,40 +4,42 @@ TradeMind Lite - Web界面
 本模块提供TradeMind Lite的Web界面，允许用户通过浏览器执行股票分析和报告生成。
 """
 
-import os
 import sys
-import logging
-from pathlib import Path
-from typing import List, Dict, Optional
-import json
-from datetime import datetime, timedelta
-import pytz
-import webbrowser
-import threading
+import os
 import time
-from urllib.parse import quote
+import threading
 import socket
-import psutil
+import signal
+import webbrowser
+import json
+import logging
 import subprocess
+import platform
+import re
+import glob
+from pathlib import Path
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple, Any
+from urllib.parse import quote
+import psutil
 import requests
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
-from werkzeug.utils import secure_filename
-from flask_cors import CORS
-import yfinance as yf
 import pandas as pd
 import numpy as np
+import warnings
+import pytz
+import yfinance as yf
 
-from trademind.core.analyzer import StockAnalyzer
-from trademind.core.indicators import (
-    calculate_rsi, 
-    calculate_macd, 
-    calculate_kdj, 
-    calculate_bollinger_bands
-)
+from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
+from flask_cors import CORS
+
+from trademind.core.indicators import calculate_rsi, calculate_macd, calculate_kdj, calculate_bollinger_bands
+from trademind.core.signals import generate_signals
+from trademind.backtest import run_backtest
 from trademind.core.patterns import identify_candlestick_patterns
-from trademind.core.signals import generate_trading_advice, generate_signals
-from trademind.backtest.engine import run_backtest
+from trademind.core.analyzer import StockAnalyzer
+from trademind.reports.generator import generate_html_report as generate_report
+from trademind.data.loader import get_stock_data, get_stock_info
 from trademind import compat
 from trademind import __version__
 
@@ -51,6 +53,7 @@ CORS(app)  # 启用CORS支持
 analyzer = None
 watchlists = {}
 logger = None
+server_running = None
 analysis_progress = {
     "in_progress": False,
     "percent": 0,
@@ -111,8 +114,12 @@ def analyze_stocks():
         
         # 创建一个线程来执行分析，以便不阻塞响应
         def run_analysis():
-            global analysis_progress
+            global analysis_progress, analyzer
             try:
+                # 确保analyzer已初始化
+                if analyzer is None:
+                    analyzer = StockAnalyzer()
+                
                 # 重写analyze_stocks方法，添加进度跟踪
                 results = []
                 total = len(symbols)
@@ -182,12 +189,12 @@ def analyze_stocks():
                         }
                         
                         print("分析K线形态...")
-                        # 调用形态识别模块
-                        patterns = identify_candlestick_patterns(hist.tail(5))
+                        # 创建StockAnalyzer实例并调用形态识别方法
+                        patterns = analyzer.identify_patterns(hist.tail(5))
                         
                         print("生成交易建议...")
-                        # 调用信号生成模块
-                        advice = generate_trading_advice(indicators, current_price, patterns)
+                        # 调用StockAnalyzer的交易建议生成方法
+                        advice = analyzer.generate_trading_advice(indicators, current_price, patterns)
                         
                         print("执行策略回测...")
                         # 生成交易信号
@@ -403,40 +410,90 @@ def list_watchlists():
 
 @app.route('/clean', methods=['POST'])
 def clean_reports():
-    """清理旧报告"""
-    days = request.form.get('days', 30, type=int)
-    force_all = request.form.get('force_all', 'false') == 'true'
-    
+    """
+    清理报告API
+    """
     try:
-        print(f"开始清理报告，阈值: {days}天, 强制删除所有: {force_all}")
+        days = request.form.get('days', '30')
+        force_all = request.form.get('force_all', 'false').lower() == 'true'
         
-        # 直接调用analyzer的clean_reports方法
-        # 如果force_all为True，则传入days_threshold=None，表示删除所有报告
-        count = analyzer.clean_reports(days_threshold=None if force_all else days)
+        try:
+            days = int(days)
+        except ValueError:
+            days = 30
         
-        # 返回结果
-        result_msg = f"已删除 {count} 个{'所有' if force_all else f'超过 {days} 天的旧'}报告"
-        print(result_msg)
+        # 获取报告目录
+        reports_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'reports')
         
+        # 如果目录不存在，创建它
+        if not os.path.exists(reports_dir):
+            os.makedirs(reports_dir)
+            return jsonify({'success': True, 'message': '没有报告需要清理'})
+        
+        # 获取当前时间
+        now = datetime.now()
+        
+        # 计算删除的文件数量
+        deleted_count = 0
+        
+        # 遍历报告目录
+        for filename in os.listdir(reports_dir):
+            file_path = os.path.join(reports_dir, filename)
+            
+            # 只处理HTML文件
+            if not filename.endswith('.html'):
+                continue
+                
+            # 如果强制删除所有，直接删除
+            if force_all:
+                os.remove(file_path)
+                deleted_count += 1
+                continue
+                
+            # 获取文件修改时间
+            file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+            
+            # 计算文件年龄（天）
+            file_age = (now - file_time).days
+            
+            # 如果文件年龄大于指定天数，删除它
+            if file_age >= days:
+                os.remove(file_path)
+                deleted_count += 1
+        
+        # 返回成功消息
         return jsonify({
             'success': True, 
-            'message': result_msg,
-            'count': count
+            'message': f'成功清理 {deleted_count} 个报告文件'
         })
+        
     except Exception as e:
-        print(f"清理报告时出错: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
+        logger.exception(f"清理报告时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/shutdown', methods=['POST'])
+def shutdown_server():
+    """
+    关闭服务器API
+    """
+    global server_running
+    try:
+        # 设置服务器停止标志
+        if 'server_running' in globals() and server_running is not None:
+            server_running.clear()
+            print("\n浏览器已关闭，服务器正在停止...")
+        return jsonify({'success': True, 'message': '服务器正在关闭'})
+    except Exception as e:
+        logger.exception(f"关闭服务器时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
 
 def refresh_reports_cache():
-    """强制刷新报告列表缓存"""
-    try:
-        # 这里可以添加任何需要的缓存刷新逻辑
-        logger.info("刷新报告列表缓存")
-    except Exception as e:
-        logger.error(f"刷新报告列表缓存失败: {str(e)}")
+    """
+    刷新报告缓存
+    """
+    # 获取报告目录
+    # 这里可以添加任何需要的缓存刷新逻辑
+    logger.info("刷新报告列表缓存")
 
 def load_watchlists() -> Dict[str, Dict[str, str]]:
     """
@@ -567,6 +624,7 @@ def start_server(host, port):
     print("\n" + "="*50 + "\n")
     
     # 创建一个事件来控制服务器
+    global server_running
     server_running = threading.Event()
     server_running.set()
     
@@ -582,61 +640,72 @@ def start_server(host, port):
         """处理用户输入的命令"""
         while server_running.is_set():
             try:
-                command = input("\n输入命令或数字（1-5）: ").strip().lower()
+                # 使用非阻塞的方式检查输入
+                import select
+                import sys
                 
-                # 支持数字输入
-                command_map = {
-                    '1': 'help',
-                    '2': 'stop',
-                    '3': 'restart',
-                    '4': 'status',
-                    '5': 'clear'
-                }
+                # 检查是否有输入可用（非阻塞）
+                ready, _, _ = select.select([sys.stdin], [], [], 1.0)  # 1秒超时
                 
-                # 如果输入的是数字，转换为对应的命令
-                if command in command_map:
-                    command = command_map[command]
-                
-                if command == 'help':
-                    print("\n可用命令：")
-                    print("1 或 help     - 显示本帮助信息")
-                    print("2 或 stop     - 停止服务器")
-                    print("3 或 restart  - 重启服务器")
-                    print("4 或 status   - 显示当前服务器状态")
-                    print("5 或 clear    - 清屏")
+                # 如果有输入可用
+                if ready:
+                    command = input("\n输入命令或数字（1-5）: ").strip().lower()
                     
-                elif command == 'stop':
-                    print("\n正在停止服务器...")
-                    server_running.clear()
-                    # 不再使用sys.exit()，而是返回
-                    return False
+                    # 支持数字输入
+                    command_map = {
+                        '1': 'help',
+                        '2': 'stop',
+                        '3': 'restart',
+                        '4': 'status',
+                        '5': 'clear'
+                    }
                     
-                elif command == 'restart':
-                    print("\n正在重启服务器...")
-                    server_running.clear()
-                    time.sleep(1)
-                    return True  # 表示需要重启
+                    # 如果输入的是数字，转换为对应的命令
+                    if command in command_map:
+                        command = command_map[command]
                     
-                elif command == 'status':
-                    if server_running.is_set():
-                        print(f"\n服务器正在运行")
-                        print(f"地址: http://{host if host != '0.0.0.0' else 'localhost'}:{port}")
-                        print(f"PID: {os.getpid()}")
-                    else:
-                        print("\n服务器已停止")
+                    if command == 'help':
+                        print("\n可用命令：")
+                        print("1 或 help     - 显示本帮助信息")
+                        print("2 或 stop     - 停止服务器")
+                        print("3 或 restart  - 重启服务器")
+                        print("4 或 status   - 显示当前服务器状态")
+                        print("5 或 clear    - 清屏")
                         
-                elif command == 'clear':
-                    os.system('cls' if os.name == 'nt' else 'clear')
-                    print(f"\n服务器正在运行: http://{host if host != '0.0.0.0' else 'localhost'}:{port}")
-                    print("\n输入命令或数字（1-5）")
-                    
-                else:
-                    print("\n未知命令。输入 1 或 help 查看可用命令。")
-                    
+                    elif command == 'stop':
+                        print("\n正在停止服务器...")
+                        server_running.clear()
+                        # 不再使用sys.exit()，而是返回
+                        return False
+                        
+                    elif command == 'restart':
+                        print("\n正在重启服务器...")
+                        server_running.clear()
+                        time.sleep(1)
+                        return True  # 表示需要重启
+                        
+                    elif command == 'status':
+                        if server_running.is_set():
+                            print(f"\n服务器正在运行")
+                            print(f"地址: http://{host if host != '0.0.0.0' else 'localhost'}:{port}")
+                            print(f"PID: {os.getpid()}")
+                        else:
+                            print("\n服务器已停止")
+                            
+                    elif command == 'clear':
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        print(f"\n服务器正在运行: http://{host if host != '0.0.0.0' else 'localhost'}:{port}")
+                        print("\n输入命令或数字（1-5）")
+                        
+                    else:
+                        print("\n未知命令。输入 1 或 help 查看可用命令。")
+                        
             except (EOFError, KeyboardInterrupt):
                 print("\n使用 2 或 stop 命令来停止服务器")
                 continue
         
+        # 如果服务器停止了，自动返回到主菜单
+        print("\n服务器已停止，返回主菜单...")
         return False  # 默认不重启
     
     try:

@@ -31,12 +31,12 @@ def print_banner():
     打印TradeMind Lite的ASCII复古风标题
     """
     # 创建单行ASCII风格标题
-    banner = r"""
- _____           _      __  __ _           _   _     _ _       
-|_   _|_ _ _ __ | | ___|  \/  (_)_ __   __| | | |   (_) |_ ___ 
-  | |/ _` | '_ \| |/ _ \ |\/| | | '_ \ / _` | | |   | | __/ _ \
-  | | (_| | | | | |  __/ |  | | | | | | (_| | | |___| | ||  __/
-  |_|\__,_|_| |_|_|\___|_|  |_|_|_| |_|\__,_| |_____|_|\__\___|
+    banner = """
+ _____               _       __  __ _           _   _    _ _      
+|_   _|_ __ __ _  __| | ___ |  \/  (_)_ __   __| | | |  (_) |_ ___ 
+  | || '__/ _` |/ _` |/ _ \| |\/| | | '_ \ / _` | | |  | | __/ _ \\
+  | || | | (_| | (_| |  __/| |  | | | | | | (_| | | |__| | ||  __/
+  |_||_|  \__,_|\__,_|\___||_|  |_|_|_| |_|\__,_| |_____/ \__\___|
 """
     
     # 创建面板，使用适当的宽度
@@ -45,14 +45,14 @@ def print_banner():
         box=box.ROUNDED,
         border_style="cyan",
         padding=(0, 2),
-        width=70
+        width=80  # 增加宽度以确保完整显示ASCII艺术
     )
     
     # 打印面板
     console.print(Align.center(panel))
     
     # 打印版本和作者信息
-    info_table = Table(show_header=False, box=box.SIMPLE, padding=(0, 2), width=70)
+    info_table = Table(show_header=False, box=box.SIMPLE, padding=(0, 2), width=80)
     info_table.add_column("Key", style="cyan", width=10)
     info_table.add_column("Value", style="green")
     
@@ -74,14 +74,14 @@ def show_menu():
         header_style="bold cyan",
         box=box.ROUNDED,
         border_style="cyan",
-        width=70,  # 与标题宽度保持一致
+        width=80,  # 与标题宽度保持一致
         padding=(0, 2)
     )
     
     # 添加列
     menu_table.add_column("选项", style="yellow", width=8, justify="center")
     menu_table.add_column("功能", style="green", width=15)
-    menu_table.add_column("描述", style="white", width=37)  # 调整以适应总宽度70
+    menu_table.add_column("描述", style="white", width=47)  # 调整以适应总宽度80
     
     # 添加菜单项
     menu_table.add_row(
