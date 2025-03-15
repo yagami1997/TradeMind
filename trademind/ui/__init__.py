@@ -6,7 +6,7 @@ TradeMind Lite - 用户界面包
 
 __version__ = "0.3.0"
 
-from .cli import run_interactive_mode
+from .cli import run_cli
 from .web import run_web_server
 
-__all__ = ['run_interactive_mode', 'run_web_server'] 
+__all__ = ['run_cli', 'run_web_server'] 

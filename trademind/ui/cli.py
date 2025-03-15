@@ -178,261 +178,192 @@ def analyze_stocks(symbols: List[str], names: Dict[str, str], analyzer: StockAna
 
 def run_cli() -> None:
     """
-    运行命令行界面
+    运行简洁版命令行界面
+    
+    这个函数提供了一个简洁的命令行界面，用于执行股票分析和报告生成。
     """
-    # 打印标题
-    print_banner()
-    
-    # 创建命令行参数解析器
-    parser = argparse.ArgumentParser(description='TradeMind Lite - 股票技术分析工具')
-    
-    # 添加子命令
-    subparsers = parser.add_subparsers(dest='command', help='命令')
-    
-    # 分析命令
-    analyze_parser = subparsers.add_parser('analyze', help='分析股票')
-    analyze_parser.add_argument('--symbols', '-s', nargs='+', help='股票代码列表')
-    analyze_parser.add_argument('--watchlist', '-w', help='使用观察列表')
-    analyze_parser.add_argument('--all', '-a', action='store_true', help='分析所有预设股票')
-    analyze_parser.add_argument('--title', '-t', default='股票分析报告', help='报告标题')
-    analyze_parser.add_argument('--no-browser', '-n', action='store_true', help='不在浏览器中打开报告')
-    
-    # 列出观察列表命令
-    list_parser = subparsers.add_parser('list', help='列出观察列表')
-    
-    # 清理报告命令
-    clean_parser = subparsers.add_parser('clean', help='清理旧报告')
-    clean_parser.add_argument('--days', '-d', type=int, default=30, help='清理多少天前的报告')
-    
-    # 版本命令
-    version_parser = subparsers.add_parser('version', help='显示版本信息')
-    
-    # 全局选项
-    parser.add_argument('--verbose', '-v', action='store_true', help='启用详细日志')
-    parser.add_argument('--compat', '-c', action='store_true', help='使用兼容模式')
-    parser.add_argument('--interactive', '-i', action='store_true', help='使用交互式模式')
-    
-    # 解析命令行参数
-    args = parser.parse_args()
-    
     # 设置日志
-    logger = setup_logging(args.verbose)
+    logger = setup_logging(False)
     
-    # 如果指定了交互式模式或没有指定命令，进入交互式模式
-    if args.interactive or not args.command:
-        run_interactive_mode(logger)
-        return
-    
-    # 加载观察列表
-    watchlists = load_watchlists()
-    
-    # 处理命令
-    if args.command == 'list':
-        list_watchlists(watchlists)
-        return
-    
-    elif args.command == 'version':
-        from trademind import __version__
-        console.print(f"[bold cyan]TradeMind Lite 版本:[/bold cyan] [bold green]Beta {__version__}[/bold green]")
-        return
-    
-    elif args.command == 'clean':
-        with console.status("[bold green]正在清理旧报告...[/bold green]", spinner="dots"):
-            analyzer = StockAnalyzer()
-            analyzer.clean_reports(days_threshold=args.days)
-        console.print(f"[bold green]已清理 {args.days} 天前的报告[/bold green]")
-        return
-    
-    elif args.command == 'analyze':
-        # 确定要分析的股票
-        symbols_to_analyze = []
-        names_dict = {}
-        
-        if args.symbols:
-            symbols_to_analyze = args.symbols
-            # 使用股票代码作为名称
-            names_dict = {symbol: symbol for symbol in symbols_to_analyze}
-            console.print(f"[bold cyan]将分析以下股票:[/bold cyan] [green]{', '.join(symbols_to_analyze)}[/green]")
-        
-        elif args.watchlist:
-            if args.watchlist in watchlists:
-                symbols_dict = watchlists[args.watchlist]
-                symbols_to_analyze = list(symbols_dict.keys())
-                names_dict = symbols_dict
-                console.print(f"[bold cyan]将分析观察列表:[/bold cyan] [green]{args.watchlist}[/green] ([cyan]{len(symbols_to_analyze)}[/cyan] 只股票)")
-            else:
-                logger.error(f"未找到观察列表: {args.watchlist}")
-                console.print(f"[bold red]未找到观察列表:[/bold red] [red]{args.watchlist}[/red]")
-                console.print("[bold cyan]可用的观察列表:[/bold cyan]")
-                for group_name in watchlists.keys():
-                    console.print(f"  - [green]{group_name}[/green]")
-                return
-        
-        elif args.all:
-            # 收集所有预设股票（去重）
-            all_symbols = []
-            all_names = {}
-            for group_name, group_stocks in watchlists.items():
-                for code, name in group_stocks.items():
-                    if code not in all_names:  # 避免重复
-                        all_symbols.append(code)
-                        all_names[code] = name
-            
-            symbols_to_analyze = all_symbols
-            names_dict = all_names
-            console.print(f"[bold cyan]将分析所有预设股票:[/bold cyan] [green]{len(symbols_to_analyze)}[/green] 只股票")
-        
-        else:
-            logger.error("未指定股票代码或观察列表")
-            console.print("[bold red]错误:[/bold red] 请使用--symbols指定股票代码或使用--watchlist指定观察列表")
-            return
-        
-        # 如果没有股票可分析，退出
-        if not symbols_to_analyze:
-            logger.error("没有股票可分析")
-            console.print("[bold red]错误:[/bold red] 没有股票可分析")
-            return
-        
-        # 创建分析器
-        analyzer = StockAnalyzer()
-        
-        # 分析股票
-        try:
-            report_path = analyze_stocks(
-                symbols_to_analyze, 
-                names_dict, 
-                analyzer, 
-                not args.no_browser,
-                args.title
-            )
-            
-            logger.info(f"分析完成，报告已生成: {report_path}")
-            
-        except Exception as e:
-            logger.exception(f"分析过程中发生错误: {str(e)}")
-            console.print(f"[bold red]错误:[/bold red] {str(e)}")
-            return
-
-def run_interactive_mode(logger=None):
-    """
-    运行交互式模式
-    
-    Args:
-        logger: 日志记录器
-    """
-    # 如果没有提供日志记录器，创建一个
-    if logger is None:
-        logger = setup_logging()
-        
     # 创建分析器
     analyzer = StockAnalyzer()
     
     # 加载观察列表
     watchlists = load_watchlists()
     
-    while True:
-        console.clear()
-        print_banner()
+    def show_menu():
+        """显示命令行菜单"""
+        # 清屏
+        os.system('cls' if os.name == 'nt' else 'clear')
+        
+        # 打印简洁的标题
+        title = Text("TradeMind Lite\n", style="bold cyan")
+        title.append(Text(f"轻量版美股技术分析工具 Beta {__version__}", style="cyan"))
+        
+        # 创建面板
+        panel = Panel(
+            Align.center(title),
+            box=box.ROUNDED,
+            border_style="cyan",
+            padding=(1, 2),
+            width=60
+        )
+        
+        # 打印面板
+        console.print("\n")
+        console.print(Align.center(panel))
+        console.print("\n")
         
         # 显示菜单
-        menu_table = Table(box=None, padding=(0, 2), width=70)
-        menu_table.add_column("选项", style="cyan", width=5)
-        menu_table.add_column("描述", style="green")
+        menu_table = Table(
+            show_header=True,
+            header_style="bold cyan",
+            box=box.SIMPLE_HEAD,
+            border_style="cyan",
+            width=60,
+            padding=(0, 2)
+        )
         
-        menu_table.add_row("1", "手动输入股票代码")
-        menu_table.add_row("2", "使用预设股票组合")
-        menu_table.add_row("3", "清理历史报告文件")
-        menu_table.add_row("0", "退出程序")
+        # 添加列
+        menu_table.add_column("选项", style="yellow", width=6, justify="center")
+        menu_table.add_column("功能", style="green", width=44)
         
+        # 添加菜单项
+        menu_table.add_row("1", "分析单个股票")
+        menu_table.add_row("2", "批量分析多个股票")
+        menu_table.add_row("3", "查看观察列表")
+        menu_table.add_row("4", "查看历史报告")
+        menu_table.add_row("5", "设置分析参数")
+        menu_table.add_row("q", "返回主菜单")
+        
+        # 打印菜单
         console.print(Align.center(menu_table))
-        console.print()
-        
-        # 获取用户选择
-        choice = Prompt.ask("请选择", choices=["0", "1", "2", "3"], default="1")
-        
-        if choice == "0":
-            console.print("[bold cyan]正在退出程序...[/bold cyan]")
-            break
-        
-        elif choice == "3":
-            # 清理报告
-            days = input("\n请输入要清理多少天前的报告 (默认30天): ").strip()
-            if not days:
-                days = 30
-            else:
-                try:
-                    days = int(days)
-                except ValueError:
-                    console.print("[bold red]错误:[/bold red] 请输入有效的天数")
-                    input("\n按回车键继续...")
+        console.print("\n")
+    
+    # 首次显示菜单
+    show_menu()
+    
+    while True:
+        try:
+            # 获取用户选择
+            choice = Prompt.ask(
+                "[cyan]请选择操作[/cyan]",
+                choices=["1", "2", "3", "4", "5", "q"],
+                show_choices=True,
+                default="1"
+            )
+            
+            if choice == "1":
+                # 分析单个股票
+                console.print("[bold cyan]分析单个股票[/bold cyan]\n")
+                symbol = Prompt.ask("[cyan]请输入股票代码[/cyan] (例如: AAPL)")
+                if not symbol:
+                    console.print("[yellow]未输入股票代码，返回主菜单[/yellow]\n")
+                    show_menu()
                     continue
-            
-            with console.status("[bold green]正在清理旧报告...[/bold green]", spinner="dots"):
-                analyzer.clean_reports(days_threshold=days)
-            console.print(f"[bold green]已清理 {days} 天前的报告[/bold green]")
-            input("\n按回车键继续...")
-            continue
-        
-        symbols = []
-        names = {}
-        title = "股票分析报告"
-        
-        if choice == "1":
-            # 手动输入股票代码
-            console.print("\n[bold cyan]请输入股票代码[/bold cyan]（最多20个，每行一个，支持自定义名称，格式：代码=名称）")
-            console.print("示例：")
-            console.print("AAPL=苹果")
-            console.print("MSFT=微软")
-            console.print("输入空行结束\n")
-            
-            count = 0
-            while count < 20:
-                line = input().strip()
-                if not line:
-                    break
                 
-                if "=" in line:
-                    symbol, name = line.split("=", 1)
-                    symbol = symbol.strip().upper()
-                    name = name.strip()
-                    symbols.append(symbol)
-                    names[symbol] = name
+                symbols = [symbol.strip().upper()]
+                names = {}
+                
+                # 执行分析
+                report_path = analyze_stocks(symbols, names, analyzer, True)
+                
+                # 显示结果
+                if report_path:
+                    console.print(f"[green]分析完成！报告已保存至: {report_path}[/green]\n")
                 else:
-                    symbol = line.strip().upper()
-                    symbols.append(symbol)
-                    names[symbol] = symbol
+                    console.print("[red]分析失败，请检查股票代码是否正确[/red]\n")
                 
-                count += 1
-            
-            if not symbols:
-                console.print("[bold red]错误:[/bold red] 未输入任何股票代码")
-                input("\n按回车键继续...")
-                continue
-            
-            title = input("\n请输入报告标题 (默认为'股票分析报告'): ").strip()
-            if not title:
-                title = "股票分析报告"
-        
-        elif choice == "2":
-            # 使用预设股票组合
-            if not watchlists:
-                console.print("[bold red]错误:[/bold red] 未找到任何预设股票组合")
-                input("\n按回车键继续...")
-                continue
-            
-            console.print("\n[bold cyan]可用的预设股票组合:[/bold cyan]")
-            for i, group_name in enumerate(watchlists.keys(), 1):
-                console.print(f"{i}. {group_name} ({len(watchlists[group_name])}只股票)")
-            
-            # 添加"分析所有股票"选项
-            console.print(f"{len(watchlists) + 1}. [bold green]分析所有股票[/bold green] (所有预设列表)")
-            
-            group_choice = input("\n请选择股票组合编号: ").strip()
-            try:
-                group_index = int(group_choice) - 1
+                # 等待用户按任意键继续
+                Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                show_menu()
                 
-                # 处理"分析所有股票"选项
-                if group_index == len(watchlists):
+            elif choice == "2":
+                # 批量分析多个股票
+                console.print("[bold cyan]批量分析多个股票[/bold cyan]\n")
+                symbols_input = Prompt.ask("[cyan]请输入多个股票代码[/cyan] (用空格分隔，例如: AAPL MSFT GOOGL)")
+                if not symbols_input:
+                    console.print("[yellow]未输入股票代码，返回主菜单[/yellow]\n")
+                    show_menu()
+                    continue
+                
+                symbols = [s.strip().upper() for s in symbols_input.split()]
+                names = {}
+                
+                # 执行分析
+                report_path = analyze_stocks(symbols, names, analyzer, True, "批量股票分析报告")
+                
+                # 显示结果
+                if report_path:
+                    console.print(f"[green]分析完成！报告已保存至: {report_path}[/green]\n")
+                else:
+                    console.print("[red]分析失败，请检查股票代码是否正确[/red]\n")
+                
+                # 等待用户按任意键继续
+                Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                show_menu()
+                
+            elif choice == "3":
+                # 查看观察列表
+                console.print("[bold cyan]查看观察列表[/bold cyan]\n")
+                
+                if not watchlists:
+                    console.print("[yellow]没有可用的观察列表[/yellow]\n")
+                    Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                    show_menu()
+                    continue
+                
+                # 显示观察列表
+                watchlist_table = Table(
+                    show_header=True,
+                    header_style="bold cyan",
+                    box=box.SIMPLE_HEAD,
+                    border_style="cyan",
+                    width=80
+                )
+                watchlist_table.add_column("序号", style="yellow", width=6, justify="center")
+                watchlist_table.add_column("观察列表", style="green")
+                watchlist_table.add_column("股票数量", style="cyan", width=10, justify="center")
+                
+                # 添加观察列表
+                watchlist_names = list(watchlists.keys())
+                for i, group_name in enumerate(watchlist_names, 1):
+                    watchlist_table.add_row(
+                        str(i),
+                        group_name,
+                        str(len(watchlists[group_name]))
+                    )
+                
+                # 添加"查询全部股票"选项
+                # 计算所有股票的总数（去重）
+                all_symbols = set()
+                for group_stocks in watchlists.values():
+                    all_symbols.update(group_stocks.keys())
+                
+                watchlist_table.add_row(
+                    str(len(watchlist_names) + 1),
+                    "[bold green]查询全部股票[/bold green]",
+                    str(len(all_symbols))
+                )
+                
+                console.print(watchlist_table)
+                console.print()
+                
+                # 选择观察列表
+                watchlist_choices = [str(i) for i in range(1, len(watchlist_names) + 2)]  # +1 for all stocks option
+                watchlist_choice = Prompt.ask(
+                    "[cyan]请选择观察列表[/cyan]",
+                    choices=watchlist_choices + ["q"],
+                    show_choices=True,
+                    default="1"
+                )
+                
+                if watchlist_choice == "q":
+                    show_menu()
+                    continue
+                
+                # 处理"查询全部股票"选项
+                if int(watchlist_choice) == len(watchlist_names) + 1:
                     # 收集所有预设股票（去重）
                     all_symbols = []
                     all_names = {}
@@ -444,62 +375,227 @@ def run_interactive_mode(logger=None):
                     
                     symbols = all_symbols
                     names = all_names
-                    title = "全市场分析报告（预置股票列表）"
+                    report_title = "全市场分析报告（所有预设股票）"
                     
                     console.print(f"[bold cyan]将分析所有预设股票:[/bold cyan] [green]{len(symbols)}[/green] 只股票")
-                
-                elif group_index < 0 or group_index >= len(watchlists):
-                    raise ValueError()
-                
                 else:
-                    group_name = list(watchlists.keys())[group_index]
-                    symbols_dict = watchlists[group_name]
-                    symbols = list(symbols_dict.keys())
-                    names = symbols_dict
+                    # 处理普通观察列表
+                    selected_watchlist = watchlist_names[int(watchlist_choice) - 1]
+                    symbols = list(watchlists[selected_watchlist].keys())
+                    names = watchlists[selected_watchlist]
+                    report_title = f"{selected_watchlist}分析报告"
+                
+                # 执行分析
+                report_path = analyze_stocks(symbols, names, analyzer, True, report_title)
+                
+                # 显示结果
+                if report_path:
+                    console.print(f"[green]分析完成！报告已保存至: {report_path}[/green]\n")
+                else:
+                    console.print("[red]分析失败，请检查股票代码是否正确[/red]\n")
+                
+                # 等待用户按任意键继续
+                Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                show_menu()
+                
+            elif choice == "4":
+                # 查看历史报告
+                console.print("[bold cyan]查看历史报告[/bold cyan]\n")
+                
+                # 获取报告目录
+                reports_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'reports')
+                if not os.path.exists(reports_dir):
+                    console.print("[yellow]没有可用的历史报告[/yellow]\n")
+                    Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                    show_menu()
+                    continue
+                
+                # 获取所有HTML报告
+                reports = []
+                for root, _, files in os.walk(reports_dir):
+                    for file in files:
+                        if file.endswith('.html'):
+                            file_path = os.path.join(root, file)
+                            file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+                            reports.append((file, file_path, file_time))
+                
+                # 按时间排序，最新的在前
+                reports.sort(key=lambda x: x[2], reverse=True)
+                
+                if not reports:
+                    console.print("[yellow]没有可用的历史报告[/yellow]\n")
+                    Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                    show_menu()
+                    continue
+                
+                # 显示报告列表和操作选项
+                console.print("[bold cyan]历史报告列表[/bold cyan]")
+                report_table = Table(
+                    show_header=True,
+                    header_style="bold cyan",
+                    box=box.SIMPLE_HEAD,
+                    border_style="cyan",
+                    width=80
+                )
+                report_table.add_column("序号", style="yellow", width=6, justify="center")
+                report_table.add_column("报告名称", style="green")
+                report_table.add_column("生成时间", style="cyan", width=20)
+                
+                # 最多显示10个最新的报告
+                for i, (file, _, file_time) in enumerate(reports[:10]):
+                    report_table.add_row(
+                        str(i+1),
+                        file,
+                        file_time.strftime("%Y-%m-%d %H:%M:%S")
+                    )
+                
+                console.print(report_table)
+                console.print()
+                
+                # 显示操作选项
+                options_table = Table(
+                    show_header=True,
+                    header_style="bold cyan",
+                    box=box.SIMPLE_HEAD,
+                    border_style="cyan",
+                    width=80
+                )
+                options_table.add_column("选项", style="yellow", width=6, justify="center")
+                options_table.add_column("操作", style="green")
+                
+                options_table.add_row("1-10", "查看对应序号的报告")
+                options_table.add_row("c", "清理报告")
+                options_table.add_row("q", "返回主菜单")
+                
+                console.print(options_table)
+                console.print()
+                
+                # 选择操作
+                report_choices = [str(i+1) for i in range(min(10, len(reports)))]
+                operation_choice = Prompt.ask(
+                    "[cyan]请选择操作[/cyan]",
+                    choices=report_choices + ["c", "q"],
+                    show_choices=True,
+                    default="1"
+                )
+                
+                if operation_choice == "q":
+                    show_menu()
+                    continue
+                elif operation_choice == "c":
+                    # 清理报告子菜单
+                    console.print("[bold cyan]清理历史报告[/bold cyan]\n")
                     
-                    title = input(f"\n请输入报告标题 (默认为'{group_name}分析报告'): ").strip()
-                    if not title:
-                        title = f"{group_name}分析报告"
-            
-            except (ValueError, IndexError):
-                console.print("[bold red]错误:[/bold red] 无效的选择")
-                input("\n按回车键继续...")
-                continue
-        
-        else:
-            console.print("[bold red]错误:[/bold red] 无效的选择")
-            input("\n按回车键继续...")
+                    clean_table = Table(
+                        show_header=True,
+                        header_style="bold cyan",
+                        box=box.SIMPLE_HEAD,
+                        border_style="cyan",
+                        width=80
+                    )
+                    clean_table.add_column("选项", style="yellow", width=6, justify="center")
+                    clean_table.add_column("操作", style="green")
+                    
+                    clean_table.add_row("1", "清理7天前的报告")
+                    clean_table.add_row("2", "清理30天前的报告")
+                    clean_table.add_row("3", "清理所有报告")
+                    clean_table.add_row("4", "自定义天数")
+                    clean_table.add_row("q", "返回上级菜单")
+                    
+                    console.print(clean_table)
+                    console.print()
+                    
+                    clean_choice = Prompt.ask(
+                        "[cyan]请选择清理选项[/cyan]",
+                        choices=["1", "2", "3", "4", "q"],
+                        show_choices=True,
+                        default="2"
+                    )
+                    
+                    if clean_choice == "q":
+                        # 重新显示报告列表
+                        choice = "4"  # 重新进入查看历史报告功能
+                        continue
+                    
+                    days_threshold = None
+                    force_all = False
+                    
+                    if clean_choice == "1":
+                        days_threshold = 7
+                    elif clean_choice == "2":
+                        days_threshold = 30
+                    elif clean_choice == "3":
+                        days_threshold = None
+                        force_all = True
+                    elif clean_choice == "4":
+                        # 自定义天数
+                        days_input = Prompt.ask(
+                            "[cyan]请输入要清理多少天前的报告[/cyan]",
+                            default="30"
+                        )
+                        try:
+                            days_threshold = int(days_input)
+                        except ValueError:
+                            console.print("[red]输入无效，使用默认值30天[/red]")
+                            days_threshold = 30
+                    
+                    # 确认操作
+                    if force_all:
+                        confirm = Prompt.ask(
+                            "[bold red]警告：此操作将删除所有报告文件，无法恢复！确认继续？(y/n)[/bold red]",
+                            choices=["y", "n"],
+                            default="n"
+                        )
+                    else:
+                        confirm = Prompt.ask(
+                            f"[yellow]确认清理{days_threshold if days_threshold else '所有'}天前的报告？(y/n)[/yellow]",
+                            choices=["y", "n"],
+                            default="y"
+                        )
+                    
+                    if confirm.lower() == "y":
+                        # 执行清理操作
+                        with console.status(f"[bold green]正在清理报告...[/bold green]", spinner="dots"):
+                            deleted_count = analyzer.clean_reports(days_threshold if not force_all else None)
+                        
+                        console.print(f"[green]成功清理 {deleted_count} 个报告文件[/green]")
+                    else:
+                        console.print("[yellow]已取消清理操作[/yellow]")
+                    
+                    # 等待用户按任意键继续
+                    Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                    show_menu()
+                    continue
+                else:
+                    # 查看选择的报告
+                    selected_report = reports[int(operation_choice) - 1]
+                    webbrowser.open(f"file://{selected_report[1]}")
+                    
+                    # 等待用户按任意键继续
+                    Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                    show_menu()
+                
+            elif choice == "5":
+                # 设置分析参数
+                console.print("[bold cyan]设置分析参数[/bold cyan]\n")
+                console.print("[yellow]此功能尚未实现，敬请期待[/yellow]\n")
+                Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+                show_menu()
+                
+            elif choice == "q":
+                # 返回主菜单
+                break
+                
+        except KeyboardInterrupt:
+            console.print("\n[yellow]操作已取消，返回主菜单[/yellow]\n")
+            show_menu()
             continue
-        
-        # 分析股票
-        try:
-            console.print(f"\n[bold cyan]正在分析 {len(symbols)} 只股票...[/bold cyan]")
-            
-            # 显示进度信息
-            with console.status(f"[bold green]正在分析 {len(symbols)} 只股票...[/bold green]", spinner="dots"):
-                # 分析股票
-                results = analyzer.analyze_stocks(symbols, names)
-            
-            # 显示进度信息
-            with console.status("[bold green]正在生成报告...[/bold green]", spinner="dots"):
-                # 生成报告
-                report_path = analyzer.generate_report(results, title)
-            
-            # 询问是否在浏览器中打开报告
-            open_browser = input("\n是否在浏览器中打开报告? (y/n): ").strip().lower() == 'y'
-            
-            if open_browser and report_path:
-                webbrowser.open(f'file://{os.path.abspath(report_path)}')
-                console.print(f"[bold green]报告已在浏览器中打开: [link=file://{os.path.abspath(report_path)}]{os.path.basename(report_path)}[/link][/bold green]")
-            else:
-                console.print(f"[bold green]报告已生成: [link=file://{os.path.abspath(report_path)}]{os.path.basename(report_path)}[/link][/bold green]")
-            
-            input("\n按回车键继续...")
-            
         except Exception as e:
-            logger.exception(f"分析过程中发生错误: {str(e)}")
-            console.print(f"[bold red]错误:[/bold red] {str(e)}")
-            input("\n按回车键继续...")
+            console.print(f"\n[red]发生错误: {str(e)}[/red]\n")
+            logger.exception("命令行界面出错")
+            Prompt.ask("[cyan]按Enter键返回主菜单[/cyan]")
+            show_menu()
+            continue
 
 if __name__ == "__main__":
     run_cli() 
