@@ -1,0 +1,459 @@
+/* TradeMind Lite - 曦潮映空主题 */
+
+:root {
+    --primary-color: #F76900;
+    --primary-hover: #d45800;
+    --accent-color: #9EBFE2;
+    --accent-hover: #7ba7d3;
+    
+    --bg-color: #fff9f5;
+    --text-color: #3a3a3a;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 6px rgba(247, 105, 0, 0.1);
+    
+    --success-color: #e85d00;
+    --info-color: #5d8cb6;
+    --border-color: #ffe0cc;
+    
+    --indicator-bg: #f0f7ff;
+    --pattern-bg: #fff1e6;
+    --advice-bg: #e6f2ff;
+    --backtest-bg: #fff6ed;
+    
+    --risk-banner-bg: #e6f0fa;
+    --risk-text: #4a6b8a;
+    --risk-title: #F76900;
+    
+    --footer-bg: #f7f9fc;
+    --footer-text: #5d8cb6;
+    --watermark: #ccdcec;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.card {
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    border-top: 3px solid var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.btn-outline-light:hover {
+    color: var(--primary-color);
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+.bg-info {
+    background-color: var(--info-color) !important;
+}
+
+/* 强调色应用到指标区块 */
+.indicator-section {
+    background-color: var(--indicator-bg);
+    border-left: 4px solid var(--accent-color);
+}
+
+.pattern-section {
+    background-color: var(--pattern-bg);
+    border-left: 4px solid var(--primary-color);
+}
+
+.advice-section {
+    background-color: var(--advice-bg);
+    border-left: 4px solid var(--accent-color);
+}
+
+.backtest-section {
+    background-color: var(--backtest-bg);
+    border-left: 4px solid var(--primary-color);
+}
+
+.section-title {
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.risk-banner {
+    background-color: var(--risk-banner-bg);
+    color: var(--risk-text);
+    border-left: none;
+}
+
+.risk-banner h4 {
+    color: var(--risk-title);
+}
+
+footer {
+    border-top: 1px solid var(--border-color);
+    color: var(--footer-text);
+    background-color: var(--footer-bg);
+}
+
+.watermark {
+    color: var(--watermark);
+}
+
+.header-banner {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #ff8534 100%);
+    box-shadow: 0 4px 12px rgba(247, 105, 0, 0.2);
+    border-bottom: 4px solid var(--accent-color);
+}
+
+.stock-card {
+    background-color: var(--card-bg);
+    border-top: none;
+}
+
+.stock-card .card-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #ff8534 100%) !important;
+    color: white;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.manual-card {
+    background-color: var(--card-bg);
+    border-left: none;
+    border-top: none;
+    box-shadow: var(--card-shadow);
+}
+
+.manual-title {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--accent-color);
+    background-color: transparent !important;
+    padding: 10px 15px;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.manual-section-title {
+    color: var(--primary-color);
+}
+
+/* 表格样式调整 */
+table {
+    color: var(--text-color);
+}
+
+table thead {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+table th {
+    border-bottom: 2px solid var(--accent-color) !important;
+}
+
+/* 输入框样式调整 */
+.form-control, .form-select {
+    background-color: #ffffff;
+    border-color: #ffe0cc;
+    color: var(--text-color);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #ffffff;
+    color: var(--text-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(247, 105, 0, 0.25);
+}
+
+/* 标签样式 */
+.form-label {
+    color: var(--text-color);
+}
+
+/* 下拉菜单样式 */
+.dropdown-item.active, .dropdown-item:active {
+    background-color: var(--primary-color);
+}
+
+/* 强调色应用 */
+.positive {
+    color: #28a745;
+}
+
+.negative {
+    color: #dc3545;
+}
+
+.neutral {
+    color: var(--info-color);
+}
+
+/* 链接颜色 */
+a {
+    color: var(--primary-color);
+}
+
+a:hover {
+    color: var(--accent-color);
+}
+
+/* 按钮样式增强 */
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* 强调色按钮 */
+.btn-accent {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+.btn-accent:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: white;
+}
+
+/* 导航栏链接 */
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: white;
+}
+
+/* 导航栏下拉菜单 */
+.navbar-dark .dropdown-menu {
+    border-top: 3px solid var(--accent-color);
+}
+
+/* 主题切换按钮 */
+#theme-toggle {
+    border-color: var(--accent-color);
+}
+
+/* 卡片标题 */
+.card-title {
+    color: var(--primary-color);
+}
+
+/* 表单按钮 */
+#analyzeBtn {
+    background: linear-gradient(to right, var(--primary-color), #ff8534);
+    border-color: var(--primary-color);
+    position: relative;
+    overflow: hidden;
+}
+
+#analyzeBtn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--accent-color);
+}
+
+/* 结果卡片 */
+#resultCard .card-header {
+    background: var(--accent-color) !important;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* 警告和提示框 */
+.alert-success {
+    background-color: #fff1e6;
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.alert-info {
+    background-color: #f0f7ff;
+    border-color: var(--accent-color);
+    color: #5a5a5a;
+}
+
+/* 模态框 */
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color);
+}
+
+/* 列表组 */
+.list-group-item {
+    border-left: 3px solid transparent;
+}
+
+.list-group-item:hover {
+    border-left-color: var(--primary-color);
+}
+
+/* 分页 */
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.page-link {
+    color: var(--primary-color);
+}
+
+.page-link:hover {
+    color: var(--accent-color);
+}
+
+/* 主要功能按钮样式 */
+.action-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(247, 105, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 15px;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.action-button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(247, 105, 0, 0.3);
+    color: white;
+}
+
+.action-button:active {
+    transform: translateY(1px);
+}
+
+/* 分析股票按钮 */
+.analyze-stock-btn {
+    background-color: var(--primary-color);
+}
+
+.analyze-stock-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* 分析进行中状态 */
+.analyzing-status {
+    background-color: var(--indicator-bg);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.analyzing-status h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.analyzing-status .progress {
+    height: 8px;
+    background-color: rgba(158, 191, 226, 0.3);
+}
+
+.analyzing-status .progress-bar {
+    background-color: var(--primary-color);
+}
+
+/* 查看报告按钮 */
+.view-report-btn {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 700;
+    border: none;
+}
+
+.view-report-btn:hover {
+    background-color: var(--primary-hover);
+    color: white;
+}
+
+/* 报告卡片 */
+.report-card {
+    border-top: 3px solid var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(247, 105, 0, 0.15);
+}
+
+.report-card .card-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.report-card .card-title {
+    color: white;
+}
+
+.report-date {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* 最近生成的报告 */
+#recentReports .card-header {
+    background-color: var(--accent-color) !important;
+}
+
+#recentReports .card-title {
+    color: var(--primary-color);
+}
+
+#recentReportsList .list-group-item span {
+    color: var(--text-color);
+}
+
+/* 美股技术分析卡片 */
+.card > .card-header {
+    background-color: var(--accent-color) !important;
+}
+
+.card > .card-header .card-title {
+    color: var(--primary-color);
+}
+
+/* 特殊卡片样式覆盖 */
+.manual-card .manual-title {
+    background-color: transparent !important;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--accent-color);
+} 
