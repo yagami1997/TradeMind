@@ -128,6 +128,63 @@ def calculate_rsi(prices: pd.Series, period: int = 14) -> float:
     return float(rsi)
 
 
+def calculate_dynamic_rsi_thresholds(high: pd.Series, low: pd.Series, close: pd.Series, 
+                                    rsi_period: int = 14, atr_period: int = 14, 
+                                    lookback_period: int = 252, max_adjustment: float = 15.0) -> tuple:
+    """
+    基于ATR的动态RSI阈值计算
+    
+    参数:
+        high: 最高价序列
+        low: 最低价序列
+        close: 收盘价序列
+        rsi_period: RSI计算周期，默认14日
+        atr_period: ATR计算周期，默认14日
+        lookback_period: 用于计算波动率百分位的历史回溯期，默认252日（约一年交易日）
+        max_adjustment: 最大阈值调整幅度，默认15
+        
+    返回:
+        tuple: (RSI值, 超卖阈值, 超买阈值, 波动率百分位)
+    """
+    # 确保数据足够长
+    if len(close) <= max(rsi_period, atr_period, lookback_period):
+        return 50.0, 30.0, 70.0, 0.5  # 数据不足时返回默认值
+    
+    # 计算RSI
+    rsi = calculate_rsi(close, rsi_period)
+    
+    # 计算ATR
+    tr1 = high - low
+    tr2 = abs(high - close.shift())
+    tr3 = abs(low - close.shift())
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    atr = tr.rolling(window=atr_period).mean()
+    
+    # 计算ATR占价格的百分比
+    atr_pct = (atr / close) * 100
+    
+    # 计算波动率的历史百分位
+    volatility_percentile = 0.5  # 默认值
+    
+    if len(atr_pct.dropna()) > lookback_period:
+        recent_window = atr_pct.iloc[-lookback_period:]
+        current_atr_pct = atr_pct.iloc[-1]
+        
+        # 计算当前ATR百分比在历史数据中的百分位
+        volatility_percentile = (recent_window < current_atr_pct).mean()
+    
+    # 平滑地调整RSI阈值
+    base_oversold = 30
+    base_overbought = 70
+    
+    # 根据波动率百分位平滑调整阈值
+    oversold = base_oversold - (volatility_percentile * max_adjustment)
+    overbought = base_overbought + (volatility_percentile * max_adjustment)
+    
+    return float(rsi), float(oversold), float(overbought), float(volatility_percentile)
+
+
 def calculate_bollinger_bands(prices: pd.Series, window: int = 20, num_std: float = 2.0) -> tuple:
     """
     计算布林带指标

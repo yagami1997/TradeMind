@@ -51,6 +51,12 @@ def generate_signals(data: pd.DataFrame, indicators: Dict) -> pd.DataFrame:
     # 提取技术指标
     rsi = indicators.get('rsi', pd.Series(np.nan, index=close.index))
     
+    # 提取动态RSI阈值（如果有）
+    dynamic_rsi = indicators.get('dynamic_rsi', {})
+    rsi_oversold = dynamic_rsi.get('oversold', pd.Series(30.0, index=close.index))
+    rsi_overbought = dynamic_rsi.get('overbought', pd.Series(70.0, index=close.index))
+    volatility_percentile = dynamic_rsi.get('volatility', pd.Series(0.5, index=close.index))
+    
     macd = indicators.get('macd', {})
     macd_line = macd.get('macd', pd.Series(np.nan, index=close.index))
     signal_line = macd.get('signal', pd.Series(np.nan, index=close.index))
@@ -73,6 +79,9 @@ def generate_signals(data: pd.DataFrame, indicators: Dict) -> pd.DataFrame:
     signals['low'] = low
     signals['volume'] = volume
     signals['rsi'] = rsi
+    signals['rsi_oversold'] = rsi_oversold
+    signals['rsi_overbought'] = rsi_overbought
+    signals['volatility_percentile'] = volatility_percentile
     signals['macd_line'] = macd_line
     signals['signal_line'] = signal_line
     signals['macd_hist'] = hist
@@ -100,34 +109,49 @@ def generate_buy_signals(signals: pd.DataFrame) -> pd.Series:
         signals: 包含技术指标的DataFrame
         
     返回:
-        pd.Series: 买入信号序列，1表示买入，0表示无信号
+        pd.Series: 买入信号序列，1表示买入，0表示不操作
     """
-    # 提取需要的指标
-    close = signals['close']
-    rsi = signals['rsi']
-    macd_line = signals['macd_line']
-    signal_line = signals['signal_line']
-    lower_band = signals['lower_band']
-    sma5 = signals['sma5']
-    sma10 = signals['sma10']
+    buy_signals = pd.Series(0, index=signals.index)
     
-    # RSI超卖信号 (Wilder的RSI交易系统)
-    rsi_buy = (rsi < 30)
+    # 检查是否有足够的数据
+    if len(signals) < 2:
+        return buy_signals
     
-    # MACD金叉信号 (Appel的MACD交易系统)
-    macd_buy = (macd_line > signal_line) & (macd_line.shift() < signal_line.shift())
+    # 使用动态RSI阈值（如果存在）或默认值
+    if 'rsi_oversold' in signals.columns:
+        rsi_oversold = signals['rsi_oversold']
+    else:
+        rsi_oversold = pd.Series(30.0, index=signals.index)
     
-    # 布林带下轨支撑信号 (Bollinger的布林带交易系统)
-    bb_buy = (close < lower_band)
+    # RSI超卖信号
+    if 'rsi' in signals.columns:
+        buy_signals.loc[signals['rsi'] < rsi_oversold] = 1
     
-    # 移动平均线支撑信号 (标准的移动平均线交易系统)
-    ma_buy = (close > sma5) & (close > sma10) & (sma5 > sma5.shift())
+    # MACD金叉信号
+    if 'macd_line' in signals.columns and 'signal_line' in signals.columns:
+        # 前一天MACD线在信号线下方，今天MACD线在信号线上方
+        prev_below = signals['macd_line'].shift(1) < signals['signal_line'].shift(1)
+        curr_above = signals['macd_line'] > signals['signal_line']
+        macd_golden_cross = prev_below & curr_above
+        buy_signals.loc[macd_golden_cross] = 1
     
-    # 综合买入信号 (至少两个系统确认)
-    buy_signal = ((rsi_buy.astype(int) + macd_buy.astype(int) + 
-                  bb_buy.astype(int) + ma_buy.astype(int)) >= 2).astype(int)
+    # 价格突破布林带下轨信号
+    if 'close' in signals.columns and 'lower_band' in signals.columns:
+        # 前一天收盘价在下轨下方，今天收盘价在下轨上方
+        prev_below = signals['close'].shift(1) < signals['lower_band'].shift(1)
+        curr_above = signals['close'] > signals['lower_band']
+        bb_bounce = prev_below & curr_above
+        buy_signals.loc[bb_bounce] = 1
     
-    return buy_signal
+    # 短期均线上穿长期均线信号
+    if 'sma5' in signals.columns and 'sma10' in signals.columns:
+        # 前一天5日均线在10日均线下方，今天5日均线在10日均线上方
+        prev_below = signals['sma5'].shift(1) < signals['sma10'].shift(1)
+        curr_above = signals['sma5'] > signals['sma10']
+        ma_golden_cross = prev_below & curr_above
+        buy_signals.loc[ma_golden_cross] = 1
+    
+    return buy_signals
 
 
 def generate_sell_signals(signals: pd.DataFrame) -> pd.Series:
@@ -138,34 +162,49 @@ def generate_sell_signals(signals: pd.DataFrame) -> pd.Series:
         signals: 包含技术指标的DataFrame
         
     返回:
-        pd.Series: 卖出信号序列，1表示卖出，0表示无信号
+        pd.Series: 卖出信号序列，1表示卖出，0表示不操作
     """
-    # 提取需要的指标
-    close = signals['close']
-    rsi = signals['rsi']
-    macd_line = signals['macd_line']
-    signal_line = signals['signal_line']
-    upper_band = signals['upper_band']
-    sma5 = signals['sma5']
-    sma10 = signals['sma10']
+    sell_signals = pd.Series(0, index=signals.index)
+    
+    # 检查是否有足够的数据
+    if len(signals) < 2:
+        return sell_signals
+    
+    # 使用动态RSI阈值（如果存在）或默认值
+    if 'rsi_overbought' in signals.columns:
+        rsi_overbought = signals['rsi_overbought']
+    else:
+        rsi_overbought = pd.Series(70.0, index=signals.index)
     
     # RSI超买信号
-    rsi_sell = (rsi > 70)
+    if 'rsi' in signals.columns:
+        sell_signals.loc[signals['rsi'] > rsi_overbought] = 1
     
     # MACD死叉信号
-    macd_sell = (macd_line < signal_line) & (macd_line.shift() > signal_line.shift())
+    if 'macd_line' in signals.columns and 'signal_line' in signals.columns:
+        # 前一天MACD线在信号线上方，今天MACD线在信号线下方
+        prev_above = signals['macd_line'].shift(1) > signals['signal_line'].shift(1)
+        curr_below = signals['macd_line'] < signals['signal_line']
+        macd_death_cross = prev_above & curr_below
+        sell_signals.loc[macd_death_cross] = 1
     
-    # 布林带上轨阻力信号
-    bb_sell = (close > upper_band)
+    # 价格突破布林带上轨信号
+    if 'close' in signals.columns and 'upper_band' in signals.columns:
+        # 前一天收盘价在上轨上方，今天收盘价在上轨下方
+        prev_above = signals['close'].shift(1) > signals['upper_band'].shift(1)
+        curr_below = signals['close'] < signals['upper_band']
+        bb_reversal = prev_above & curr_below
+        sell_signals.loc[bb_reversal] = 1
     
-    # 移动平均线阻力信号
-    ma_sell = (close < sma5) & (close < sma10) & (sma5 < sma5.shift())
+    # 短期均线下穿长期均线信号
+    if 'sma5' in signals.columns and 'sma10' in signals.columns:
+        # 前一天5日均线在10日均线上方，今天5日均线在10日均线下方
+        prev_above = signals['sma5'].shift(1) > signals['sma10'].shift(1)
+        curr_below = signals['sma5'] < signals['sma10']
+        ma_death_cross = prev_above & curr_below
+        sell_signals.loc[ma_death_cross] = 1
     
-    # 综合卖出信号 (至少两个系统确认)
-    sell_signal = ((rsi_sell.astype(int) + macd_sell.astype(int) + 
-                   bb_sell.astype(int) + ma_sell.astype(int)) >= 2).astype(int)
-    
-    return sell_signal
+    return sell_signals
 
 
 def generate_trading_advice(indicators: Dict, current_price: float, 
