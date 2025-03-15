@@ -110,6 +110,7 @@ nosetests.xml
 .idea/
 *.swp
 *.swo
+.cursor/settings.json
 
 # 系统文件
 .DS_Store
