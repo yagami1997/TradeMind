@@ -7,14 +7,14 @@
 // 主题类型
 const THEMES = {
     EMERALD_GOLD: 'emerald-gold',
-    SUNSET_OCEAN: 'sunset-ocean',
+    PURPLE_MIST: 'purple-mist',
     AZURE_CREAM: 'azure-cream'
 };
 
 // 主题名称
 const THEME_NAMES = {
     [THEMES.EMERALD_GOLD]: '翠影流金',
-    [THEMES.SUNSET_OCEAN]: '曦潮映空',
+    [THEMES.PURPLE_MIST]: '紫岚烟渚',
     [THEMES.AZURE_CREAM]: '蓝沁云霁'
 };
 
@@ -27,14 +27,14 @@ const THEME_STORAGE_KEY = 'trademind-theme';
 // 主题CSS文件路径
 const THEME_CSS_FILES = {
     [THEMES.EMERALD_GOLD]: '/static/css/theme-emerald-gold.css',
-    [THEMES.SUNSET_OCEAN]: '/static/css/theme-sunset-ocean.css',
+    [THEMES.PURPLE_MIST]: '/static/css/theme-purple-mist.css',
     [THEMES.AZURE_CREAM]: '/static/css/theme-azure-cream.css'
 };
 
 // 主题图标
 const THEME_ICONS = {
     [THEMES.EMERALD_GOLD]: 'bi-tree-fill',
-    [THEMES.SUNSET_OCEAN]: 'bi-sunrise-fill',
+    [THEMES.PURPLE_MIST]: 'bi-flower3',
     [THEMES.AZURE_CREAM]: 'bi-cloud-sun-fill'
 };
 
@@ -76,14 +76,6 @@ class ThemeManager {
                     this.cycleTheme();
                 });
             }
-            
-            // 监听主题选择事件
-            document.querySelectorAll('.theme-option').forEach(option => {
-                option.addEventListener('click', (e) => {
-                    const theme = e.currentTarget.getAttribute('data-theme');
-                    this.applyTheme(theme);
-                });
-            });
         });
     }
 
@@ -125,6 +117,15 @@ class ThemeManager {
             
             option.appendChild(link);
             dropdown.appendChild(option);
+        });
+        
+        // 为每个主题选项添加点击事件
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                const theme = e.currentTarget.getAttribute('data-theme');
+                this.applyTheme(theme);
+            });
         });
     }
 

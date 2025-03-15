@@ -28,7 +28,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 ## 📝 更新日志
 
 ### 🆕 2025年3月15日界面优化更新 (Beta 0.3.1)
-- **Web界面主题优化**：优化三个主题（翠影流金、曦潮映空、蓝沁云霁）的色彩搭配，提升视觉体验，在Web界面右上角点击主题图标即可一键切换不同风格
+- **Web界面主题优化**：优化三个主题（翠影流金、紫岚烟渚、蓝沁云霁）的色彩搭配，提升视觉体验，在Web界面右上角点击主题图标即可一键切换不同风格
 - **标题样式统一**：统一"分析股票"和"分析结果"标题样式，优化"最近生成的报告"标题显示
 - **卡片样式优化**：改进股票卡片和报告卡片的样式，提高可读性和美观度
 - **按钮样式优化**：统一按钮样式和颜色，优化交互效果
@@ -578,5 +578,5 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Th
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-03-15 00:39:12 PDT</span>
+  <span style="font-size: 14px; color: #888;">2025-03-15 05:19:58 PDT</span>
 </p>
