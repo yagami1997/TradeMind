@@ -19,9 +19,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const watchlistSelect = document.getElementById('watchlist');
 
     // 添加浏览器关闭事件监听器
-    window.addEventListener('beforeunload', function() {
+    window.addEventListener('beforeunload', function(e) {
         // 发送关闭服务器的请求
-        navigator.sendBeacon('/api/shutdown', '');
+        try {
+            // 使用同步请求确保在页面关闭前发送完成
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/shutdown', '');
+            } else {
+                // 备用方案：使用同步XMLHttpRequest
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/shutdown', false); // 同步请求
+                xhr.send();
+            }
+        } catch (error) {
+            console.error('关闭服务器时出错:', error);
+        }
     });
 
     // 分析表单提交
