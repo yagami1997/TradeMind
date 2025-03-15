@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeMind Lite - 美股技术面分析工具</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- 主题CSS将由JavaScript动态加载 -->
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -26,6 +28,21 @@
                         <a class="nav-link" href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a>
                     </li>
                 </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="themeDropdownBtn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            主题风格
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" id="theme-dropdown" aria-labelledby="themeDropdownBtn">
+                            <!-- 主题选项将由JavaScript动态生成 -->
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button id="theme-toggle" class="btn btn-outline-light" title="切换主题">
+                            <i id="theme-icon" class="bi bi-tree-fill"></i>
+                        </button>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -41,7 +58,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header">
                         <h5 class="card-title mb-0">美股技术分析</h5>
                     </div>
                     <div class="card-body">
@@ -72,7 +89,7 @@
                                 <input type="text" class="form-control" id="title" name="title" value="美股技术面分析报告">
                             </div>
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                                <button type="submit" class="btn btn-primary action-button analyze-stock-btn" id="analyzeBtn">
                                     <span class="spinner-border spinner-border-sm d-none" id="analyzeSpinner" role="status" aria-hidden="true"></span>
                                     分析股票
                                 </button>
@@ -86,13 +103,13 @@
         <div class="row mt-4">
             <div class="col-md-12">
                 <div class="card d-none" id="resultCard">
-                    <div class="card-header bg-success text-white">
+                    <div class="card-header">
                         <h5 class="card-title mb-0">分析结果</h5>
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-success" id="resultMessage"></div>
+                        <div class="alert alert-success analyzing-status" id="resultMessage"></div>
                         <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-primary" id="viewReportBtn" target="_blank">查看报告</a>
+                            <a href="#" class="btn btn-primary action-button view-report-btn" id="viewReportBtn" target="_blank">查看报告</a>
                         </div>
                         <div class="alert alert-info mt-3" style="display: none;">
                             <h5>回测结果说明</h5>
@@ -114,7 +131,7 @@
         <div class="row mt-4 d-none" id="recentReports">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-info text-white">
+                    <div class="card-header">
                         <h5 class="card-title mb-0">最近生成的报告</h5>
                     </div>
                     <div class="card-body">
@@ -194,7 +211,7 @@
 
     <footer class="footer mt-5 py-3 bg-light">
         <div class="container text-center">
-            <p class="text-muted mb-0">TradeMind Lite Beta 0.3.0 © 2025 | <a href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a></p>
+            <p class="text-muted mb-0">TradeMind Lite Beta 0.3.1 © 2025 | <a href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a></p>
         </div>
     </footer>
 
@@ -240,6 +257,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
     <script>
         // 更新时间显示
         function updateTime() {
