@@ -19,7 +19,7 @@ from rich import box
 from rich.style import Style
 from rich.align import Align
 
-from trademind.ui.cli import run_interactive_mode
+from trademind.ui.cli import run_cli
 from trademind.ui.web import run_web_server
 from trademind import __version__
 
@@ -140,7 +140,7 @@ def main():
     
     # 直接启动命令行模式
     if args.cli:
-        run_interactive_mode()
+        run_cli()
         return
     
     # 直接启动Web模式
@@ -168,7 +168,7 @@ def main():
             )
             
             if choice == "1":
-                run_interactive_mode()
+                run_cli()
             elif choice == "2":
                 run_web_mode(host=args.host, port=args.port)
             elif choice == "q":
