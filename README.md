@@ -80,7 +80,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      # 从 https://git-scm.com/download/win 下载并安装
      
      # 克隆仓库
-     git clone https://github.com/your-username/trademind-lite.git
+     git clone https://github.com/yagami1997/TradeMind.git
      cd trademind-lite
      ```
    
@@ -150,7 +150,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 2. **下载 TradeMind Lite**
    ```bash
    # 克隆仓库
-   git clone https://github.com/your-username/trademind-lite.git
+   git clone https://github.com/yagami1997/TradeMind.git
    cd trademind-lite
    ```
 
@@ -206,7 +206,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 2. **下载项目**
    ```bash
    # 克隆仓库
-   git clone https://github.com/your-username/trademind-lite.git
+   git clone https://github.com/yagami1997/TradeMind.git
    cd trademind-lite
    ```
 
