@@ -18,6 +18,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const symbolsInput = document.getElementById('symbols');
     const watchlistSelect = document.getElementById('watchlist');
 
+    // 添加浏览器关闭事件监听器
+    window.addEventListener('beforeunload', function() {
+        // 发送关闭服务器的请求
+        navigator.sendBeacon('/api/shutdown', '');
+    });
+
     // 分析表单提交
     analyzeForm.addEventListener('submit', function(e) {
         e.preventDefault();

@@ -14,6 +14,17 @@
 
 TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面分析。它采用多个技术指标和形态识别算法，为投资者提供客观的市场分析和交易建议。本工具特别适合对技术分析感兴趣的个人投资者和研究人员。
 
+## 🧠 Cursor智能辅助开发框架
+
+本项目完全引入我原创开发的 [CursorMind](https://github.com/yagami1997/CursorMind) 智能开发框架进行软件工程管理，这是Cursor辅助开发的最佳实践。CursorMind框架提供了标准化的项目管理结构、文档模板和工作流程，确保开发过程的一致性和可追踪性。通过使用CursorMind，我们实现了：
+
+- 标准化的项目管理和文档体系
+- 自动化的时间戳生成和版本控制
+- 结构化的决策记录和进度跟踪
+- 规范化的代码开发和质量保证流程
+
+这种方法论显著提高了开发效率，减少了沟通成本，并确保了软件质量的一致性。
+
 ## 📝 更新日志
 
 ### 🆕 2025年3月14日重构级更新 (Beta 0.3.0)
@@ -558,5 +569,5 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Th
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-03-14 11:01:11 PDT</span>
+  <span style="font-size: 14px; color: #888;">2025-03-14 20:01:36 PDT</span>
 </p>
