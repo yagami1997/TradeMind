@@ -674,7 +674,7 @@ def generate_stock_card_html(result: Dict) -> str:
     advice_text = advice.get('advice', advice.get('type', '观望'))
     confidence = advice.get('confidence', 50)
     # 使用get方法获取explanation，避免KeyError
-    explanation = advice.get('explanation', '无详细解释')
+    explanation = advice.get('explanation', '')
     
     # 根据建议设置背景颜色和文本
     if '强烈买入' in advice_text:
@@ -820,6 +820,8 @@ def generate_stock_card_html(result: Dict) -> str:
         signals = result['signals']
     elif result.get('advice', {}).get('signals'):
         signals = result['advice']['signals']
+    else:
+        signals = []  # 如果没有信号，使用空列表作为默认值
     
     # 生成信号标签HTML - 使用更清晰的配色方案
     signals_html = ""
@@ -896,7 +898,7 @@ def generate_stock_card_html(result: Dict) -> str:
                         置信度: {confidence}%
                     </div>
                 </div>
-                <p>{explanation}</p>
+                {f'<p>{explanation}</p>' if explanation else ''}
             </div>
             
             <div class="backtest-results" style="background-color: #fff8e1; padding: 12px; border-radius: 5px;">
