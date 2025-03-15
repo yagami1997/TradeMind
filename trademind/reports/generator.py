@@ -936,9 +936,9 @@ def generate_stock_card_html(result: Dict) -> str:
                     </tr>
                     <tr>
                         <td style="padding: 4px;">Sharpe比率</td>
-                        <td style="padding: 4px; text-align: right;">{backtest.get('sharpe_ratio', 0)}</td>
+                        <td style="padding: 4px; text-align: right;">{backtest.get('sharpe_ratio', 0):.2f}</td>
                         <td style="padding: 4px;">Sortino比率</td>
-                        <td style="padding: 4px; text-align: right;">{backtest.get('sortino_ratio', 0)}</td>
+                        <td style="padding: 4px; text-align: right;">{backtest.get('sortino_ratio', 0):.2f}</td>
                     </tr>
                 </table>
             </div>
