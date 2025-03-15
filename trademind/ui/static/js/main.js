@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                                 
                                 // 显示回测结果说明
-                                const backTestExplanation = document.querySelector('.alert.alert-info.mt-3');
+                                const backTestExplanation = document.querySelector('.backtest-zero-notice');
                                 if (backTestExplanation) {
                                     backTestExplanation.style.display = 'block';
                                 }

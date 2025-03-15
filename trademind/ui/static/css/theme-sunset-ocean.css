@@ -456,4 +456,13 @@ a:hover {
     background-color: transparent !important;
     color: var(--primary-color);
     border-bottom: 2px solid var(--accent-color);
+}
+
+/* 回测结果为零说明 */
+.backtest-zero-notice {
+    margin-top: 15px;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid var(--primary-color);
 } 

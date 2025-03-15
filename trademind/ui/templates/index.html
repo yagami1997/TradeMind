@@ -111,8 +111,8 @@
                         <div class="d-grid gap-2">
                             <a href="#" class="btn btn-primary action-button view-report-btn" id="viewReportBtn" target="_blank">查看报告</a>
                         </div>
-                        <div class="alert alert-info mt-3" style="display: none;">
-                            <h5>回测结果说明</h5>
+                        <div class="backtest-zero-notice" style="display: none;">
+                            <p><strong>回测结果为零的说明：</strong></p>
                             <p>当回测结果显示为零时，这并不意味着策略无效，而是表明在当前数据和参数条件下没有产生交易。可能的原因包括：</p>
                             <ul>
                                 <li>历史数据量不足（少于50个交易日）</li>
@@ -179,7 +179,7 @@
                             <li><strong>Van K. Tharp头寸模型</strong> - 优化资金管理和头寸规模，控制单笔交易风险</li>
                         </ul>
                         
-                        <div style="margin-top: 15px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <div class="backtest-zero-notice">
                             <p><strong>回测结果为零的说明：</strong></p>
                             <p>当回测结果显示为零时，这并不意味着策略无效，而是表明在当前数据和参数条件下没有产生交易。可能的原因包括：</p>
                             <ul>
