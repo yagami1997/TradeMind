@@ -12,6 +12,11 @@
 <!-- 使用PST时区，格式：YYYY-MM-DD HH:MM:SS PST -->
 [TIMESTAMP]
 
+## 基本信息
+- **项目名称**: {{PROJECT_NAME}}
+- **报告周期**: {{START_DATE}} 至 {{END_DATE}}
+- **报告人**: {{AUTHOR}}
+
 ## 本周主要工作
 <!--
 记录本周完成的主要工作：

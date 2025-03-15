@@ -65,7 +65,7 @@ create_daily_report() {
     cp "$TEMPLATE_FILE" "$REPORT_FILE"
     sed -i '' "s/{{DATE}}/$CURRENT_DATE/g" "$REPORT_FILE"
     sed -i '' "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" "$REPORT_FILE"
-    sed -i '' "s/{{AUTHOR}}/$(whoami)/g" "$REPORT_FILE"
+    sed -i '' "s/{{AUTHOR}}/Yagami/g" "$REPORT_FILE"
     sed -i '' "s/{{TIMESTAMP}}/$FULL_TIMESTAMP/g" "$REPORT_FILE"
     
     echo -e "${GREEN}日报已创建: $REPORT_FILE${NC}"
@@ -127,7 +127,7 @@ print(end.strftime('%Y-%m-%d'))
     sed -i '' "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" "$REPORT_FILE"
     sed -i '' "s/{{START_DATE}}/$WEEK_START/g" "$REPORT_FILE"
     sed -i '' "s/{{END_DATE}}/$WEEK_END/g" "$REPORT_FILE"
-    sed -i '' "s/{{AUTHOR}}/$(whoami)/g" "$REPORT_FILE"
+    sed -i '' "s/{{AUTHOR}}/Yagami/g" "$REPORT_FILE"
     sed -i '' "s/{{TIMESTAMP}}/$FULL_TIMESTAMP/g" "$REPORT_FILE"
     
     echo -e "${GREEN}周报已创建: $REPORT_FILE${NC}"
