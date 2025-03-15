@@ -246,7 +246,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 2. **主菜单导航**
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/5eb94899-1edc-4c17-851d-4211823855af" alt="主菜单界面" width="800px"/>
+   <img src="https://github.com/user-attachments/assets/e2b1dcf3-f0e4-47a5-ae20-26b4f71ac95d" alt="主菜单选项" width="800px"/>
 </div>
 
    - 使用数字键选择功能
