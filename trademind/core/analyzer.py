@@ -171,7 +171,7 @@ class StockAnalyzer:
                 
                 print("分析K线形态...")
                 # 调用形态识别模块
-                patterns = identify_candlestick_patterns(hist.tail(5))
+                patterns = self.identify_patterns(hist.tail(5))
                 
                 print("生成交易建议...")
                 # 调用信号生成模块
