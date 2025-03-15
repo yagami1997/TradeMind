@@ -1,0 +1,24 @@
+# 明确标记Python文件
+*.py linguist-language=Python
+*.pyc linguist-generated=true
+
+# JS文件正常计入统计（不标记为documentation）
+# *.js linguist-language=JavaScript
+
+# 将HTML和CSS标记为文档而不是代码
+*.html linguist-documentation=true
+*.css linguist-documentation=true
+
+# 将模板和大部分静态资源文件夹标记为文档
+templates/* linguist-documentation=true
+static/css/* linguist-documentation=true 
+static/images/* linguist-documentation=true
+static/fonts/* linguist-documentation=true
+
+# 保留JS文件夹的统计（如果需要的话）
+# static/js/* linguist-language=JavaScript
+
+# 其他可能需要排除的文件夹
+docs/* linguist-documentation=true
+*.md linguist-documentation=true
+*.rst linguist-documentation=true
