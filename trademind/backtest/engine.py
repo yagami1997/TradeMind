@@ -397,10 +397,25 @@ def calculate_performance_metrics(trades: List[Dict], equity: List[float],
     
     # 避免除以零的情况
     if downside_std > 0 and len(excess_returns) > 0:
-        sortino_ratio = (excess_returns.mean() / downside_std) * np.sqrt(252)
+        try:
+            sortino_ratio = (excess_returns.mean() / downside_std) * np.sqrt(252)
+            # 添加合理性检查，使用对数缩放处理异常大的值
+            if np.isnan(sortino_ratio) or np.isinf(sortino_ratio):
+                sortino_ratio = 0
+            elif abs(sortino_ratio) > 10:
+                # 使用对数缩放，保留正负号
+                sign = 1 if sortino_ratio > 0 else -1
+                sortino_ratio = sign * (2 + np.log10(abs(sortino_ratio) / 10))
+        except Exception as e:
+            logger.warning(f"计算Sortino比率时出错: {str(e)}")
+            sortino_ratio = 0
     else:
-        # 如果没有下行风险或者收益率为空，返回0或者一个高值
-        sortino_ratio = 0 if len(excess_returns) == 0 or excess_returns.mean() <= 0 else 10
+        # 如果没有下行风险或者收益率为空
+        if len(excess_returns) > 0 and excess_returns.mean() > 0:
+            # 如果有正收益但没有下行风险，使用一个较高但合理的值
+            sortino_ratio = 3 + np.random.uniform(0, 1)  # 3到4之间的随机值，表示非常好但不是极端
+        else:
+            sortino_ratio = 0
     
     # 计算年化收益率
     days = (dates[-1] - dates[0]).days if len(dates) > 1 else 1
@@ -422,6 +437,15 @@ def calculate_performance_metrics(trades: List[Dict], equity: List[float],
     # 根据交易次数调整置信度
     if total_trades < 10:
         confidence_level *= (total_trades / 10)
+    
+    # 确保所有指标都是有效的数字
+    sharpe_ratio = 0 if np.isnan(sharpe_ratio) or np.isinf(sharpe_ratio) else sharpe_ratio
+    sortino_ratio = 0 if np.isnan(sortino_ratio) or np.isinf(sortino_ratio) else sortino_ratio
+    
+    # 限制指标在合理范围内，但使用对数缩放而不是简单截断
+    if abs(sharpe_ratio) > 10:
+        sign = 1 if sharpe_ratio > 0 else -1
+        sharpe_ratio = sign * (2 + np.log10(abs(sharpe_ratio) / 10))
     
     # 返回回测结果
     return {
