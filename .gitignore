@@ -1,6 +1,7 @@
 .DS_Store
 logs/
 reports/output/*
+reports/stocks/
 !reports/output/.gitkeep
 results/
 venv/
