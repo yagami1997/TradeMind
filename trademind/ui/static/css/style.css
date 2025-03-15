@@ -1,9 +1,8 @@
-/* TradeMind Lite - 样式表 */
+/* TradeMind Lite - 基础样式表 */
 
+/* 基础布局和结构样式 */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
 }
 
 .navbar-brand {
@@ -11,7 +10,6 @@ body {
 }
 
 .card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border: none;
     border-radius: 10px;
     overflow: hidden;
@@ -20,7 +18,6 @@ body {
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
@@ -37,9 +34,7 @@ body {
 
 /* 股票卡片样式 - 从原HTML报告迁移 */
 .stock-card {
-    background: white;
     border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     overflow: hidden;
     transition: transform 0.3s ease;
     margin-bottom: 20px;
@@ -47,12 +42,10 @@ body {
 
 .stock-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .stock-card .card-header {
     padding: 15px;
-    color: white;
     font-weight: 600;
     height: 80px;
     display: flex;
@@ -98,41 +91,33 @@ body {
     color: #ffc107;
 }
 
-/* 指标块色彩方案 */
+/* 指标块样式 */
 .indicator-section {
     margin-bottom: 12px;
-    background-color: #E8F5E9; /* 温和的薄荷绿 */
     padding: 15px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .pattern-section {
     margin-bottom: 12px;
-    background-color: #F3E5F5; /* 温和的淡紫色 */
     padding: 15px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .advice-section {
     margin-bottom: 12px;
     padding: 15px;
-    background: #E3F2FD; /* 温和的天蓝色 */
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .backtest-section {
     margin-bottom: 12px;
-    background-color: #FFF8E1; /* 温和的浅黄色 */
     padding: 15px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .section-title {
@@ -140,7 +125,6 @@ body {
     margin-bottom: 10px;
     padding-bottom: 5px;
     border-bottom: 1px solid #ddd;
-    color: #2E8B57; /* 海绿色标题 */
 }
 
 /* 按钮样式 */
@@ -148,19 +132,8 @@ body {
     transition: all 0.3s ease;
 }
 
-.btn-primary {
-    background-color: #3A7CA5;
-    border-color: #3A7CA5;
-}
-
-.btn-primary:hover {
-    background-color: #2C6384;
-    border-color: #2C6384;
-}
-
 /* 说明书样式 */
 .manual-card {
-    background: white;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     padding: 20px;
@@ -171,8 +144,6 @@ body {
     font-weight: 600;
     font-size: 20px;
     margin-bottom: 15px;
-    color: #2E8B57;
-    border-bottom: 2px solid #88BDBC;
     padding-bottom: 8px;
 }
 
@@ -183,16 +154,13 @@ body {
 .manual-section-title {
     font-weight: 600;
     margin-bottom: 8px;
-    color: #2E8B57;
 }
 
 /* 风险提示横幅 */
 .risk-banner {
     margin-top: 30px;
     padding: 18px 20px;
-    background-color: #E8EAF6; /* 深青蓝色背景 */
     border-radius: 8px;
-    color: #37474F; /* 深青灰色文字 */
     font-size: 14px;
     line-height: 1.6;
     text-align: center;
@@ -202,7 +170,6 @@ body {
 .risk-banner h4 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #1A237E; /* 深蓝色标题 */
     font-weight: 600;
 }
 
@@ -212,18 +179,14 @@ body {
 
 /* 页脚和水印 */
 footer {
-    border-top: 1px solid #e9ecef;
     text-align: center;
     margin-top: 30px;
     margin-bottom: 20px;
-    color: #666;
     padding: 15px;
-    background-color: #f8f9fa;
     border-radius: 8px;
 }
 
 .watermark {
-    color: #9E9E9E;
     font-size: 14px;
     font-style: italic;
     text-align: center;
@@ -233,53 +196,48 @@ footer {
     letter-spacing: 0.5px;
 }
 
-/* 自定义颜色 */
-.bg-primary {
-    background-color: #3A7CA5 !important; /* 更重的青蓝色 */
-}
-
-.bg-success {
-    background-color: #2E8B57 !important; /* 海绿色 */
-}
-
-.bg-info {
-    background-color: #5BC0DE !important; /* 天蓝色 */
-}
-
 .header-banner {
-    background-color: #3A7CA5; /* 更重的青蓝色 */
-    padding: 30px 20px;
+    padding: 30px;
     border-radius: 10px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    text-align: center;
     color: white;
+    text-align: center;
 }
 
 .header-banner h1 {
-    color: white;
-    font-weight: 600;
+    font-size: 28px;
+    font-weight: 700;
     margin-bottom: 10px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 .header-banner p {
-    color: rgba(255,255,255,0.9);
     font-size: 16px;
+    opacity: 0.9;
 }
 
-/* 响应式调整 */
 @media (max-width: 768px) {
     .container {
-        padding: 10px;
+        padding: 0 15px;
     }
     
     .card {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
 }
 
-/* 加载动画 */
 .spinner-border {
-    margin-right: 5px;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+/* 主题切换按钮样式 */
+#theme-toggle {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+}
+
+#theme-toggle i {
+    font-size: 1rem;
 } 

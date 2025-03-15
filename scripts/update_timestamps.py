@@ -2,124 +2,89 @@
 # -*- coding: utf-8 -*-
 
 """
-TradeMind Lite 文档时间戳更新脚本
-自动更新项目文档中的时间戳
+时间戳更新脚本
+自动更新项目中所有文档的时间戳
 """
 
 import os
 import re
-import sys
 import subprocess
-from datetime import datetime
-
-# 需要更新时间戳的文档目录
-DOC_DIRECTORIES = [
-    "project_management",
-    "project_management/actuals",
-    "project_management/actuals/tasks",
-]
-
-# 需要更新的文件类型
-FILE_EXTENSIONS = [".md"]
-
-# 时间戳正则表达式模式
-TIMESTAMP_PATTERNS = [
-    r"## 时间\n.*\n",  # 匹配文档顶部的时间字段
-    r"\*最后更新: .*\*"  # 匹配文档底部的最后更新字段
-]
-
+import datetime
+import pytz
+from pathlib import Path
 
 def get_current_timestamp():
-    """获取当前时间戳，使用generate_timestamp.py脚本"""
-    try:
-        result = subprocess.run(
-            ["python", "scripts/generate_timestamp.py"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        print(f"错误: 无法生成时间戳: {e}")
-        sys.exit(1)
+    """获取当前的时间戳"""
+    result = subprocess.run(['python', 'scripts/generate_timestamp.py', 'full'], 
+                           capture_output=True, text=True)
+    return result.stdout.strip()
 
-
-def update_file_timestamps(file_path, timestamp):
+def update_file_timestamp(file_path, timestamp):
     """更新文件中的时间戳"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-        
-        # 更新顶部时间字段
-        content = re.sub(
-            r"## 时间\n.*\n",
-            f"## 时间\n{timestamp}\n",
-            content
-        )
-        
-        # 更新底部最后更新字段
-        content = re.sub(
-            r"\*最后更新: .*\*",
-            f"*最后更新: {timestamp}*",
-            content
-        )
-        
-        with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(content)
-        
-        return True
-    except Exception as e:
-        print(f"错误: 更新文件 {file_path} 时出错: {e}")
-        return False
-
-
-def find_and_update_docs(root_dir, timestamp):
-    """查找并更新所有文档中的时间戳"""
-    updated_files = []
-    failed_files = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
     
-    for doc_dir in DOC_DIRECTORIES:
-        dir_path = os.path.join(root_dir, doc_dir)
-        if not os.path.exists(dir_path):
-            print(f"警告: 目录不存在: {dir_path}")
-            continue
-        
-        for file_name in os.listdir(dir_path):
-            if any(file_name.endswith(ext) for ext in FILE_EXTENSIONS):
-                file_path = os.path.join(dir_path, file_name)
-                print(f"更新文件: {file_path}")
-                
-                if update_file_timestamps(file_path, timestamp):
-                    updated_files.append(file_path)
-                else:
-                    failed_files.append(file_path)
+    # 更新文件顶部的时间戳
+    content = re.sub(r'\*\*最后更新\*\*: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
+                    f'**最后更新**: {timestamp}', content)
     
-    return updated_files, failed_files
+    # 更新文件底部的时间戳
+    content = re.sub(r'\*最后更新: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', 
+                    f'*最后更新: {timestamp}*', content)
+    
+    # 更新"最后更新"部分的时间戳
+    content = re.sub(r'## 最后更新\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
+                    f'## 最后更新\n{timestamp}', content)
+    
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    print(f"已更新: {file_path}")
 
+def find_markdown_files(directory):
+    """查找目录中的所有Markdown文件"""
+    markdown_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.md'):
+                markdown_files.append(os.path.join(root, file))
+    return markdown_files
 
 def main():
     """主函数"""
-    # 获取项目根目录
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = os.path.dirname(script_dir)
-    
     # 获取当前时间戳
     timestamp = get_current_timestamp()
     print(f"当前时间戳: {timestamp}")
     
-    # 更新文档时间戳
-    updated_files, failed_files = find_and_update_docs(root_dir, timestamp)
+    # 项目根目录
+    root_dir = Path(__file__).parent.parent
     
-    # 打印结果
-    print("\n更新结果:")
-    print(f"成功更新: {len(updated_files)} 个文件")
-    if failed_files:
-        print(f"更新失败: {len(failed_files)} 个文件")
-        for file in failed_files:
-            print(f"  - {file}")
+    # 需要更新的目录
+    directories = [
+        os.path.join(root_dir, 'project_management'),
+        os.path.join(root_dir, 'docs'),
+    ]
     
-    print("\n完成!")
-
+    # 需要更新的单独文件
+    individual_files = [
+        os.path.join(root_dir, 'README.md'),
+        os.path.join(root_dir, 'PROJECT_PROGRESS.md'),
+        os.path.join(root_dir, 'RELEASE_NOTES.md'),
+    ]
+    
+    # 更新目录中的所有Markdown文件
+    for directory in directories:
+        if os.path.exists(directory):
+            markdown_files = find_markdown_files(directory)
+            for file_path in markdown_files:
+                update_file_timestamp(file_path, timestamp)
+    
+    # 更新单独的文件
+    for file_path in individual_files:
+        if os.path.exists(file_path):
+            update_file_timestamp(file_path, timestamp)
+    
+    print("所有文档的时间戳已更新完成！")
 
 if __name__ == "__main__":
     main() 

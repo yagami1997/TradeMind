@@ -125,7 +125,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // 显示进度区域
         resultCard.classList.remove('d-none');
         resultCard.querySelector('.card-header').classList.remove('bg-danger');
-        resultCard.querySelector('.card-header').classList.add('bg-primary');
+        resultCard.querySelector('.card-header').classList.remove('bg-success');
+        resultCard.querySelector('.card-header').classList.remove('bg-primary');
         resultCard.querySelector('.card-header h5').textContent = '分析进行中';
         resultMessage.innerHTML = '';
         resultMessage.appendChild(statusText);
@@ -214,7 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                 // 更新结果卡片
                                 resultCard.querySelector('.card-header').classList.remove('bg-primary');
-                                resultCard.querySelector('.card-header').classList.add('bg-success');
+                                resultCard.querySelector('.card-header').classList.remove('bg-danger');
+                                resultCard.querySelector('.card-header').classList.remove('bg-success');
                                 resultCard.querySelector('.card-header h5').textContent = '分析成功';
                                 
                                 // 刷新报告列表
@@ -243,6 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 显示错误信息
             resultCard.querySelector('.card-header').classList.remove('bg-primary');
+            resultCard.querySelector('.card-header').classList.remove('bg-success');
             resultCard.querySelector('.card-header').classList.add('bg-danger');
             resultCard.querySelector('.card-header h5').textContent = '分析失败';
             resultMessage.innerHTML = '';
@@ -359,8 +362,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             li.innerHTML = `
                                 <span>${report.name}</span>
                                 <div>
-                                    <small class="text-muted me-3">${report.created}</small>
-                                    <a href="${report.url}" class="btn btn-sm btn-primary" target="_blank">查看</a>
+                                    <small class="text-muted me-3 report-date">${report.created}</small>
+                                    <a href="${report.url}" class="btn btn-sm action-button view-report-btn" target="_blank">查看</a>
                                 </div>
                             `;
                             recentReportsList.appendChild(li);
