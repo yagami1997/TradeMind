@@ -1,32 +1,32 @@
-/* TradeMind Lite - 曦潮映空主题 */
+/* TradeMind Lite - 紫岚烟渚主题 */
 
 :root {
-    --primary-color: #F76900;
-    --primary-hover: #d45800;
-    --accent-color: #9EBFE2;
-    --accent-hover: #7ba7d3;
+    --primary-color: #615F74;
+    --primary-hover: #525064;
+    --accent-color: #D3D4D3;
+    --accent-hover: #b8b9b8;
     
-    --bg-color: #fff9f5;
+    --bg-color: #f8f7fc;
     --text-color: #3a3a3a;
     --card-bg: #ffffff;
-    --card-shadow: 0 4px 6px rgba(247, 105, 0, 0.1);
+    --card-shadow: 0 4px 6px rgba(97, 95, 116, 0.1);
     
-    --success-color: #e85d00;
-    --info-color: #5d8cb6;
-    --border-color: #ffe0cc;
+    --success-color: #7a7895;
+    --info-color: #a3a4a3;
+    --border-color: #e6e7e6;
     
-    --indicator-bg: #f0f7ff;
-    --pattern-bg: #fff1e6;
-    --advice-bg: #e6f2ff;
-    --backtest-bg: #fff6ed;
+    --indicator-bg: #f0f0f6;
+    --pattern-bg: #f5f5f5;
+    --advice-bg: #eeeef2;
+    --backtest-bg: #f7f7f7;
     
-    --risk-banner-bg: #e6f0fa;
-    --risk-text: #4a6b8a;
-    --risk-title: #F76900;
+    --risk-banner-bg: #f0f0f0;
+    --risk-text: #4a4a67;
+    --risk-title: #615F74;
     
-    --footer-bg: #f7f9fc;
-    --footer-text: #5d8cb6;
-    --watermark: #ccdcec;
+    --footer-bg: #f7f7f9;
+    --footer-text: #615F74;
+    --watermark: #d3d4d3;
 }
 
 body {
@@ -69,22 +69,22 @@ body {
 /* 强调色应用到指标区块 */
 .indicator-section {
     background-color: var(--indicator-bg);
-    border-left: 4px solid var(--accent-color);
+    border-left: 4px solid var(--primary-color);
 }
 
 .pattern-section {
     background-color: var(--pattern-bg);
-    border-left: 4px solid var(--primary-color);
+    border-left: 4px solid var(--accent-color);
 }
 
 .advice-section {
     background-color: var(--advice-bg);
-    border-left: 4px solid var(--accent-color);
+    border-left: 4px solid var(--primary-color);
 }
 
 .backtest-section {
     background-color: var(--backtest-bg);
-    border-left: 4px solid var(--primary-color);
+    border-left: 4px solid var(--accent-color);
 }
 
 .section-title {
@@ -113,8 +113,8 @@ footer {
 }
 
 .header-banner {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #ff8534 100%);
-    box-shadow: 0 4px 12px rgba(247, 105, 0, 0.2);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #7a7895 100%);
+    box-shadow: 0 4px 12px rgba(97, 95, 116, 0.2);
     border-bottom: 4px solid var(--accent-color);
 }
 
@@ -124,7 +124,7 @@ footer {
 }
 
 .stock-card .card-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #ff8534 100%) !important;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #7a7895 100%) !important;
     color: white;
     border-bottom: 2px solid var(--accent-color);
 }
@@ -166,7 +166,7 @@ table th {
 /* 输入框样式调整 */
 .form-control, .form-select {
     background-color: #ffffff;
-    border-color: #ffe0cc;
+    border-color: var(--border-color);
     color: var(--text-color);
 }
 
@@ -174,7 +174,7 @@ table th {
     background-color: #ffffff;
     color: var(--text-color);
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(247, 105, 0, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(97, 95, 116, 0.25);
 }
 
 /* 标签样式 */
@@ -224,13 +224,13 @@ a:hover {
 .btn-accent {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
-    color: white;
+    color: var(--text-color);
 }
 
 .btn-accent:hover {
     background-color: var(--accent-hover);
     border-color: var(--accent-hover);
-    color: white;
+    color: var(--text-color);
 }
 
 /* 导航栏链接 */
@@ -259,7 +259,7 @@ a:hover {
 
 /* 表单按钮 */
 #analyzeBtn {
-    background: linear-gradient(to right, var(--primary-color), #ff8534);
+    background: linear-gradient(to right, var(--primary-color), #7a7895);
     border-color: var(--primary-color);
     position: relative;
     overflow: hidden;
@@ -283,13 +283,13 @@ a:hover {
 
 /* 警告和提示框 */
 .alert-success {
-    background-color: #fff1e6;
+    background-color: #f0fcf1;
     border-color: var(--success-color);
     color: var(--success-color);
 }
 
 .alert-info {
-    background-color: #f0f7ff;
+    background-color: #f5f5f5;
     border-color: var(--accent-color);
     color: #5a5a5a;
 }
@@ -337,7 +337,7 @@ a:hover {
     border-radius: 6px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(247, 105, 0, 0.2);
+    box-shadow: 0 4px 6px rgba(97, 95, 116, 0.2);
     position: relative;
     overflow: hidden;
     margin-bottom: 15px;
@@ -348,7 +348,7 @@ a:hover {
 .action-button:hover {
     background-color: var(--primary-hover);
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(247, 105, 0, 0.3);
+    box-shadow: 0 6px 12px rgba(97, 95, 116, 0.3);
     color: white;
 }
 
@@ -384,7 +384,7 @@ a:hover {
 
 .analyzing-status .progress {
     height: 8px;
-    background-color: rgba(158, 191, 226, 0.3);
+    background-color: rgba(211, 212, 211, 0.3);
 }
 
 .analyzing-status .progress-bar {
@@ -412,7 +412,7 @@ a:hover {
 
 .report-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(247, 105, 0, 0.15);
+    box-shadow: 0 8px 15px rgba(97, 95, 116, 0.15);
 }
 
 .report-card .card-header {

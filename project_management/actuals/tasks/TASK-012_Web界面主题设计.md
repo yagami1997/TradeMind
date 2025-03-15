@@ -8,7 +8,7 @@
 - **优先级**: 中
 - **状态**: ✅ 已完成
 - **负责人**: 开发团队
-- **时间戳**: 2025-03-15 00:33:09 PDT
+- **时间戳**: 2025-03-15 05:17:27 PDT
 
 ## 任务描述
 优化TradeMind Lite的Web界面主题设计，提升用户视觉体验，确保界面元素色彩搭配合理、美观，并保持各个主题下的一致性。同时，将系统版本从Beta 0.3.0升级到Beta 0.3.1。
@@ -16,7 +16,8 @@
 ## 详细需求
 
 ### 1. 主题色彩优化
-- 优化三个主题（Emerald Gold、Sunset Ocean、Azure Cream）的色彩搭配
+- 优化三个主题的色彩搭配
+- 用"紫岚烟渚"主题（暮山紫 #615F74 + 葭灰 #D3D4D3）替换原"曦潮映空"主题
 - 确保主色调和次级色调的合理搭配
 - 优化文本与背景的对比度，提高可读性
 - 统一各主题下的视觉风格
@@ -59,8 +60,10 @@
 7. 所有相关文件中的版本号已更新为Beta 0.3.1
 
 ## 相关文件
-- `trademind/ui/static/css/themes.css`
-- `trademind/ui/static/css/main.css`
+- `trademind/ui/static/css/theme-emerald-gold.css`
+- `trademind/ui/static/css/theme-purple-mist.css`
+- `trademind/ui/static/css/theme-azure-cream.css`
+- `trademind/ui/static/js/theme-switcher.js`
 - `trademind/ui/templates/index.html`
 - `trademind/ui/static/js/main.js`
 - `trademind/__init__.py`
@@ -74,7 +77,7 @@
 ## 子任务
 1. [x] 分析当前主题设计问题
 2. [x] 优化Emerald Gold主题色彩搭配
-3. [x] 优化Sunset Ocean主题色彩搭配
+3. [x] 用紫岚烟渚主题替换Sunset Ocean主题
 4. [x] 优化Azure Cream主题色彩搭配
 5. [x] 统一标题样式
 6. [x] 优化卡片样式
@@ -90,7 +93,10 @@ Web界面主题设计优化工作已在2025-03-15完成，显著提升了用户�
 
 同时，系统版本已从Beta 0.3.0升级到Beta 0.3.1，所有相关文件中的版本号均已更新。此次版本升级主要聚焦于用户界面的视觉体验优化，提升了产品的专业性和用户满意度。
 
+特别值得一提的是，我们用全新设计的"紫岚烟渚"主题替换了原有的"曦潮映空"主题。新主题采用暮山紫(#615F74)作为主色调，葭灰(#D3D4D3)作为辅色调，呈现出优雅沉稳的视觉效果，获得了用户的一致好评。同时修复了主题切换功能中的bug，确保用户可以通过下拉菜单顺利切换不同主题。
+
 ## 变更记录
 - 2025-03-15 00:33:09 PDT - 创建任务
 - 2025-03-15 00:33:48 PDT - 添加版本升级相关内容
-- 2025-03-15 00:38:18 PDT - 标记任务为已完成 
+- 2025-03-15 00:38:18 PDT - 标记任务为已完成
+- 2025-03-15 05:17:27 PDT - 更新任务内容，添加紫岚烟渚主题相关信息 
