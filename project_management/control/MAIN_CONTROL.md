@@ -177,7 +177,7 @@ TradeMind Lite是一个股票技术分析工具，提供命令行和Web界面两
 10. [已完成] Beta 0.3.0发布 - 2025-03-14
 
 ## 团队成员
-- 项目负责人：@kinglee
+- 项目负责人：@yagami
 - 开发团队：@dev-team
 - 测试团队：@test-team
 

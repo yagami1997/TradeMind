@@ -12,6 +12,11 @@
 <!-- 使用PST时区，格式：YYYY-MM-DD HH:MM:SS PST -->
 [TIMESTAMP]
 
+## 基本信息
+- **项目**: {{PROJECT_NAME}}
+- **日期**: {{DATE}}
+- **报告人**: {{AUTHOR}}
+
 ## 今日工作内容
 <!--
 记录今日完成的具体工作：

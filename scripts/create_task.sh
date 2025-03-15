@@ -27,6 +27,9 @@ echo $((TASK_NUM + 1)) > "$TASK_COUNT_FILE"
 # 获取当前时间戳
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S %Z")
 
+# 设置默认作者
+AUTHOR="Yagami"
+
 # 创建任务文件
 TASK_FILE="project_management/actuals/tasks/${TASK_ID}_$(echo "$TASK_NAME" | tr ' ' '_').md"
 mkdir -p "project_management/actuals/tasks"
@@ -37,6 +40,7 @@ sed -e "s/\[TASK-ID\]/$TASK_ID/g" \
     -e "s/\[TIMESTAMP\]/$TIMESTAMP/g" \
     -e "s/\[高\/中\/低\]/$PRIORITY/g" \
     -e "s/\[未开始\/进行中\/已完成\/已暂停\]/未开始/g" \
+    -e "s/\[负责人\]/$AUTHOR/g" \
     "project_management/templates/task_template.md" > "$TASK_FILE"
 
 echo "已创建任务：$TASK_ID"
