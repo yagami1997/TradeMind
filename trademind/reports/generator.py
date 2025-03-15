@@ -146,6 +146,9 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
             }}
             .pattern-section {{
                 margin-bottom: 15px;
+                background-color: #FFE4E1 !important;
+                padding: 12px;
+                border-radius: 5px;
             }}
             .patterns-container {{
                 display: flex;
@@ -154,8 +157,6 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                 margin-top: 10px;
             }}
             .pattern-tag {{
-                background-color: #e0f7fa;
-                color: #00838f;
                 padding: 5px 10px;
                 border-radius: 15px;
                 font-size: 12px;
@@ -793,12 +794,25 @@ def generate_stock_card_html(result: Dict) -> str:
                 # 严格确保这是一个K线形态而不是技术指标信号
                 if pattern_name and not any(keyword in pattern_name.lower() for keyword in ['macd', 'rsi', 'kdj', 'bollinger', '零轴', '金叉', '死叉', '超买', '超卖']):
                     has_valid_patterns = True
-                    pattern_html += f'<div style="display: inline-block; margin: 2px; padding: 5px 10px; background-color: #f0f0f0; color: #333; border-radius: 4px; font-size: 13px;">{pattern_name} ({pattern_confidence}%)</div>'
+                    # 根据形态类型设置不同的底色
+                    bg_color = "#DEB887"  # 默认中性振荡信号用#DEB887
+                    
+                    # 积极信号用#3CB371
+                    if any(keyword in pattern_name for keyword in ["看涨", "启明星", "晨星", "锤子", "反转", "上升"]):
+                        bg_color = "#3CB371"
+                    # 悲观信号用#F08080
+                    elif any(keyword in pattern_name for keyword in ["看跌", "黄昏星", "暮星", "吊颈", "下降"]):
+                        bg_color = "#F08080"
+                    # 中性信号用#DEB887
+                    elif any(keyword in pattern_name for keyword in ["十字星", "平头", "震荡"]):
+                        bg_color = "#DEB887"
+                    
+                    pattern_html += f'<div style="display: inline-block; margin: 2px; padding: 5px 10px; background-color: {bg_color} !important; color: #333; border-radius: 4px; font-size: 13px;">{pattern_name} ({pattern_confidence}%)</div>'
         
         if not has_valid_patterns:
-            pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #D8BFD8; padding: 8px; border-radius: 4px; border: 1px dashed #C8AFC8;">无明显K线形态</div>'
+            pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #FFE4E1 !important; padding: 8px; border-radius: 4px; border: 1px dashed #E8D4D1;">无明显K线形态</div>'
     else:
-        pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #D8BFD8; padding: 8px; border-radius: 4px; border: 1px dashed #C8AFC8;">无明显K线形态</div>'
+        pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #FFE4E1 !important; padding: 8px; border-radius: 4px; border: 1px dashed #E8D4D1;">无明显K线形态</div>'
     
     # 获取信号 - 严格筛选技术指标信号
     signals = []
@@ -846,8 +860,8 @@ def generate_stock_card_html(result: Dict) -> str:
             </div>
         </div>
         <div class="stock-body" style="padding: 12px;">
-            <div class="pattern-section" style="background-color: #D8BFD8; padding: 12px; border-radius: 5px; margin-bottom: 12px;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #424242; border-bottom: 1px solid #C8AFC8; padding-bottom: 4px; font-size: 15px;">K线形态分析</h4>
+            <div style="background-color: #FFE4E1; padding: 12px; border-radius: 5px; margin-bottom: 12px;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #424242; border-bottom: 1px solid #E8D4D1; padding-bottom: 4px; font-size: 15px;">K线形态分析</h4>
                 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 14px; margin-bottom: 10px;">
                     {pattern_html}
                 </div>
