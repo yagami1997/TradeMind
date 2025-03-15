@@ -22,7 +22,8 @@ from trademind.core.indicators import (
     calculate_rsi, 
     calculate_macd, 
     calculate_kdj, 
-    calculate_bollinger_bands
+    calculate_bollinger_bands,
+    calculate_dynamic_rsi_thresholds
 )
 from trademind.core.patterns import identify_candlestick_patterns
 from trademind.core.signals import generate_trading_advice, generate_signals
@@ -546,6 +547,11 @@ class StockAnalyzer:
             # 计算RSI
             rsi = calculate_rsi(data['Close'])
             
+            # 计算动态RSI阈值
+            dynamic_rsi, oversold, overbought, volatility = calculate_dynamic_rsi_thresholds(
+                data['High'], data['Low'], data['Close']
+            )
+            
             # 计算MACD
             macd, signal, hist_macd = calculate_macd(data['Close'])
             
@@ -565,6 +571,12 @@ class StockAnalyzer:
             # 构建指标字典
             indicators = {
                 'rsi': rsi,
+                'dynamic_rsi': {
+                    'rsi': dynamic_rsi,
+                    'oversold': oversold,
+                    'overbought': overbought,
+                    'volatility': volatility
+                },
                 'macd': {'macd': macd, 'signal': signal, 'hist': hist_macd},
                 'kdj': {'k': k, 'd': d, 'j': j},
                 'bollinger': {
