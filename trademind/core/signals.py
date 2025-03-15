@@ -337,21 +337,33 @@ def generate_trading_advice(indicators: Dict, current_price: float,
     # 基于K线形态识别
     
     if patterns:
+        pattern_count = 0
         for pattern in patterns:
+            pattern_count += 1
+            # 处理不同类型的pattern对象
+            if isinstance(pattern, dict):
+                pattern_name = pattern.get('name', '')
+                pattern_confidence = pattern.get('confidence', 70)
+            else:  # 假设是TechnicalPattern对象
+                pattern_name = pattern.name
+                pattern_confidence = pattern.confidence
+                
             # 根据形态类型和置信度调整系统得分
-            if "看涨" in pattern.name or "锤子" in pattern.name or "启明星" in pattern.name:
+            pattern_weight = pattern_confidence / 100
+            
+            if any(keyword in pattern_name for keyword in ["看涨", "锤子", "启明星", "晨星"]):
                 # 看涨形态
-                score_adjustment = pattern.confidence / 2
+                score_adjustment = 50 * pattern_weight
                 system_scores['momentum'] += score_adjustment
-                signals.append(f"{pattern.name}({pattern.confidence}%)")
-            elif "看跌" in pattern.name or "吊颈" in pattern.name or "黄昏星" in pattern.name:
+                signals.append(f"{pattern_name}形态")
+            elif any(keyword in pattern_name for keyword in ["看跌", "吊颈", "黄昏星", "暮星"]):
                 # 看跌形态
-                score_adjustment = pattern.confidence / 2
+                score_adjustment = 50 * pattern_weight
                 system_scores['momentum'] -= score_adjustment
-                signals.append(f"{pattern.name}({pattern.confidence}%)")
-            else:
+                signals.append(f"{pattern_name}形态")
+            elif "十字星" in pattern_name:
                 # 中性形态
-                signals.append(f"{pattern.name}({pattern.confidence}%)")
+                signals.append(f"{pattern_name}形态")
     
     # =============== 5. 综合分析 ===============
     # 计算总体得分和建议
