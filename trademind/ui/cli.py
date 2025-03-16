@@ -104,7 +104,7 @@ def load_watchlists() -> Dict[str, Dict[str, str]]:
         观察列表字典，格式为 {group_name: {symbol: name}}
     """
     try:
-        config_path = Path('config') / 'watchlists.json'
+        config_path = Path('config') / 'users' / 'default' / 'watchlists.json'
         with open(config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
@@ -306,6 +306,9 @@ def run_cli() -> None:
             elif choice == "3":
                 # 查看观察列表
                 console.print("[bold cyan]查看观察列表[/bold cyan]\n")
+                
+                # 重新加载观察列表，确保获取最新数据
+                watchlists = load_watchlists()
                 
                 if not watchlists:
                     console.print("[yellow]没有可用的观察列表[/yellow]\n")
