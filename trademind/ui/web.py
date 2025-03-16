@@ -698,9 +698,12 @@ def auto_organize_watchlist():
         organize_progress['status'] = '正在备份原文件...'
         
         # 备份原文件
-        backup_path = user_watchlists_file + '.bak'
-        with open(backup_path, 'w', encoding='utf-8') as f:
-            json.dump(watchlists_data, f, ensure_ascii=False, indent=4)
+        try:
+            backup_path = user_watchlists_file + '.bak'
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(watchlists_data, f, ensure_ascii=False, indent=4)
+        except Exception as backup_error:
+            app.logger.warning(f"备份文件失败，但将继续处理: {str(backup_error)}")
         
         # 统计信息
         stats = {
@@ -719,27 +722,31 @@ def auto_organize_watchlist():
         stock_dict = {}
         for group, stocks in watchlists_data.items():
             for symbol, name in stocks.items():
-                # 标准化股票代码（去除空格和转为大写）
-                normalized_symbol = symbol.strip().upper()
-                
-                # 获取股票名称
-                if isinstance(name, str):
-                    stock_name = name
-                else:
-                    stock_name = name.get('name', '')
-                
-                # 如果股票已存在，记录重复并跳过
-                if normalized_symbol in stock_dict:
-                    stats['duplicates'] += 1
+                try:
+                    # 标准化股票代码（去除空格和转为大写）
+                    normalized_symbol = symbol.strip().upper()
+                    
+                    # 获取股票名称
+                    if isinstance(name, str):
+                        stock_name = name
+                    else:
+                        stock_name = name.get('name', '')
+                    
+                    # 如果股票已存在，记录重复并跳过
+                    if normalized_symbol in stock_dict:
+                        stats['duplicates'] += 1
+                        continue
+                    
+                    # 添加到字典中
+                    stock_dict[normalized_symbol] = {
+                        'symbol': normalized_symbol,
+                        'name': stock_name,
+                        'group': group
+                    }
+                    stats['stocks'] += 1
+                except Exception as stock_error:
+                    app.logger.warning(f"处理股票 {symbol} 时出错，已跳过: {str(stock_error)}")
                     continue
-                
-                # 添加到字典中
-                stock_dict[normalized_symbol] = {
-                    'symbol': normalized_symbol,
-                    'name': stock_name,
-                    'group': group
-                }
-                stats['stocks'] += 1
         
         # 转换为列表
         all_stocks = list(stock_dict.values())
@@ -757,104 +764,124 @@ def auto_organize_watchlist():
         validated_symbols = set()
         
         for i in range(0, len(all_stocks), batch_size):
-            batch_index = i // batch_size
-            batch = all_stocks[i:i+batch_size]
-            symbols = [stock['symbol'] for stock in batch]
-            
-            # 更新进度 - 验证阶段占40%的进度(20%-60%)
-            progress_percent = 20 + (batch_index / total_batches) * 40
-            organize_progress['percent'] = progress_percent
-            
-            # 每个批次使用不同的状态消息，使界面更加动态
-            if batch_index % 5 == 0:
-                organize_progress['status'] = f'正在验证股票代码有效性 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
-            elif batch_index % 5 == 1:
-                organize_progress['status'] = f'正在查询股票信息和最新数据 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
-            elif batch_index % 5 == 2:
-                organize_progress['status'] = f'正在翻译股票名称为中文 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
-            elif batch_index % 5 == 3:
-                organize_progress['status'] = f'正在修复无效的股票代码 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
-            else:
-                organize_progress['status'] = f'正在处理特殊格式的股票代码 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
-            
-            # 验证股票代码
-            results = batch_validate_stock_codes(symbols, translate=True)
-            
-            # 处理验证结果
-            for j, result in enumerate(results):
-                stock = batch[j]
+            try:
+                batch_index = i // batch_size
+                batch = all_stocks[i:i+batch_size]
+                symbols = [stock['symbol'] for stock in batch]
                 
-                if result.get('valid', False):
-                    # 获取转换后的代码（如果有）
-                    converted_code = result.get('yf_code') or stock['symbol']
-                    
-                    # 如果转换后的代码已经存在，跳过（去重）
-                    if converted_code in validated_symbols:
-                        stats['duplicates'] += 1
-                        continue
-                    
-                    # 添加到已验证集合
-                    validated_symbols.add(converted_code)
-                    
-                    # 有效股票
-                    validated_stock = {
-                        'valid': True,
-                        'original': stock['symbol'],
-                        'converted': converted_code,
-                        'name': result.get('name', stock.get('name', '')),
-                        'market_type': result.get('market_type', ''),
-                        'originalGroup': stock['group']
-                    }
-                    
-                    # 检查是否有中文名称
-                    if validated_stock['name'] != stock.get('name', ''):
-                        stats['translated'] += 1
-                    
-                    validated_stocks.append(validated_stock)
+                # 更新进度 - 验证阶段占40%的进度(20%-60%)
+                progress_percent = 20 + (batch_index / total_batches) * 40
+                organize_progress['percent'] = progress_percent
+                
+                # 每个批次使用不同的状态消息，使界面更加动态
+                if batch_index % 5 == 0:
+                    organize_progress['status'] = f'正在验证股票代码有效性 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
+                elif batch_index % 5 == 1:
+                    organize_progress['status'] = f'正在查询股票信息和最新数据 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
+                elif batch_index % 5 == 2:
+                    organize_progress['status'] = f'正在翻译股票名称为中文 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
+                elif batch_index % 5 == 3:
+                    organize_progress['status'] = f'正在修复无效的股票代码 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
                 else:
-                    # 尝试修复无效股票
-                    fixed = False
-                    
-                    # 尝试不同的修复方法
-                    if stock['symbol'].startswith('.'):
-                        # 可能是指数，尝试转换为^格式
-                        fixed_symbol = '^' + stock['symbol'][1:]
-                        fixed_result = validate_stock_code(fixed_symbol, translate=True)
-                        if fixed_result.get('valid', False):
-                            # 检查修复后的代码是否已存在
-                            converted_code = fixed_result.get('yf_code') or fixed_symbol
+                    organize_progress['status'] = f'正在处理特殊格式的股票代码 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
+                
+                # 验证股票代码
+                try:
+                    results = batch_validate_stock_codes(symbols, translate=True)
+                except Exception as validate_error:
+                    app.logger.error(f"验证股票代码批次失败: {str(validate_error)}")
+                    # 使用空结果继续处理
+                    results = [{'valid': False, 'error': '验证过程出错'} for _ in symbols]
+                
+                # 处理验证结果
+                for j, result in enumerate(results):
+                    try:
+                        stock = batch[j]
+                        
+                        if result.get('valid', False):
+                            # 获取转换后的代码（如果有）
+                            converted_code = result.get('yf_code') or stock['symbol']
+                            
+                            # 如果转换后的代码已经存在，跳过（去重）
                             if converted_code in validated_symbols:
                                 stats['duplicates'] += 1
                                 continue
-                                
+                            
                             # 添加到已验证集合
                             validated_symbols.add(converted_code)
                             
-                            fixed = True
-                            stats['fixed'] += 1
-                            validated_stocks.append({
+                            # 有效股票
+                            validated_stock = {
                                 'valid': True,
                                 'original': stock['symbol'],
                                 'converted': converted_code,
-                                'name': fixed_result.get('name', stock.get('name', '')),
-                                'market_type': fixed_result.get('market_type', ''),
+                                'name': result.get('name', stock.get('name', '')),
+                                'market_type': result.get('market_type', ''),
                                 'originalGroup': stock['group']
-                            })
-                    
-                    if not fixed:
-                        # 无法修复，保留原始信息
-                        validated_stocks.append({
-                            'valid': False,
-                            'original': stock['symbol'],
-                            'error': result.get('error', '无效股票代码'),
-                            'originalGroup': stock['group']
-                        })
-            
-            # 避免API限制
-            time.sleep(0.5)
-            
-            # 每处理完一批次，稍微增加一点进度，让用户感觉到系统在持续工作
-            organize_progress['percent'] += 0.5
+                            }
+                            
+                            # 检查是否有中文名称
+                            if validated_stock['name'] != stock.get('name', ''):
+                                stats['translated'] += 1
+                            
+                            validated_stocks.append(validated_stock)
+                        else:
+                            # 尝试修复无效股票
+                            fixed = False
+                            
+                            # 尝试不同的修复方法
+                            if stock['symbol'].startswith('.'):
+                                try:
+                                    # 可能是指数，尝试转换为^格式
+                                    fixed_symbol = '^' + stock['symbol'][1:]
+                                    fixed_result = validate_stock_code(fixed_symbol, translate=True)
+                                    if fixed_result.get('valid', False):
+                                        # 检查修复后的代码是否已存在
+                                        converted_code = fixed_result.get('yf_code') or fixed_symbol
+                                        if converted_code in validated_symbols:
+                                            stats['duplicates'] += 1
+                                            continue
+                                            
+                                        # 添加到已验证集合
+                                        validated_symbols.add(converted_code)
+                                        
+                                        fixed = True
+                                        stats['fixed'] += 1
+                                        validated_stocks.append({
+                                            'valid': True,
+                                            'original': stock['symbol'],
+                                            'converted': converted_code,
+                                            'name': fixed_result.get('name', stock.get('name', '')),
+                                            'market_type': fixed_result.get('market_type', ''),
+                                            'originalGroup': stock['group']
+                                        })
+                                except Exception as fix_error:
+                                    app.logger.warning(f"修复股票代码 {stock['symbol']} 失败: {str(fix_error)}")
+                                    fixed = False
+                            
+                            if not fixed:
+                                # 无法修复，保留原始信息
+                                validated_stocks.append({
+                                    'valid': False,
+                                    'original': stock['symbol'],
+                                    'error': result.get('error', '无效股票代码'),
+                                    'originalGroup': stock['group']
+                                })
+                    except Exception as result_error:
+                        app.logger.warning(f"处理验证结果时出错: {str(result_error)}")
+                        continue
+                
+                # 避免API限制
+                try:
+                    time.sleep(0.5)
+                except Exception:
+                    pass
+                
+                # 每处理完一批次，稍微增加一点进度，让用户感觉到系统在持续工作
+                organize_progress['percent'] += 0.5
+            except Exception as batch_error:
+                app.logger.error(f"处理批次 {i//batch_size + 1}/{total_batches} 时出错: {str(batch_error)}")
+                continue
         
         # 更新进度 - 分类阶段
         organize_progress['percent'] = 65
@@ -867,68 +894,92 @@ def auto_organize_watchlist():
         
         # 分类处理进度 - 占20%的进度(65%-85%)
         for i, stock in enumerate(valid_stocks):
-            if stock.get('valid', False):
-                symbol = stock.get('converted') or stock.get('original')  # 使用转换后的代码
-                original_symbol = stock.get('original')  # 保存原始代码
-                stock_name = stock.get('name', original_symbol)
-                market_type = stock.get('market_type', '').lower()
-                
-                # 确保指数代码使用正确的格式
-                if original_symbol.startswith('.') or (market_type == 'index' and not symbol.startswith('^')):
-                    # 使用convert_index_code函数转换指数代码
-                    from trademind.data.loader import convert_index_code
-                    symbol = convert_index_code(symbol)
-                
-                # 使用智能分类逻辑
-                if market_type == 'index' or symbol.startswith('^'):
-                    # 指数自动归类到"指数与ETF"
-                    category = "指数与ETF"
-                elif market_type == 'etf':
-                    # ETF自动归类到"指数与ETF"
-                    category = "指数与ETF"
-                else:
-                    # 使用STOCK_CATEGORIES进行智能行业分类
-                    category = None
-                    for cat_name, patterns in STOCK_CATEGORIES.items():
-                        for pattern in patterns:
-                            if re.search(pattern, symbol):
-                                category = cat_name
-                                break
-                        if category:
-                            break
+            try:
+                if stock.get('valid', False):
+                    symbol = stock.get('converted') or stock.get('original')  # 使用转换后的代码
+                    original_symbol = stock.get('original')  # 保存原始代码
+                    stock_name = stock.get('name', original_symbol)
+                    market_type = stock.get('market_type', '').lower()
                     
-                    # 如果没有匹配到任何分类，使用默认分类
-                    if not category:
-                        category = '无分类自选股'
+                    # 确保指数代码使用正确的格式
+                    try:
+                        if original_symbol.startswith('.') or (market_type == 'index' and not symbol.startswith('^')):
+                            # 使用convert_index_code函数转换指数代码
+                            from trademind.data.loader import convert_index_code
+                            symbol = convert_index_code(symbol)
+                    except Exception as convert_error:
+                        app.logger.warning(f"转换指数代码 {original_symbol} 失败: {str(convert_error)}")
+                    
+                    # 使用智能分类逻辑
+                    if market_type == 'index' or symbol.startswith('^'):
+                        # 指数自动归类到"指数与ETF"
+                        category = "指数与ETF"
+                    elif market_type == 'etf':
+                        # ETF自动归类到"指数与ETF"
+                        category = "指数与ETF"
+                    else:
+                        # 使用STOCK_CATEGORIES进行智能行业分类
+                        category = None
+                        try:
+                            for cat_name, patterns in STOCK_CATEGORIES.items():
+                                for pattern in patterns:
+                                    if re.search(pattern, symbol):
+                                        category = cat_name
+                                        break
+                                if category:
+                                    break
+                        except Exception as category_error:
+                            app.logger.warning(f"分类股票 {symbol} 时出错: {str(category_error)}")
+                        
+                        # 如果没有匹配到任何分类，使用默认分类
+                        if not category:
+                            category = '无分类自选股'
+                    
+                    # 确保分组存在
+                    if category not in updated_watchlists:
+                        updated_watchlists[category] = {}
+                        stats['groups'] += 1
+                    
+                    # 添加到分组
+                    updated_watchlists[category][symbol] = stock_name
                 
-                # 确保分组存在
-                if category not in updated_watchlists:
-                    updated_watchlists[category] = {}
-                    stats['groups'] += 1
-                
-                # 添加到分组
-                updated_watchlists[category][symbol] = stock_name
-            
-            # 每处理10个股票，更新一次进度
-            if i % 10 == 0 and total_valid > 0:
-                progress = 65 + (i / total_valid) * 20
-                organize_progress['percent'] = progress
+                # 每处理10个股票，更新一次进度
+                if i % 10 == 0 and total_valid > 0:
+                    progress = 65 + (i / total_valid) * 20
+                    organize_progress['percent'] = progress
+            except Exception as stock_error:
+                app.logger.warning(f"处理股票 {stock.get('original', '未知')} 分类时出错: {str(stock_error)}")
+                continue
         
         # 更新进度 - 写入文件阶段
         organize_progress['percent'] = 85
         organize_progress['status'] = '正在写入更新后的文件...'
         
         # 写入更新后的文件 - 只更新用户特定的文件，不修改全局配置
-        with open(user_watchlists_file, 'w', encoding='utf-8') as f:
-            json.dump(updated_watchlists, f, ensure_ascii=False, indent=4)
+        try:
+            with open(user_watchlists_file, 'w', encoding='utf-8') as f:
+                json.dump(updated_watchlists, f, ensure_ascii=False, indent=4)
+        except Exception as write_error:
+            app.logger.error(f"写入文件失败: {str(write_error)}")
+            # 尝试使用临时文件
+            try:
+                temp_file = user_watchlists_file + '.temp'
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump(updated_watchlists, f, ensure_ascii=False, indent=4)
+                app.logger.info(f"已写入临时文件: {temp_file}")
+            except Exception as temp_write_error:
+                app.logger.error(f"写入临时文件也失败: {str(temp_write_error)}")
         
         # 更新进度 - 更新全局变量
         organize_progress['percent'] = 95
         organize_progress['status'] = '正在更新系统配置...'
         
         # 更新全局变量
-        global watchlists
-        watchlists = updated_watchlists
+        try:
+            global watchlists
+            watchlists = updated_watchlists
+        except Exception as global_error:
+            app.logger.error(f"更新全局变量失败: {str(global_error)}")
         
         # 完成进度
         organize_progress['percent'] = 100
@@ -947,12 +998,15 @@ def auto_organize_watchlist():
     except Exception as e:
         # 记录错误
         app.logger.error(f"自动整理自选股列表出错: {str(e)}")
-        traceback.print_exc()
+        app.logger.error(traceback.format_exc())
         
         # 更新进度
-        organize_progress['in_progress'] = False
-        organize_progress['completed'] = True
-        organize_progress['status'] = f'整理过程中出错: {str(e)}'
+        try:
+            organize_progress['in_progress'] = False
+            organize_progress['completed'] = True
+            organize_progress['status'] = f'整理过程中出错: {str(e)}'
+        except Exception:
+            pass
         
         # 返回错误信息
         return jsonify({
