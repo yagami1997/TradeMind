@@ -396,7 +396,7 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
             </div>
             
             <div class="footer">
-                <p>TradeMind Lite Beta 0.3.1 © 2025 | <a href="https://github.com/yourusername/trademind" target="_blank">GitHub</a></p>
+                <p>TradeMind Lite Beta 0.3.2 © 2025 | <a href="https://github.com/yourusername/trademind" target="_blank">GitHub</a></p>
                 <div class="watermark">
                     In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
                     Long live the Free Software Movement!

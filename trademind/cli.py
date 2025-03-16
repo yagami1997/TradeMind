@@ -2,8 +2,10 @@ import sys
 
 def show_main_menu():
     """显示主菜单"""
+    from trademind import __version__
+    
     print("\n" + "="*60)
-    print("                    TradeMind Lite 主菜单")
+    print(f"                TradeMind Lite Beta {__version__} 主菜单")
     print("="*60 + "\n")
     
     menu_items = [

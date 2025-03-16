@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const marketSelect = document.getElementById('marketSelect');
     const stockInput = document.getElementById('stockInput');
     const stockFile = document.getElementById('stockFile');
+    const fileImportBtn = document.getElementById('fileImportBtn');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
     const hasHeaderRow = document.getElementById('hasHeaderRow');
     const codeColumnIndex = document.getElementById('codeColumnIndex');
     const pasteFromClipboardBtn = document.getElementById('pasteFromClipboardBtn');
@@ -23,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const groupNameContainer = document.getElementById('groupNameContainer');
     const validateStocksBtn = document.getElementById('validateStocksBtn');
     const validateSpinner = document.getElementById('validateSpinner');
+    const translateNames = document.getElementById('translateNames');
     
     // 步骤2元素
     const validationProgressBar = document.getElementById('validationProgressBar');
@@ -57,6 +60,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化Bootstrap标签页
     const importStepsTabs = new bootstrap.Tab(step1Tab);
     
+    // 初始化页面状态
+    console.log('页面加载完成，初始化状态');
+    
+    // 确保验证按钮初始状态正确
+    setTimeout(() => {
+        console.log('检查验证按钮初始状态');
+        
+        // 如果自动分类已选中，确保分组名称输入框被禁用
+        if (autoCategories && autoCategories.checked) {
+            console.log('自动分类已选中，禁用分组名称输入');
+            if (groupNameContainer) groupNameContainer.classList.add('d-none');
+            if (groupNameInput) {
+                groupNameInput.disabled = true;
+                groupNameInput.value = '';
+            }
+        }
+        
+        // 检查验证按钮状态
+        if (checkValidateButtonState) {
+            checkValidateButtonState();
+        }
+    }, 100);
+    
     // 更新进度条函数
     function updateProgressBar(current, total) {
         const percent = Math.min(Math.round((current / total) * 100), 100);
@@ -89,63 +115,113 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
     
-    // 处理文件上传
+    // 文件导入按钮点击事件
+    if (fileImportBtn) {
+        fileImportBtn.addEventListener('click', function() {
+            console.log('文件导入按钮被点击');
+            if (stockFile) {
+                stockFile.click();
+            } else {
+                console.error('找不到文件输入元素');
+            }
+        });
+    } else {
+        console.error('找不到文件导入按钮元素');
+    }
+    
+    // 文件选择变更事件
     stockFile.addEventListener('change', function(e) {
-        if (this.files.length === 0) return;
+        if (!e.target.files.length) return;
         
-        const file = this.files[0];
-        const fileType = file.name.split('.').pop().toLowerCase();
+        const file = e.target.files[0];
         
-        // 清空文本输入框
-        stockInput.value = '';
-        
-        // 显示文件名
-        const fileNameDisplay = document.createElement('div');
-        fileNameDisplay.className = 'alert alert-info mt-2';
-        fileNameDisplay.innerHTML = `<i class="bi bi-file-earmark"></i> 已选择文件: <strong>${file.name}</strong>`;
-        
-        // 移除之前的文件名显示
-        const previousFileDisplay = this.parentNode.querySelector('.alert');
-        if (previousFileDisplay) {
-            previousFileDisplay.remove();
+        // 更新文件名显示
+        if (fileNameDisplay) {
+            fileNameDisplay.value = file.name;
         }
         
-        // 添加到文件输入框后面
-        this.parentNode.appendChild(fileNameDisplay);
-        
-        // 显示加载状态
+        // 显示加载动画
         validateStocksBtn.disabled = true;
         validateSpinner.classList.remove('d-none');
         
-        // 根据文件类型处理
-        if (fileType === 'txt' || fileType === 'csv') {
-            readTextFile(file);
-        } else if (fileType === 'xlsx' || fileType === 'xls') {
-            readExcelFile(file);
-        } else {
-            alert('不支持的文件格式，请上传TXT、CSV或Excel文件');
-            this.value = '';
+        // 检查文件类型
+        const fileName = file.name.toLowerCase();
+        
+        try {
+            // 检查文件大小
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                throw new Error('文件过大，请上传小于5MB的文件');
+            }
+            
+            console.log('开始处理文件:', fileName);
+            
+            // 根据文件类型处理
+            if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
+                readTextFile(file);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                processExcelFile(file);
+            } else {
+                throw new Error('不支持的文件类型，请上传TXT、CSV或Excel文件');
+            }
+        } catch (error) {
+            console.error('文件处理错误:', error);
+            alert(`文件处理错误: ${error.message || '未知错误'}`);
+            
+            // 恢复按钮状态
             validateStocksBtn.disabled = false;
             validateSpinner.classList.add('d-none');
+            
+            // 清空文件输入
+            stockFile.value = '';
+            if (fileNameDisplay) {
+                fileNameDisplay.value = '未选择文件';
+            }
         }
+    });
+    
+    // 股票输入框变更事件
+    stockInput.addEventListener('input', function() {
+        console.log('股票输入框内容变更');
+        checkValidateButtonState();
     });
     
     // 读取文本文件
     function readTextFile(file) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            const content = e.target.result;
+        try {
+            const reader = new FileReader();
             
-            // 解析文本内容
-            parseFileContent(content);
-        };
-        
-        reader.onerror = function() {
-            alert('读取文件失败');
-        };
-        
-        reader.readAsText(file);
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    parseFileContent(content);
+                } catch (error) {
+                    console.error('解析文本文件内容错误:', error);
+                    alert(`解析文件内容错误: ${error.message || '未知错误'}`);
+                    
+                    // 恢复按钮状态
+                    validateStocksBtn.disabled = false;
+                    validateSpinner.classList.add('d-none');
+                }
+            };
+            
+            reader.onerror = function() {
+                console.error('读取文件错误');
+                alert('读取文件时发生错误，请重试');
+                
+                // 恢复按钮状态
+                validateStocksBtn.disabled = false;
+                validateSpinner.classList.add('d-none');
+            };
+            
+            reader.readAsText(file);
+        } catch (error) {
+            console.error('读取文本文件错误:', error);
+            alert(`读取文件错误: ${error.message || '未知错误'}`);
+            
+            // 恢复按钮状态
+            validateStocksBtn.disabled = false;
+            validateSpinner.classList.add('d-none');
+        }
     }
     
     // 读取Excel文件
@@ -199,110 +275,257 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 解析文件内容
     function parseFileContent(content) {
-        // 分割为行
-        const lines = content.split('\n');
-        
-        // 如果有表头，跳过第一行
-        const startIndex = hasHeaderRow.checked ? 1 : 0;
-        
-        // 获取代码列索引
-        const colIndex = parseInt(codeColumnIndex.value) || 0;
-        
-        // 提取股票代码
-        const codes = [];
-        for (let i = startIndex; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
+        try {
+            console.log('开始解析文件内容');
             
-            // 分割行（支持CSV格式）
-            const columns = line.split(/,|;|\t/).map(col => col.trim());
+            // 分割为行
+            const lines = content.split('\n');
             
-            // 检查列索引是否有效
-            if (colIndex < columns.length) {
-                const code = columns[colIndex].replace(/^["']|["']$/g, '').trim();
-                if (code) {
-                    codes.push(code);
+            // 如果有表头，跳过第一行
+            const startIndex = hasHeaderRow.checked ? 1 : 0;
+            
+            // 获取代码列索引
+            const colIndex = parseInt(codeColumnIndex.value) || 0;
+            
+            // 提取股票代码
+            const codes = [];
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // 分割行（支持CSV格式）
+                const columns = line.split(/,|;|\t/).map(col => col.trim());
+                
+                // 检查列索引是否有效
+                if (colIndex < columns.length) {
+                    const code = columns[colIndex].replace(/^["']|["']$/g, '').trim();
+                    if (code) {
+                        codes.push(code);
+                    }
                 }
             }
+            
+            console.log(`从文件中提取到 ${codes.length} 个股票代码`);
+            
+            if (codes.length === 0) {
+                alert('未能从文件中提取到有效的股票代码');
+                // 恢复按钮状态
+                validateStocksBtn.disabled = false;
+                validateSpinner.classList.add('d-none');
+                return;
+            }
+            
+            // 显示提取到的代码数量
+            alert(`成功从文件中提取到 ${codes.length} 个股票代码`);
+            
+            // 将代码填入文本框，让用户可以编辑和确认
+            stockInput.value = codes.join('\n');
+            
+            // 确保启用验证按钮
+            validateSpinner.classList.add('d-none');
+            
+            // 强制检查验证按钮状态
+            setTimeout(() => {
+                console.log('文件解析完成，检查验证按钮状态');
+                checkValidateButtonState();
+                
+                // 如果自动分类已选中，直接启用验证按钮
+                if (autoCategories && autoCategories.checked) {
+                    console.log('自动分类已选中，强制启用验证按钮');
+                    validateStocksBtn.disabled = false;
+                } else if (groupNameInput && groupNameInput.value.trim()) {
+                    console.log('分组名称已填写，强制启用验证按钮');
+                    validateStocksBtn.disabled = false;
+                }
+                
+                console.log('验证按钮最终状态:', validateStocksBtn.disabled ? '禁用' : '启用');
+            }, 100);
+        } catch (error) {
+            console.error('解析文件内容错误:', error);
+            alert(`解析文件内容错误: ${error.message || '未知错误'}`);
+            
+            // 恢复按钮状态
+            validateStocksBtn.disabled = false;
+            validateSpinner.classList.add('d-none');
         }
-        
-        if (codes.length === 0) {
-            alert('未能从文件中提取到有效的股票代码');
-            return;
-        }
-        
-        // 显示提取到的代码数量
-        alert(`成功从文件中提取到 ${codes.length} 个股票代码`);
-        
-        // 将代码填入文本框，让用户可以编辑和确认
-        stockInput.value = codes.join('\n');
-        
-        // 启用验证按钮
-        validateStocksBtn.disabled = false;
-        validateSpinner.classList.add('d-none');
     }
     
     // 自动分类复选框变更事件
     autoCategories.addEventListener('change', function() {
+        console.log('自动分类选项变更:', this.checked);
+        
         if (this.checked) {
             // 如果选中自动分类，禁用分组名称输入
             groupNameContainer.classList.add('d-none');
             groupNameInput.disabled = true;
+            groupNameInput.value = ''; // 清空分组名称
+            
+            // 如果有股票代码，直接启用验证按钮
+            if (stockInput.value.trim().length > 0) {
+                console.log('自动分类选中且有股票代码，立即启用验证按钮');
+                validateStocksBtn.disabled = false;
+            }
+            
+            // 确保立即触发检查验证按钮状态
+            setTimeout(() => {
+                console.log('自动分类选中后立即检查验证按钮状态');
+                checkValidateButtonState();
+            }, 0);
         } else {
             // 如果取消自动分类，启用分组名称输入
             groupNameContainer.classList.remove('d-none');
             groupNameInput.disabled = false;
+            groupNameInput.focus(); // 自动聚焦到分组名称输入框
+            
+            // 如果分组名称为空，禁用验证按钮
+            if (!groupNameInput.value.trim()) {
+                validateStocksBtn.disabled = true;
+            }
         }
+        
+        // 更新步骤3的确认信息（如果已经显示）
+        if (confirmGroupName) {
+            confirmGroupName.textContent = this.checked ? '自动分类' : (groupNameInput.value.trim() || '未指定');
+        }
+        
+        // 检查是否可以启用验证按钮
+        checkValidateButtonState();
     });
+    
+    // 分组名称输入框变更事件
+    groupNameInput.addEventListener('input', function() {
+        console.log('分组名称变更:', this.value);
+        
+        // 更新步骤3的确认信息（如果已经显示）
+        if (confirmGroupName) {
+            confirmGroupName.textContent = this.value.trim() || '未指定';
+        }
+        
+        // 检查是否可以启用验证按钮
+        checkValidateButtonState();
+    });
+    
+    // 检查验证按钮状态
+    function checkValidateButtonState() {
+        // 如果有股票代码输入，并且选择了自动分类或者输入了分组名称，则启用验证按钮
+        const hasStockCodes = stockInput.value.trim().length > 0;
+        const hasAutoCategories = autoCategories.checked;
+        const hasGroupName = groupNameInput.value.trim().length > 0;
+        
+        // 修复逻辑：当选择了自动分类时，只需要检查是否有股票代码
+        // 当未选择自动分类时，需要同时检查是否有股票代码和分组名称
+        const shouldEnable = hasStockCodes && (hasAutoCategories || hasGroupName);
+        
+        console.log('验证按钮状态检查:', {
+            hasStockCodes, 
+            hasAutoCategories, 
+            hasGroupName, 
+            shouldEnable,
+            currentDisabled: validateStocksBtn.disabled
+        });
+        
+        // 强制更新按钮状态
+        validateStocksBtn.disabled = !shouldEnable;
+        
+        // 如果应该启用但仍然禁用，尝试强制启用
+        if (shouldEnable && validateStocksBtn.disabled) {
+            console.log('强制启用验证按钮');
+            setTimeout(() => {
+                validateStocksBtn.disabled = false;
+            }, 10);
+        }
+        
+        return shouldEnable;
+    }
+    
+    // 将函数暴露到全局，以便HTML中的函数可以调用
+    window.checkValidateButtonState = checkValidateButtonState;
     
     // 验证股票代码
     validateStocksBtn.addEventListener('click', function() {
+        console.log('验证按钮被点击');
+        
         // 获取输入的股票代码
         if (!stockInput.value.trim()) {
             alert('请输入股票代码或上传文件');
             return;
         }
         
-        // 显示加载动画
+        // 检查是否选择了自动分类或者指定了分组名称
+        const isAutoCategories = autoCategories.checked;
+        const groupName = groupNameInput.value.trim();
+        
+        if (!isAutoCategories && !groupName) {
+            alert('请选择自动分类或者指定分组名称');
+            groupNameInput.focus();
+            return;
+        }
+        
+        // 禁用验证按钮，显示加载动画
         validateStocksBtn.disabled = true;
         validateSpinner.classList.remove('d-none');
         
-        // 从文本框获取，先解析文本
-        fetch('/api/parse-stock-text', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: stockInput.value.trim()
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // 获取解析后的股票代码
-                const stockCodes = data.codes;
-                
-                if (stockCodes.length === 0) {
-                    alert('未能解析出有效的股票代码');
-                    validateStocksBtn.disabled = false;
-                    validateSpinner.classList.add('d-none');
-                    return;
-                }
-                
-                // 继续验证流程
-                startValidation(stockCodes);
-            } else {
-                alert('解析股票文本失败: ' + data.error);
-                validateStocksBtn.disabled = false;
-                validateSpinner.classList.add('d-none');
+        // 切换到验证结果标签页
+        const step2TabEl = document.getElementById('step2-tab');
+        if (step2TabEl) {
+            step2TabEl.disabled = false;
+            const step2Tab = new bootstrap.Tab(step2TabEl);
+            step2Tab.show();
+        }
+        
+        // 解析股票代码
+        const stockCodes = stockInput.value.trim().split(/[\n,;]+/).map(code => code.trim()).filter(code => code);
+        
+        console.log(`开始验证 ${stockCodes.length} 个股票代码`);
+        console.log('自动分类:', isAutoCategories);
+        console.log('分组名称:', groupName);
+        
+        // 更新步骤3的确认信息
+        if (confirmGroupName) {
+            confirmGroupName.textContent = isAutoCategories ? '自动分类' : (groupName || '未指定');
+        }
+        
+        // 初始化进度条
+        validationProgressBar.style.width = '0%';
+        validationProgressBar.setAttribute('aria-valuenow', 0);
+        validationProgressBar.textContent = '0%';
+        validationProgressBar.classList.add('progress-bar-animated');
+        
+        // 确保验证结果区域可见
+        const validationResultsArea = document.querySelector('.validation-results');
+        if (validationResultsArea) {
+            validationResultsArea.classList.remove('d-none');
+        }
+        
+        // 清空结果表格
+        validationResultsTable.querySelector('tbody').innerHTML = '';
+        
+        // 更新验证状态文本
+        if (validationCurrentStatus) {
+            validationCurrentStatus.textContent = `正在验证 ${stockCodes.length} 个股票代码...`;
+        }
+        
+        // 更新统计信息
+        if (validationStats) {
+            validationStats.textContent = `0/${stockCodes.length}`;
+        }
+        
+        // 开始批量验证
+        const cancelValidation = batchValidateStocks(stockCodes, groupName, isAutoCategories);
+        
+        // 返回按钮点击事件
+        backToStep1Btn.addEventListener('click', function() {
+            // 如果正在验证，取消验证
+            if (cancelValidation) {
+                cancelValidation();
             }
-        })
-        .catch(error => {
-            console.error('解析股票文本出错:', error);
-            alert('解析股票文本出错: ' + error.message);
-            validateStocksBtn.disabled = false;
-            validateSpinner.classList.add('d-none');
+            
+            // 切换回步骤1
+            const step1TabEl = document.getElementById('step1-tab');
+            if (step1TabEl) {
+                const step1Tab = new bootstrap.Tab(step1TabEl);
+                step1Tab.show();
+            }
         });
     });
     
@@ -368,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 批量验证股票代码
         setTimeout(() => {
-            batchValidateStocks(stockCodes, marketSelect.value, groupNameInput.value, autoCategories.checked);
+            batchValidateStocks(stockCodes, groupNameInput.value, autoCategories.checked);
         }, 100); // 短暂延迟，让UI先渲染
         
         // 监听模态框关闭事件，停止验证过程
@@ -417,209 +640,222 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 批量验证股票代码
-    function batchValidateStocks(codes, market, groupName, isAutoCategories) {
-        // 分批处理，每批最多20个代码
-        const batchSize = 20;
-        const batches = [];
+    function batchValidateStocks(codes, groupName, isAutoCategories) {
+        // 重置验证结果
+        validationResults = [];
         
-        for (let i = 0; i < codes.length; i += batchSize) {
-            batches.push(codes.slice(i, i + batchSize));
-        }
-        
-        // 初始化进度
+        // 重置统计数据
+        let validStocks = 0;
+        let invalidStocks = 0;
         let processedCount = 0;
         
-        // 获取是否翻译的设置
-        const translateCheckbox = document.getElementById('translateNames');
-        const translate = translateCheckbox ? translateCheckbox.checked : true;
+        // 获取翻译选项
+        const shouldTranslate = translateNames && translateNames.checked;
         
-        // 顺序处理每一批
-        processBatch(0);
+        // 更新统计显示
+        validCount.textContent = validStocks;
+        invalidCount.textContent = invalidStocks;
         
+        // 清空结果表格
+        validationResultsTable.querySelector('tbody').innerHTML = '';
+        
+        // 显示进度条
+        validationProgressBar.style.width = '0%';
+        validationProgressBar.setAttribute('aria-valuenow', 0);
+        validationProgressBar.textContent = '0%';
+        validationProgressBar.classList.add('progress-bar-animated');
+        
+        // 分批处理，每批10个，减小批量大小以提高进度条准确性
+        const batchSize = 10;
+        const totalBatches = Math.ceil(codes.length / batchSize);
+        let currentBatch = 0;
+        let isCancelled = false;
+        
+        console.log(`开始批量验证 ${codes.length} 个股票代码，分为 ${totalBatches} 批处理`);
+        console.log('翻译选项:', shouldTranslate);
+        
+        // 处理一批股票代码
         function processBatch(batchIndex) {
-            // 检查验证是否已取消
-            if (!window.validationInProgress) {
-                // 恢复按钮状态
-                validateStocksBtn.disabled = false;
-                validateSpinner.classList.add('d-none');
+            if (isCancelled) {
+                console.log('验证过程被取消');
                 return;
             }
             
-            if (batchIndex >= batches.length) {
-                // 所有批次处理完成
-                validateStocksBtn.disabled = false;
-                validateSpinner.classList.add('d-none');
-                
-                // 移除加载行
-                const loadingRow = document.getElementById('validation-loading-row');
-                if (loadingRow) loadingRow.remove();
-                
-                // 更新进度条为完成状态
-                if (validationProgressBar) {
-                    validationProgressBar.classList.remove('progress-bar-animated');
-                    validationProgressBar.classList.add('bg-success');
-                    validationProgressBar.style.width = '100%';
-                    validationProgressBar.setAttribute('aria-valuenow', '100');
-                    validationProgressBar.textContent = '100%';
-                }
-                
-                // 更新状态文本
-                if (validationCurrentStatus) {
-                    validationCurrentStatus.textContent = '验证完成！';
-                }
-                
-                // 更新统计信息
-                const validStocks = validationResults.filter(r => r.valid);
-                validCount.textContent = `${validStocks.length} 有效`;
-                invalidCount.textContent = `${validationResults.length - validStocks.length} 无效`;
-                validStockCount.textContent = `(${validStocks.length})`;
-                
-                // 更新步骤3的确认信息
-                if (confirmGroupName) confirmGroupName.textContent = isAutoCategories ? '自动分类' : groupName;
-                if (confirmValidCount) confirmValidCount.textContent = validStocks.length;
-                if (confirmInvalidCount) confirmInvalidCount.textContent = validationResults.length - validStocks.length;
-                
-                // 如果没有有效股票，禁用继续按钮
-                if (proceedToStep3Btn) proceedToStep3Btn.disabled = validStocks.length === 0;
-                
-                // 标记验证已完成
-                window.validationInProgress = false;
-                
-                return;
-            }
-            
-            const batch = batches[batchIndex];
+            const start = batchIndex * batchSize;
+            const end = Math.min(start + batchSize, codes.length);
+            const batchCodes = codes.slice(start, end);
             
             // 更新当前状态
-            if (validationCurrentStatus) {
-                validationCurrentStatus.textContent = `正在验证第 ${processedCount + 1} 到 ${processedCount + batch.length} 个股票代码...`;
+            validationCurrentStatus.textContent = `正在验证第 ${start+1} 到 ${end} 个，共 ${codes.length} 个`;
+            
+            // 更新统计信息
+            if (validationStats) {
+                validationStats.textContent = `${processedCount}/${codes.length}`;
             }
             
-            // 发送请求验证当前批次
+            // 更新进度条 - 使用已处理的数量而不是当前批次的结束位置
+            const percent = Math.min(Math.round((processedCount / codes.length) * 100), 100);
+            validationProgressBar.style.width = `${percent}%`;
+            validationProgressBar.setAttribute('aria-valuenow', percent);
+            validationProgressBar.textContent = `${percent}%`;
+            
+            // 发送验证请求
             fetch('/api/validate-stocks', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    codes: batch,
-                    market: market,
-                    translate: translate // 使用用户设置的翻译选项
+                    codes: batchCodes,
+                    translate: shouldTranslate
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`验证请求失败: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                // 检查验证是否已取消
-                if (!window.validationInProgress) return;
+                if (isCancelled) return;
                 
-                // 移除加载行
-                const loadingRow = document.getElementById('validation-loading-row');
-                if (loadingRow) loadingRow.remove();
+                // 更新已处理数量
+                processedCount += batchCodes.length;
                 
-                if (data.results) {
-                    // 处理验证结果
-                    processedCount += batch.length;
+                // 更新进度条 - 在处理完当前批次后立即更新
+                const newPercent = Math.min(Math.round((processedCount / codes.length) * 100), 100);
+                validationProgressBar.style.width = `${newPercent}%`;
+                validationProgressBar.setAttribute('aria-valuenow', newPercent);
+                validationProgressBar.textContent = `${newPercent}%`;
+                
+                // 更新统计信息
+                if (validationStats) {
+                    validationStats.textContent = `${processedCount}/${codes.length}`;
+                }
+                
+                // 处理验证结果
+                for (const result of data.results) {
+                    // 添加到结果数组
+                    validationResults.push(result);
                     
-                    // 更新进度条
-                    updateProgressBar(processedCount, codes.length);
-                    
-                    // 更新统计信息
-                    if (validationStats) {
-                        validationStats.textContent = `${processedCount}/${codes.length}`;
+                    // 更新统计数据
+                    if (result.valid) {
+                        validStocks++;
+                    } else {
+                        invalidStocks++;
                     }
                     
-                    // 添加结果到表格
-                    data.results.forEach(result => {
-                        validationResults.push(result);
-                        addResultToTable(result);
-                    });
-                    
-                    // 处理下一批
+                    // 添加到表格
+                    addResultToTable(result);
+                }
+                
+                // 更新统计显示
+                validCount.textContent = validStocks;
+                invalidCount.textContent = invalidStocks;
+                
+                // 处理下一批
+                currentBatch++;
+                if (currentBatch < totalBatches) {
+                    // 使用短延迟，让UI有时间更新
                     setTimeout(() => {
-                        processBatch(batchIndex + 1);
-                    }, 300);
+                        processBatch(currentBatch);
+                    }, 50);
                 } else {
-                    // 显示友好的错误消息
-                    const errorMsg = data.error || '未知错误';
-                    console.error('验证股票代码失败:', errorMsg);
+                    // 全部处理完成
+                    validationCurrentStatus.textContent = `验证完成，共 ${codes.length} 个股票代码`;
+                    validationProgressBar.classList.remove('progress-bar-animated');
+                    validationProgressBar.classList.add('bg-success');
+                    validationProgressBar.style.width = '100%';
+                    validationProgressBar.setAttribute('aria-valuenow', 100);
+                    validationProgressBar.textContent = '100%';
                     
-                    // 添加错误提示行
-                    const errorRow = document.createElement('tr');
-                    errorRow.classList.add('table-warning');
-                    errorRow.innerHTML = `
-                        <td colspan="4" class="text-center">
-                            <div class="alert alert-warning mb-0">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                验证部分股票代码时遇到问题，请重试或联系管理员
-                            </div>
-                        </td>
-                    `;
-                    validationResultsTable.appendChild(errorRow);
+                    // 更新步骤3的确认信息
+                    confirmValidCount.textContent = validStocks;
+                    confirmInvalidCount.textContent = invalidStocks;
+                    validStockCount.textContent = validStocks;
                     
-                    validateStocksBtn.disabled = false;
+                    // 如果有有效的股票，启用下一步按钮
+                    if (validStocks > 0) {
+                        proceedToStep3Btn.disabled = false;
+                    } else {
+                        proceedToStep3Btn.disabled = true;
+                    }
+                    
+                    // 隐藏加载动画
                     validateSpinner.classList.add('d-none');
-                    window.validationInProgress = false;
                 }
             })
             .catch(error => {
-                console.error('验证股票代码出错:', error);
+                console.error('验证请求错误:', error);
                 
-                // 移除加载行
-                const loadingRow = document.getElementById('validation-loading-row');
-                if (loadingRow) loadingRow.remove();
+                // 显示错误信息
+                validationCurrentStatus.textContent = `验证过程中出错: ${error.message}`;
+                validationProgressBar.classList.remove('progress-bar-animated');
                 
-                // 添加错误提示行，显示友好的错误消息
+                // 添加错误提示到表格
                 const errorRow = document.createElement('tr');
                 errorRow.classList.add('table-danger');
                 errorRow.innerHTML = `
                     <td colspan="4" class="text-center">
                         <div class="alert alert-danger mb-0">
-                            <i class="bi bi-x-circle-fill me-2"></i>
-                            验证过程中出现错误，请稍后重试
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            验证过程中出错: ${error.message}
                         </div>
                     </td>
                 `;
-                validationResultsTable.appendChild(errorRow);
+                validationResultsTable.querySelector('tbody').appendChild(errorRow);
                 
-                validateStocksBtn.disabled = false;
+                // 隐藏加载动画
                 validateSpinner.classList.add('d-none');
-                window.validationInProgress = false;
             });
         }
+        
+        // 开始处理第一批
+        processBatch(0);
+        
+        // 返回取消函数
+        return function cancel() {
+            isCancelled = true;
+            validationCurrentStatus.textContent = '验证已取消';
+            validateSpinner.classList.add('d-none');
+        };
     }
     
     // 添加验证结果到表格
     function addResultToTable(result) {
-        const row = document.createElement('tr');
-        
-        // 设置行的类，根据验证结果
-        if (result.valid) {
-            row.classList.add('table-success');
-        } else {
-            row.classList.add('table-danger');
+        const tbody = document.querySelector('#validationResultsTable tbody');
+        if (!tbody) {
+            console.error('找不到验证结果表格的tbody元素');
+            return;
         }
         
-        // 股票代码
+        const row = document.createElement('tr');
+        
+        // 股票代码列
         const codeCell = document.createElement('td');
-        codeCell.textContent = result.code || '-';
+        codeCell.textContent = result.code;
+        if (result.yf_code) {
+            const yfCodeSpan = document.createElement('span');
+            yfCodeSpan.className = 'ms-2 badge bg-secondary';
+            yfCodeSpan.textContent = `YF: ${result.yf_code}`;
+            codeCell.appendChild(yfCodeSpan);
+        }
         row.appendChild(codeCell);
         
-        // 名称
+        // 名称列
         const nameCell = document.createElement('td');
         if (result.valid) {
-            // 显示名称
-            nameCell.textContent = result.name || '-';
-            
-            // 如果有英文名称且与显示名称不同，显示英文名称
-            if (result.english_name && result.english_name !== result.name) {
-                nameCell.innerHTML = `${result.name}<br><small class="text-muted">${result.english_name}</small>`;
-            }
+            nameCell.textContent = result.name || '';
         } else {
-            nameCell.textContent = '-';
+            // 对于无效的股票，显示错误信息
+            const errorBadge = document.createElement('span');
+            errorBadge.className = 'badge bg-danger';
+            errorBadge.textContent = '无效';
+            nameCell.appendChild(errorBadge);
         }
         row.appendChild(nameCell);
         
-        // 价格和货币
+        // 价格列
         const priceCell = document.createElement('td');
         if (result.valid && result.price) {
             priceCell.textContent = `${result.price} ${result.currency || 'USD'}`;
@@ -628,62 +864,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         row.appendChild(priceCell);
         
-        // 状态
+        // 状态列
         const statusCell = document.createElement('td');
         if (result.valid) {
-            let statusHtml = '<span class="badge bg-success">有效</span>';
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-success';
+            badge.textContent = '有效';
+            statusCell.appendChild(badge);
+            
+            // 显示市场类型
             if (result.market_type) {
-                const marketTypeMap = {
-                    'equity': '股票',
-                    'etf': 'ETF',
-                    'index': '指数'
-                };
-                const marketTypeText = marketTypeMap[result.market_type] || result.market_type;
-                statusHtml += ` <small class="text-muted">${marketTypeText}</small>`;
+                const marketBadge = document.createElement('span');
+                marketBadge.className = 'ms-2 badge bg-info';
+                
+                // 翻译市场类型
+                let marketType = result.market_type;
+                if (marketType === 'equity') marketType = '股票';
+                else if (marketType === 'etf') marketType = 'ETF';
+                else if (marketType === 'index') marketType = '指数';
+                
+                marketBadge.textContent = marketType;
+                statusCell.appendChild(marketBadge);
             }
-            statusCell.innerHTML = statusHtml;
         } else {
+            // 创建一个警告框来显示错误信息
+            const errorBox = document.createElement('div');
+            errorBox.className = 'alert alert-warning py-1 px-2 mb-0';
+            errorBox.style.fontSize = '0.8rem';
+            
+            // 处理特定类型的错误，提供更友好的提示
             let errorMessage = result.error || '未知错误';
             
-            // 处理特殊错误情况
-            if (errorMessage.includes("'NoneType' object")) {
-                errorMessage = '无法解析股票数据，可能是不支持的股票类型';
-            } else if (errorMessage.includes('期货') || errorMessage.includes('期权')) {
-                // 对于期货和期权错误，使用更明显的警告样式
-                statusCell.innerHTML = `
-                    <div class="alert alert-warning py-1 px-2 mb-0">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        <small>${errorMessage}</small>
-                    </div>
-                `;
-                row.appendChild(statusCell);
-                validationResultsTable.appendChild(row);
-                return;
-            } else if (errorMessage.includes('不支持的市场类型')) {
-                // 对于不支持的市场类型，使用信息样式
-                statusCell.innerHTML = `
-                    <div class="alert alert-info py-1 px-2 mb-0">
-                        <i class="bi bi-info-circle-fill me-1"></i>
-                        <small>${errorMessage}</small>
-                    </div>
-                `;
-                row.appendChild(statusCell);
-                validationResultsTable.appendChild(row);
-                return;
+            // 检查是否为期货合约错误
+            if (errorMessage.includes('期货合约') || errorMessage.includes('期货') || /[A-Z]{2}\d{4}/.test(result.code)) {
+                errorBox.className = 'alert alert-danger py-1 px-2 mb-0';
+                if (/[A-Z]{2}\d{4}/.test(result.code)) {
+                    errorMessage = `不支持期货合约代码 ${result.code}，请使用普通股票代码`;
+                }
+            }
+            // 检查是否为404错误
+            else if (errorMessage.includes('404') || errorMessage.includes('无法识别')) {
+                errorBox.className = 'alert alert-danger py-1 px-2 mb-0';
             }
             
-            // 默认错误显示
-            statusCell.innerHTML = `
-                <div class="alert alert-danger py-1 px-2 mb-0">
-                    <i class="bi bi-x-circle-fill me-1"></i>
-                    <small>${errorMessage}</small>
-                </div>
-            `;
+            errorBox.textContent = errorMessage;
+            statusCell.appendChild(errorBox);
         }
         row.appendChild(statusCell);
         
         // 添加到表格
-        validationResultsTable.appendChild(row);
+        tbody.appendChild(row);
+        
+        // 更新统计数据
+        updateValidationStats();
+    }
+    
+    // 更新验证统计数据
+    function updateValidationStats() {
+        const validStocksCount = validationResults.filter(r => r.valid).length;
+        const invalidStocksCount = validationResults.length - validStocksCount;
+        
+        // 更新统计显示
+        if (validCount) validCount.textContent = validStocksCount;
+        if (invalidCount) invalidCount.textContent = invalidStocksCount;
+        if (validStockCount) validStockCount.textContent = `(${validStocksCount})`;
     }
     
     // 返回步骤1
@@ -694,12 +938,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 进入步骤3
     proceedToStep3Btn.addEventListener('click', function() {
+        // 检查是否选择了自动分类或者指定了分组名称
+        const isAutoCategories = autoCategories.checked;
+        const groupName = groupNameInput.value.trim();
+        
+        if (!isAutoCategories && !groupName) {
+            alert('请选择自动分类或者指定分组名称');
+            // 切换回步骤1以便用户设置分组
+            const step1TabInstance = new bootstrap.Tab(step1Tab);
+            step1TabInstance.show();
+            groupNameInput.focus();
+            return;
+        }
+        
         // 启用步骤3标签页
         step3Tab.disabled = false;
         
         // 切换到步骤3
         const step3TabInstance = new bootstrap.Tab(step3Tab);
         step3TabInstance.show();
+        
+        // 更新确认信息
+        if (confirmGroupName) {
+            confirmGroupName.textContent = isAutoCategories ? '自动分类' : groupName;
+        }
     });
     
     // 返回步骤2
@@ -708,22 +970,106 @@ document.addEventListener('DOMContentLoaded', function() {
         step2TabInstance.show();
     });
     
-    // 确认导入
+    // 确认导入按钮点击事件
     confirmImportBtn.addEventListener('click', function() {
-        // 检查元素是否存在
-        if (!confirmImportBtn || !importSpinner) {
-            console.error('导入按钮或加载动画元素不存在');
-            return;
-        }
-        
-        // 显示加载状态
+        // 禁用按钮，显示加载动画
         confirmImportBtn.disabled = true;
         importSpinner.classList.remove('d-none');
         
-        // 获取有效的股票
-        const validStocks = validationResults.filter(r => r.valid);
+        // 获取分组名称和自动分类选项
         const isAutoCategories = autoCategories && autoCategories.checked;
         const groupNameValue = groupNameInput ? groupNameInput.value.trim() : '';
+        
+        // 获取有效的股票
+        const validStocks = validationResults.filter(r => r.valid);
+        
+        // 获取是否清空现有列表
+        const clearExisting = document.getElementById('clearExistingStocks') && document.getElementById('clearExistingStocks').checked;
+        
+        // 如果选择清空现有列表，显示确认对话框
+        if (clearExisting) {
+            // 使用Bootstrap确认对话框
+            const confirmDialog = `
+                <div class="modal fade" id="importConfirmDialog" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">确认操作</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <strong>即将清空现有列表并导入新自选股列表（推荐这么做）</strong>
+                                </div>
+                                <p>这将删除所有现有的股票分组和股票，并导入新的自选股列表。</p>
+                                <p>如果您不希望清空现有列表，请点击"取消"并取消勾选"清空现有列表"选项。</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelImportBtn">取消</button>
+                                <button type="button" class="btn btn-primary" id="proceedImportBtn">继续导入</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加对话框到页面
+            const dialogContainer = document.createElement('div');
+            dialogContainer.innerHTML = confirmDialog;
+            document.body.appendChild(dialogContainer);
+            
+            // 显示对话框
+            const confirmDialogEl = document.getElementById('importConfirmDialog');
+            const confirmDialogModal = new bootstrap.Modal(confirmDialogEl);
+            confirmDialogModal.show();
+            
+            // 取消按钮点击事件
+            document.getElementById('cancelImportBtn').addEventListener('click', function() {
+                // 恢复按钮状态
+                confirmImportBtn.disabled = false;
+                importSpinner.classList.add('d-none');
+                
+                // 关闭对话框
+                confirmDialogModal.hide();
+                
+                // 移除对话框
+                setTimeout(() => {
+                    document.body.removeChild(dialogContainer);
+                }, 500);
+            });
+            
+            // 确认按钮点击事件
+            document.getElementById('proceedImportBtn').addEventListener('click', function() {
+                // 关闭对话框
+                confirmDialogModal.hide();
+                
+                // 移除对话框
+                setTimeout(() => {
+                    document.body.removeChild(dialogContainer);
+                }, 500);
+                
+                // 执行导入
+                performImport(validStocks, isAutoCategories, groupNameValue, clearExisting);
+            });
+            
+            // 对话框关闭事件
+            confirmDialogEl.addEventListener('hidden.bs.modal', function() {
+                // 恢复按钮状态
+                confirmImportBtn.disabled = false;
+                importSpinner.classList.add('d-none');
+            });
+        } else {
+            // 直接执行导入
+            performImport(validStocks, isAutoCategories, groupNameValue, clearExisting);
+        }
+    });
+    
+    // 执行导入操作
+    function performImport(validStocks, isAutoCategories, groupNameValue, clearExisting) {
+        // 禁用按钮，显示加载动画
+        confirmImportBtn.disabled = true;
+        importSpinner.classList.remove('d-none');
         
         // 发送请求导入自选股
         fetch('/api/import-watchlist', {
@@ -734,7 +1080,8 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({
                 stocks: validStocks,
                 groupName: isAutoCategories ? '' : groupNameValue,
-                autoCategories: isAutoCategories
+                autoCategories: isAutoCategories,
+                clearExisting: clearExisting
             })
         })
         .then(response => response.json())
@@ -820,19 +1167,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('导入自选股出错，请稍后重试');
             }
         });
-    });
+    }
     
     // 刷新观察列表下拉菜单
     function refreshWatchlistDropdown(watchlists) {
-        const watchlistSelect = document.getElementById('watchlist');
-        if (!watchlistSelect) return;
+        console.log('刷新观察列表下拉菜单', watchlists);
+        
+        // 刷新模态框内的下拉菜单（如果有的话）
+        const modalWatchlistSelect = document.querySelector('#importWatchlistModal select[id="watchlist"]');
+        if (modalWatchlistSelect) {
+            updateSelectOptions(modalWatchlistSelect, watchlists);
+        }
+        
+        // 刷新主页面的下拉菜单
+        const mainWatchlistSelect = document.getElementById('watchlist');
+        if (mainWatchlistSelect) {
+            updateSelectOptions(mainWatchlistSelect, watchlists);
+        } else {
+            console.error('找不到主页面观察列表下拉菜单');
+        }
+    }
+    
+    // 更新下拉菜单选项
+    function updateSelectOptions(selectElement, watchlists) {
+        if (!selectElement) return;
         
         // 保存当前选中的值
-        const selectedValue = watchlistSelect.value;
+        const selectedValue = selectElement.value;
         
         // 清空下拉菜单，只保留第一个选项
-        while (watchlistSelect.options.length > 1) {
-            watchlistSelect.remove(1);
+        while (selectElement.options.length > 1) {
+            selectElement.remove(1);
         }
         
         // 添加新的选项
@@ -840,12 +1205,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const option = document.createElement('option');
             option.value = groupName;
             option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
-            watchlistSelect.appendChild(option);
+            selectElement.appendChild(option);
         }
         
-        // 恢复之前选中的值
-        if (selectedValue && Array.from(watchlistSelect.options).some(opt => opt.value === selectedValue)) {
-            watchlistSelect.value = selectedValue;
+        // 恢复之前选中的值，如果它仍然存在
+        if (selectedValue && Array.from(selectElement.options).some(opt => opt.value === selectedValue)) {
+            selectElement.value = selectedValue;
         }
     }
     
@@ -905,8 +1270,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (stockFile) stockFile.value = '';
         
         // 移除文件名显示
-        const fileNameDisplay = document.querySelector('.file-name-display');
-        if (fileNameDisplay) fileNameDisplay.remove();
+        if (fileNameDisplay) {
+            fileNameDisplay.value = '未选择文件';
+        }
         
         // 重置导入确认按钮
         if (confirmImportBtn) confirmImportBtn.disabled = false;
@@ -1102,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 随机改变动画颜色
         const spinners = animatedText.querySelectorAll('.spinner-grow');
-        const colors = ['text-primary', 'text-success', 'text-info', 'text-warning'];
+        const colors = ['text-info', 'text-success', 'text-primary', 'text-warning'];
         
         spinners.forEach(spinner => {
             // 移除所有颜色类
@@ -1114,5 +1480,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
             spinner.classList.add(randomColor);
         });
+    }
+
+    // 初始化验证按钮状态
+    console.log('初始化验证按钮状态');
+    if (validateStocksBtn) {
+        // 默认禁用验证按钮，直到有股票代码输入并选择了分类方式
+        validateStocksBtn.disabled = true;
+        
+        // 检查初始状态
+        setTimeout(() => {
+            console.log('延迟检查验证按钮状态');
+            checkValidateButtonState();
+            
+            // 如果自动分类已选中，确保分组名称输入框被禁用
+            if (autoCategories && autoCategories.checked) {
+                console.log('自动分类已选中，禁用分组名称输入框');
+                if (groupNameContainer) groupNameContainer.classList.add('d-none');
+                if (groupNameInput) {
+                    groupNameInput.disabled = true;
+                    groupNameInput.value = '';
+                }
+                
+                // 如果有股票代码，启用验证按钮
+                if (stockInput && stockInput.value.trim().length > 0) {
+                    console.log('有股票代码，启用验证按钮');
+                    validateStocksBtn.disabled = false;
+                }
+            }
+        }, 100);
+    } else {
+        console.error('找不到验证按钮元素');
     }
 }); 

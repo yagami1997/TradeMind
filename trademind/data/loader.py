@@ -225,6 +225,10 @@ def convert_index_code(code: str) -> str:
     返回:
         str: 转换后的代码
     """
+    # 如果代码已经是YFinance格式，直接返回
+    if code.startswith('^'):
+        return code
+        
     # 常见指数代码映射
     index_mapping = {
         # 美国指数
@@ -400,51 +404,35 @@ def validate_stock_code(code: str, translate: bool = True) -> dict:
             }
             
             return result
-            
         except Exception as e:
             error_msg = str(e)
             
             # 处理常见错误
-            if "No data found" in error_msg:
+            if "No data found" in error_msg or "404" in error_msg:
                 return {
                     "code": code,
                     "valid": False,
-                    "error": "找不到股票数据，请检查代码是否正确"
+                    "error": f"无法识别的股票代码: {code}"
                 }
-            elif "Invalid ticker" in error_msg:
+            elif "NoneType" in error_msg:
                 return {
                     "code": code,
                     "valid": False,
-                    "error": "无效的股票代码"
-                }
-            elif "404 Client Error" in error_msg:
-                return {
-                    "code": code,
-                    "valid": False,
-                    "error": "Yahoo Finance无法识别此代码，可能是期货合约或不支持的代码格式"
+                    "error": f"获取股票数据时出错: 数据格式不正确"
                 }
             else:
                 return {
                     "code": code,
                     "valid": False,
-                    "error": f"验证失败: {error_msg}"
+                    "error": f"获取股票数据时出错: {error_msg[:100]}"
                 }
     
     except Exception as e:
-        # 处理任何其他异常
-        error_str = str(e)
-        if "'NoneType' object" in error_str:
-            return {
-                "code": code,
-                "valid": False,
-                "error": "无法解析股票数据，可能是不支持的股票类型"
-            }
-        else:
-            return {
-                "code": code,
-                "valid": False,
-                "error": f"验证过程出错: {error_str}"
-            }
+        return {
+            "code": code,
+            "valid": False,
+            "error": f"验证股票代码时出错: {str(e)[:100]}"
+        }
 
 def get_chinese_name(symbol: str, english_name: str) -> str:
     """
@@ -723,19 +711,47 @@ def batch_validate_stock_codes(codes: List[str], market: str = "US", translate: 
     返回:
         List[Dict]: 验证结果列表
     """
+    if not codes:
+        logger.warning("批量验证股票代码时收到空列表")
+        return []
+    
+    logger.info(f"开始批量验证 {len(codes)} 个股票代码，市场: {market}, 翻译: {translate}")
     results = []
     
     for code in codes:
         try:
+            # 跳过空代码
+            if not code or not code.strip():
+                logger.warning("跳过空股票代码")
+                results.append({
+                    "code": "",
+                    "valid": False,
+                    "error": "股票代码不能为空"
+                })
+                continue
+                
+            # 验证单个股票代码
+            logger.debug(f"验证股票代码: {code}")
             result = validate_stock_code(code, translate=translate)
             results.append(result)
+            
+            # 记录验证结果
+            if result.get("valid", False):
+                logger.debug(f"股票代码 {code} 验证有效")
+            else:
+                logger.debug(f"股票代码 {code} 验证无效: {result.get('error', '未知错误')}")
+                
         except Exception as e:
-            logger.error(f"验证股票代码 {code} 时出错: {str(e)}")
+            logger.error(f"验证股票代码 {code} 时出错: {str(e)}", exc_info=True)
             results.append({
                 "code": code,
                 "valid": False,
                 "error": f"验证出错: {str(e)}"
             })
+    
+    # 记录验证结果统计
+    valid_count = sum(1 for r in results if r.get("valid", False))
+    logger.info(f"批量验证完成: 总计 {len(results)}, 有效 {valid_count}, 无效 {len(results) - valid_count}")
     
     return results
 
@@ -836,41 +852,36 @@ def update_watchlists_file(stocks: List[Dict], group_name: str = None) -> bool:
         logger.error(f"更新watchlists.json文件时出错: {str(e)}")
         return False
 
-def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str = "", auto_categories: bool = False) -> Dict:
+def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str = "", auto_categories: bool = False, clear_existing: bool = False) -> Dict:
     """
-    导入股票到用户的自选股列表
+    导入股票到自选股列表
     
     参数:
         user_id: 用户ID
-        stocks: 股票列表，每个股票是一个字典，包含股票信息
-        group_name: 分组名称
+        stocks: 股票列表，每个股票是一个字典，包含code和name
+        group_name: 分组名称，如果不指定则使用默认分组
         auto_categories: 是否自动分类
+        clear_existing: 是否清空现有列表
         
     返回:
         Dict: 导入结果
     """
     try:
-        # 验证参数
-        if not auto_categories and not group_name:
-            return {
-                'success': False,
-                'error': '请选择自动分类或者指定分组名称'
-            }
-            
-        # 过滤出有效的股票
-        valid_stocks = [s for s in stocks if s.get('valid', False)]
+        # 获取现有的自选股列表
+        user_watchlists = get_user_watchlists(user_id) if not clear_existing else {}
         
-        if not valid_stocks:
-            return {
-                'success': False,
-                'error': '没有有效的股票可导入'
-            }
+        # 如果指定了分组名称且不是自动分类，确保分组存在
+        if group_name and not auto_categories:
+            if group_name not in user_watchlists:
+                user_watchlists[group_name] = {}
         
-        # 获取用户的自选股列表
-        user_watchlists = get_user_watchlists(user_id)
-        
-        # 导入计数
+        # 统计导入结果
         imported_count = 0
+        skipped_count = 0
+        invalid_count = 0
+        
+        # 过滤有效的股票
+        valid_stocks = [s for s in stocks if s.get('valid', True)]
         
         # 根据是否自动分类处理
         if auto_categories:
@@ -878,55 +889,66 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
             categorized_stocks = {}
             
             for stock in valid_stocks:
-                # 根据市场类型分类
-                category = stock.get('market_type', 'equity').lower()
-                if category == 'equity':
-                    category = '股票'
-                elif category == 'etf':
-                    category = 'ETF'
-                elif category == 'index':
-                    category = '指数'
+                stock_code = stock.get('code', '')
+                if not stock_code:
+                    continue
+                
+                # 使用简单字符串格式保存股票名称
+                stock_name = stock.get('name', '')
+                
+                # 获取股票类型
+                market_type = stock.get('market_type', 'equity').lower()
+                
+                # 确保指数代码使用正确的格式
+                if stock_code.startswith('.') or (market_type == 'index' and not stock_code.startswith('^')):
+                    # 使用convert_index_code函数转换指数代码
+                    stock_code = convert_index_code(stock_code)
+                
+                # 使用智能分类逻辑
+                if market_type == 'index' or stock_code.startswith('^'):
+                    # 指数自动归类到"指数与ETF"
+                    category = "指数与ETF"
+                elif market_type == 'etf':
+                    # ETF自动归类到"指数与ETF"
+                    category = "指数与ETF"
                 else:
-                    category = '其他'
+                    # 使用STOCK_CATEGORIES进行智能行业分类
+                    category = None
+                    for cat_name, patterns in STOCK_CATEGORIES.items():
+                        for pattern in patterns:
+                            if re.search(pattern, stock_code):
+                                category = cat_name
+                                break
+                        if category:
+                            break
+                    
+                    # 如果没有匹配到任何分类，使用默认分类
+                    if not category:
+                        category = '无分类自选股'
                 
                 # 添加到分类中
                 if category not in categorized_stocks:
                     categorized_stocks[category] = {}
                 
-                # 使用股票代码作为键
-                stock_code = stock.get('code', '')
-                if not stock_code:
-                    continue
-                
                 # 添加股票到分类
-                categorized_stocks[category][stock_code] = {
-                    'name': stock.get('name', ''),
-                    'price': stock.get('price', 0),
-                    'currency': stock.get('currency', 'USD'),
-                    'yf_code': stock.get('yf_code', None)
-                }
+                categorized_stocks[category][stock_code] = stock_name
                 
                 imported_count += 1
             
-            # 更新用户的自选股列表
+            # 更新用户自选股列表
             for category, stocks_dict in categorized_stocks.items():
-                if category in user_watchlists:
-                    # 合并现有分类
-                    user_watchlists[category].update(stocks_dict)
-                else:
-                    # 创建新分类
-                    user_watchlists[category] = stocks_dict
+                if category not in user_watchlists:
+                    user_watchlists[category] = {}
+                
+                # 合并股票
+                user_watchlists[category].update(stocks_dict)
         else:
             # 使用指定的分组名称
-            if not group_name:
-                return {
-                    'success': False,
-                    'error': '未指定分组名称'
-                }
+            target_group = group_name or "自选股"
             
-            # 创建或获取分组
-            if group_name not in user_watchlists:
-                user_watchlists[group_name] = {}
+            # 确保分组存在
+            if target_group not in user_watchlists:
+                user_watchlists[target_group] = {}
             
             # 添加股票到分组
             for stock in valid_stocks:
@@ -934,28 +956,39 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
                 if not stock_code:
                     continue
                 
-                user_watchlists[group_name][stock_code] = {
-                    'name': stock.get('name', ''),
-                    'price': stock.get('price', 0),
-                    'currency': stock.get('currency', 'USD'),
-                    'yf_code': stock.get('yf_code', None)
-                }
+                # 使用简单字符串格式保存股票名称
+                stock_name = stock.get('name', '')
+                
+                # 获取股票类型
+                market_type = stock.get('market_type', 'equity').lower()
+                
+                # 确保指数代码使用正确的格式
+                if stock_code.startswith('.') or (market_type == 'index' and not stock_code.startswith('^')):
+                    # 使用convert_index_code函数转换指数代码
+                    stock_code = convert_index_code(stock_code)
+                
+                # 添加到分组
+                user_watchlists[target_group][stock_code] = stock_name
                 
                 imported_count += 1
         
         # 保存更新后的自选股列表
         save_user_watchlists(user_id, user_watchlists)
         
+        # 返回结果
         return {
             'success': True,
-            'imported_count': imported_count
+            'imported': imported_count,
+            'skipped': skipped_count,
+            'invalid': invalid_count,
+            'watchlists': user_watchlists
         }
     
     except Exception as e:
-        logger.error(f"导入股票到自选股列表时出错: {str(e)}")
+        logger.error(f"导入股票到自选股列表出错: {str(e)}")
         return {
             'success': False,
-            'error': f"导入出错: {str(e)}"
+            'error': str(e)
         }
 
 def get_user_watchlists(user_id: str) -> Dict:
@@ -981,19 +1014,9 @@ def get_user_watchlists(user_id: str) -> Dict:
         # 自选股文件路径
         watchlists_file = os.path.join(user_config_dir, 'watchlists.json')
         
-        # 如果用户特定的文件不存在，使用全局配置文件
+        # 如果用户特定的文件不存在，返回空字典
         if not os.path.exists(watchlists_file):
-            # 使用全局配置文件
-            global_config_file = os.path.join(project_root, 'config', 'watchlists.json')
-            if os.path.exists(global_config_file):
-                with open(global_config_file, 'r', encoding='utf-8') as f:
-                    watchlists = json.load(f)
-                # 保存到用户特定的文件中
-                with open(watchlists_file, 'w', encoding='utf-8') as f:
-                    json.dump(watchlists, f, ensure_ascii=False, indent=4)
-                return watchlists
-            else:
-                return {}
+            return {}
         
         # 读取用户特定的文件
         with open(watchlists_file, 'r', encoding='utf-8') as f:
@@ -1001,15 +1024,6 @@ def get_user_watchlists(user_id: str) -> Dict:
     
     except Exception as e:
         logger.error(f"获取用户自选股列表时出错: {str(e)}")
-        # 尝试读取全局配置文件
-        try:
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            global_config_file = os.path.join(project_root, 'config', 'watchlists.json')
-            if os.path.exists(global_config_file):
-                with open(global_config_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-        except Exception as inner_e:
-            logger.error(f"尝试读取全局配置文件时出错: {str(inner_e)}")
         return {}
 
 def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:

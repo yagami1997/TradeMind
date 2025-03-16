@@ -17,6 +17,7 @@ import subprocess
 import platform
 import re
 import glob
+import traceback
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
@@ -39,7 +40,7 @@ from trademind.backtest import run_backtest
 from trademind.core.patterns import identify_candlestick_patterns
 from trademind.core.analyzer import StockAnalyzer
 from trademind.reports.generator import generate_html_report as generate_report
-from trademind.data.loader import get_stock_data, get_stock_info, validate_stock_code, batch_validate_stock_codes, update_watchlists_file, get_user_watchlists, save_user_watchlists, import_stocks_to_watchlist
+from trademind.data.loader import get_stock_data, get_stock_info, validate_stock_code, batch_validate_stock_codes, update_watchlists_file, get_user_watchlists, save_user_watchlists, import_stocks_to_watchlist, STOCK_CATEGORIES
 from trademind import compat
 from trademind import __version__
 
@@ -52,6 +53,7 @@ app.secret_key = 'trademind_lite_secret_key'  # 设置session密钥
 
 # 全局变量
 watchlists = {}  # 自选股列表
+temp_query_stocks = {}  # 临时查询股票列表
 reports_cache = []  # 报告缓存
 last_refresh_time = 0  # 上次刷新报告缓存的时间
 
@@ -89,6 +91,10 @@ def index():
         
     # 加载自选股列表
     load_watchlists()
+    
+    # 初始化临时查询股票列表
+    if 'temp_query_id' not in session:
+        session['temp_query_id'] = datetime.now().strftime('%Y%m%d%H%M%S')
     
     # 渲染模板
     return render_template('index.html', watchlists=watchlists)
@@ -160,20 +166,18 @@ def analyze_stocks():
                         
                         # 修复显示问题，确保正确显示股票名称和代码
                         stock_name = names.get(symbol, symbol)
-                        if isinstance(stock_name, dict) and 'name' in stock_name:
-                            # 如果名称是一个字典，提取实际名称
-                            display_name = stock_name['name']
-                            display_code = stock_name.get('yf_code', symbol)
-                            print(f"\n[{index}/{total} - {index/total*100:.1f}%] 分析: {display_name} ({display_code})")
+                        yf_code = symbol
+                        
+                        if isinstance(stock_name, dict):
+                            # 新格式：{name: "名称", yf_code: "YF代码"}
+                            display_name = stock_name.get('name', symbol)
+                            yf_code = stock_name.get('yf_code', symbol)
+                            print(f"\n[{index}/{total} - {index/total*100:.1f}%] 分析: {display_name} ({yf_code})")
                         else:
-                            # 正常显示名称和代码
+                            # 旧格式：直接是名称字符串
                             print(f"\n[{index}/{total} - {index/total*100:.1f}%] 分析: {stock_name} ({symbol})")
                         
                         # 使用正确的代码获取股票数据
-                        yf_code = symbol
-                        if isinstance(stock_name, dict) and stock_name.get('yf_code'):
-                            yf_code = stock_name['yf_code']
-                        
                         stock = yf.Ticker(yf_code)
                         hist = stock.history(period="1y")
                         
@@ -454,12 +458,12 @@ def list_reports():
 
 @app.route('/watchlists')
 def list_watchlists():
-    """列出所有自选股列表"""
+    """获取自选股列表"""
     try:
         # 获取当前用户ID
         user_id = session.get('user_id', 'default')
         
-        # 获取用户的自选股列表
+        # 使用get_user_watchlists函数获取用户的自选股列表
         user_watchlists = get_user_watchlists(user_id)
         
         # 更新全局变量
@@ -468,10 +472,10 @@ def list_watchlists():
         
         return jsonify({
             'success': True,
-            'watchlists': watchlists
+            'watchlists': user_watchlists
         })
     except Exception as e:
-        logger.exception(f"列出自选股列表时发生错误: {str(e)}")
+        logger.exception(f"获取自选股列表时出错: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/validate-stock', methods=['POST'])
@@ -496,34 +500,53 @@ def validate_stocks():
     """批量验证股票代码"""
     try:
         data = request.get_json()
+        if not data:
+            logger.error("验证股票代码时未收到有效的JSON数据")
+            return jsonify({'error': '未收到有效的请求数据'}), 400
+            
         codes = data.get('codes', [])
         market = data.get('market', 'US')
         translate = data.get('translate', True)  # 默认启用翻译
         
+        logger.info(f"收到验证请求: {len(codes)} 个股票代码, 市场: {market}, 翻译: {translate}")
+        
         if not codes:
+            logger.warning("验证请求中股票代码列表为空")
             return jsonify({'error': '股票代码列表不能为空'}), 400
             
         # 限制一次验证的数量
         if len(codes) > 100:
+            logger.warning(f"验证请求超过限制: {len(codes)} > 100")
             return jsonify({'error': '一次最多验证100个股票代码'}), 400
+        
+        # 记录请求的代码
+        logger.debug(f"验证的股票代码: {codes}")
+        
+        try:
+            # 批量验证股票代码
+            results = batch_validate_stock_codes(codes, market, translate=translate)
             
-        results = batch_validate_stock_codes(codes, market, translate=translate)
-        
-        # 统计验证结果
-        valid_count = sum(1 for r in results if r.get('valid', False))
-        invalid_count = len(results) - valid_count
-        
-        return jsonify({
-            'results': results,
-            'summary': {
-                'total': len(results),
-                'valid': valid_count,
-                'invalid': invalid_count
-            }
-        })
+            # 统计验证结果
+            valid_count = sum(1 for r in results if r.get('valid', False))
+            invalid_count = len(results) - valid_count
+            
+            logger.info(f"验证完成: 总计 {len(results)}, 有效 {valid_count}, 无效 {invalid_count}")
+            
+            return jsonify({
+                'results': results,
+                'summary': {
+                    'total': len(results),
+                    'valid': valid_count,
+                    'invalid': invalid_count
+                }
+            })
+        except Exception as inner_e:
+            logger.exception(f"执行批量验证时发生错误: {str(inner_e)}")
+            return jsonify({'error': f'验证过程出错: {str(inner_e)}'}), 500
+            
     except Exception as e:
         logger.exception(f"批量验证股票代码时发生错误: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'请求处理失败: {str(e)}'}), 500
 
 @app.route('/api/import-watchlist', methods=['POST'])
 def import_watchlist():
@@ -533,6 +556,7 @@ def import_watchlist():
         stocks = data.get('stocks', [])
         group_name = data.get('groupName', '')
         auto_categories = data.get('autoCategories', False)
+        clear_existing = data.get('clearExisting', False)
         
         if not stocks:
             return jsonify({'success': False, 'error': '没有有效的股票可导入'}), 400
@@ -542,7 +566,7 @@ def import_watchlist():
             return jsonify({'success': False, 'error': '请选择自动分类或者指定分组名称'}), 400
             
         # 获取当前用户
-        user_id = session.get('user_id')
+        user_id = session.get('user_id', 'default')
         if not user_id:
             return jsonify({'success': False, 'error': '用户未登录'}), 401
             
@@ -551,17 +575,22 @@ def import_watchlist():
             user_id=user_id,
             stocks=stocks,
             group_name=group_name,
-            auto_categories=auto_categories
+            auto_categories=auto_categories,
+            clear_existing=clear_existing
         )
         
         if result['success']:
             # 获取更新后的自选股列表
-            watchlists = get_user_watchlists(user_id)
+            user_watchlists = get_user_watchlists(user_id)
+            
+            # 更新全局变量
+            global watchlists
+            watchlists = user_watchlists
             
             return jsonify({
                 'success': True,
-                'message': f'成功导入 {result["imported_count"]} 个股票到自选股列表',
-                'watchlists': watchlists
+                'message': f'成功导入 {result["imported"]} 个股票到自选股列表',
+                'watchlists': user_watchlists
             })
         else:
             return jsonify({
@@ -625,6 +654,9 @@ def parse_stock_text_content(text):
 def auto_organize_watchlist():
     """自动整理自选股列表"""
     try:
+        # 获取用户ID
+        user_id = session.get('user_id', 'default')
+        
         # 重置进度信息
         global organize_progress
         organize_progress = {
@@ -634,22 +666,39 @@ def auto_organize_watchlist():
             'completed': False
         }
         
-        # 读取现有的watchlists.json
-        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'watchlists.json')
+        # 获取项目根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # 获取用户配置目录和文件路径
+        user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+        user_watchlists_file = os.path.join(user_config_dir, 'watchlists.json')
+        
+        # 确保目录存在
+        os.makedirs(user_config_dir, exist_ok=True)
         
         # 更新进度
         organize_progress['percent'] = 8
         organize_progress['status'] = '正在读取自选股列表...'
         
-        with open(config_path, 'r', encoding='utf-8') as f:
-            watchlists_data = json.load(f)
+        # 读取用户特定的watchlists.json
+        if os.path.exists(user_watchlists_file):
+            with open(user_watchlists_file, 'r', encoding='utf-8') as f:
+                watchlists_data = json.load(f)
+        else:
+            # 如果用户特定文件不存在，尝试读取全局配置
+            global_config_file = os.path.join(project_root, 'config', 'watchlists.json')
+            if os.path.exists(global_config_file):
+                with open(global_config_file, 'r', encoding='utf-8') as f:
+                    watchlists_data = json.load(f)
+            else:
+                watchlists_data = {}
         
         # 更新进度
         organize_progress['percent'] = 12
         organize_progress['status'] = '正在备份原文件...'
         
         # 备份原文件
-        backup_path = config_path + '.bak'
+        backup_path = user_watchlists_file + '.bak'
         with open(backup_path, 'w', encoding='utf-8') as f:
             json.dump(watchlists_data, f, ensure_ascii=False, indent=4)
         
@@ -658,32 +707,54 @@ def auto_organize_watchlist():
             'groups': 0,
             'stocks': 0,
             'translated': 0,
-            'fixed': 0
+            'fixed': 0,
+            'duplicates': 0
         }
         
         # 更新进度
         organize_progress['percent'] = 15
         organize_progress['status'] = '正在收集股票代码...'
         
-        # 收集所有股票代码
-        all_stocks = []
+        # 收集所有股票代码，使用字典进行去重
+        stock_dict = {}
         for group, stocks in watchlists_data.items():
             for symbol, name in stocks.items():
-                all_stocks.append({
-                    'symbol': symbol,
-                    'name': name,
+                # 标准化股票代码（去除空格和转为大写）
+                normalized_symbol = symbol.strip().upper()
+                
+                # 获取股票名称
+                if isinstance(name, str):
+                    stock_name = name
+                else:
+                    stock_name = name.get('name', '')
+                
+                # 如果股票已存在，记录重复并跳过
+                if normalized_symbol in stock_dict:
+                    stats['duplicates'] += 1
+                    continue
+                
+                # 添加到字典中
+                stock_dict[normalized_symbol] = {
+                    'symbol': normalized_symbol,
+                    'name': stock_name,
                     'group': group
-                })
+                }
                 stats['stocks'] += 1
+        
+        # 转换为列表
+        all_stocks = list(stock_dict.values())
         
         # 更新进度
         organize_progress['percent'] = 20
-        organize_progress['status'] = f'准备验证{stats["stocks"]}个股票代码...'
+        organize_progress['status'] = f'准备验证{stats["stocks"]}个股票代码（去除{stats["duplicates"]}个重复项）...'
         
         # 批量验证所有股票
         validated_stocks = []
         batch_size = 20
         total_batches = (len(all_stocks) + batch_size - 1) // batch_size
+        
+        # 用于跟踪已验证的股票代码，避免重复
+        validated_symbols = set()
         
         for i in range(0, len(all_stocks), batch_size):
             batch_index = i // batch_size
@@ -707,26 +778,36 @@ def auto_organize_watchlist():
                 organize_progress['status'] = f'正在处理特殊格式的股票代码 ({i+1}-{min(i+batch_size, len(all_stocks))}/{len(all_stocks)})...'
             
             # 验证股票代码
-            results = batch_validate_stock_codes(symbols, 'US', translate=True)
+            results = batch_validate_stock_codes(symbols, translate=True)
             
             # 处理验证结果
             for j, result in enumerate(results):
                 stock = batch[j]
                 
                 if result.get('valid', False):
+                    # 获取转换后的代码（如果有）
+                    converted_code = result.get('yf_code') or stock['symbol']
+                    
+                    # 如果转换后的代码已经存在，跳过（去重）
+                    if converted_code in validated_symbols:
+                        stats['duplicates'] += 1
+                        continue
+                    
+                    # 添加到已验证集合
+                    validated_symbols.add(converted_code)
+                    
                     # 有效股票
                     validated_stock = {
                         'valid': True,
                         'original': stock['symbol'],
-                        'converted': result.get('converted', stock['symbol']),
-                        'name': result.get('name', stock['name']),
-                        'chineseName': result.get('chineseName', ''),
-                        'category': result.get('category', '其他股票'),
+                        'converted': converted_code,
+                        'name': result.get('name', stock.get('name', '')),
+                        'market_type': result.get('market_type', ''),
                         'originalGroup': stock['group']
                     }
                     
                     # 检查是否有中文名称
-                    if validated_stock['chineseName'] and validated_stock['chineseName'] != validated_stock['name']:
+                    if validated_stock['name'] != stock.get('name', ''):
                         stats['translated'] += 1
                     
                     validated_stocks.append(validated_stock)
@@ -738,17 +819,25 @@ def auto_organize_watchlist():
                     if stock['symbol'].startswith('.'):
                         # 可能是指数，尝试转换为^格式
                         fixed_symbol = '^' + stock['symbol'][1:]
-                        fixed_result = validate_stock_code(fixed_symbol, 'US')
+                        fixed_result = validate_stock_code(fixed_symbol, translate=True)
                         if fixed_result.get('valid', False):
+                            # 检查修复后的代码是否已存在
+                            converted_code = fixed_result.get('yf_code') or fixed_symbol
+                            if converted_code in validated_symbols:
+                                stats['duplicates'] += 1
+                                continue
+                                
+                            # 添加到已验证集合
+                            validated_symbols.add(converted_code)
+                            
                             fixed = True
                             stats['fixed'] += 1
                             validated_stocks.append({
                                 'valid': True,
                                 'original': stock['symbol'],
-                                'converted': fixed_result.get('converted', fixed_symbol),
-                                'name': fixed_result.get('name', stock['name']),
-                                'chineseName': fixed_result.get('chineseName', ''),
-                                'category': fixed_result.get('category', '指数与ETF'),
+                                'converted': converted_code,
+                                'name': fixed_result.get('name', stock.get('name', '')),
+                                'market_type': fixed_result.get('market_type', ''),
                                 'originalGroup': stock['group']
                             })
                     
@@ -757,7 +846,7 @@ def auto_organize_watchlist():
                         validated_stocks.append({
                             'valid': False,
                             'original': stock['symbol'],
-                            'reason': result.get('reason', '无效股票代码'),
+                            'error': result.get('error', '无效股票代码'),
                             'originalGroup': stock['group']
                         })
             
@@ -769,34 +858,56 @@ def auto_organize_watchlist():
         
         # 更新进度 - 分类阶段
         organize_progress['percent'] = 65
-        organize_progress['status'] = '正在智能分类股票到不同分组...'
+        organize_progress['status'] = '正在整理股票数据...'
         
-        # 按分类整理股票
-        categorized_stocks = {}
+        # 创建新的分组结构，使用智能分类
+        updated_watchlists = {}
         valid_stocks = [s for s in validated_stocks if s.get('valid', False)]
         total_valid = len(valid_stocks)
         
         # 分类处理进度 - 占20%的进度(65%-85%)
         for i, stock in enumerate(valid_stocks):
             if stock.get('valid', False):
-                category = stock.get('category', '其他股票')
+                symbol = stock.get('converted') or stock.get('original')  # 使用转换后的代码
+                original_symbol = stock.get('original')  # 保存原始代码
+                stock_name = stock.get('name', original_symbol)
+                market_type = stock.get('market_type', '').lower()
                 
-                if category not in categorized_stocks:
-                    categorized_stocks[category] = {}
-                    stats['groups'] += 1
-                    
-                    # 每创建一个新分组，更新一下状态
-                    organize_progress['status'] = f'创建分组: {category}...'
+                # 确保指数代码使用正确的格式
+                if original_symbol.startswith('.') or (market_type == 'index' and not symbol.startswith('^')):
+                    # 使用convert_index_code函数转换指数代码
+                    from trademind.data.loader import convert_index_code
+                    symbol = convert_index_code(symbol)
                 
-                symbol = stock.get('converted')
-                
-                # 优先使用中文名称
-                if stock.get('chineseName'):
-                    name = stock.get('chineseName')
+                # 使用智能分类逻辑
+                if market_type == 'index' or symbol.startswith('^'):
+                    # 指数自动归类到"指数与ETF"
+                    category = "指数与ETF"
+                elif market_type == 'etf':
+                    # ETF自动归类到"指数与ETF"
+                    category = "指数与ETF"
                 else:
-                    name = stock.get('name', symbol)
+                    # 使用STOCK_CATEGORIES进行智能行业分类
+                    category = None
+                    for cat_name, patterns in STOCK_CATEGORIES.items():
+                        for pattern in patterns:
+                            if re.search(pattern, symbol):
+                                category = cat_name
+                                break
+                        if category:
+                            break
+                    
+                    # 如果没有匹配到任何分类，使用默认分类
+                    if not category:
+                        category = '无分类自选股'
                 
-                categorized_stocks[category][symbol] = name
+                # 确保分组存在
+                if category not in updated_watchlists:
+                    updated_watchlists[category] = {}
+                    stats['groups'] += 1
+                
+                # 添加到分组
+                updated_watchlists[category][symbol] = stock_name
             
             # 每处理10个股票，更新一次进度
             if i % 10 == 0 and total_valid > 0:
@@ -807,9 +918,9 @@ def auto_organize_watchlist():
         organize_progress['percent'] = 85
         organize_progress['status'] = '正在写入更新后的文件...'
         
-        # 写入更新后的文件
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(categorized_stocks, f, ensure_ascii=False, indent=4)
+        # 写入更新后的文件 - 只更新用户特定的文件，不修改全局配置
+        with open(user_watchlists_file, 'w', encoding='utf-8') as f:
+            json.dump(updated_watchlists, f, ensure_ascii=False, indent=4)
         
         # 更新进度 - 更新全局变量
         organize_progress['percent'] = 95
@@ -817,28 +928,37 @@ def auto_organize_watchlist():
         
         # 更新全局变量
         global watchlists
-        watchlists = categorized_stocks
+        watchlists = updated_watchlists
         
         # 完成进度
         organize_progress['percent'] = 100
-        organize_progress['status'] = '整理完成！所有股票已成功分类并保存。'
-        organize_progress['in_progress'] = False
+        organize_progress['status'] = '整理完成！'
         organize_progress['completed'] = True
+        organize_progress['in_progress'] = False
         
+        # 返回结果
         return jsonify({
             'success': True,
-            'message': f'成功整理自选股列表！共整理了{stats["stocks"]}个股票，分为{stats["groups"]}个分组，翻译了{stats["translated"]}个名称，修复了{stats["fixed"]}个无效代码。',
+            'message': f'成功整理自选股列表，共{stats["stocks"]}个股票，{stats["groups"]}个分组，去除{stats["duplicates"]}个重复项',
             'stats': stats,
-            'watchlists': categorized_stocks
+            'watchlists': updated_watchlists
         })
-    except Exception as e:
-        # 更新进度为错误状态
-        organize_progress['in_progress'] = False
-        organize_progress['status'] = f'出错: {str(e)}'
-        organize_progress['completed'] = False
         
-        logger.exception(f"自动整理自选股列表时发生错误: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        # 记录错误
+        app.logger.error(f"自动整理自选股列表出错: {str(e)}")
+        traceback.print_exc()
+        
+        # 更新进度
+        organize_progress['in_progress'] = False
+        organize_progress['completed'] = True
+        organize_progress['status'] = f'整理过程中出错: {str(e)}'
+        
+        # 返回错误信息
+        return jsonify({
+            'success': False,
+            'error': f'整理自选股列表出错: {str(e)}'
+        })
 
 @app.route('/api/auto-organize-progress', methods=['GET'])
 def auto_organize_progress():
@@ -1310,6 +1430,50 @@ def run_web_server(host='0.0.0.0', port=5000):
     except Exception as e:
         logger.exception(f"启动Web服务器时发生错误: {str(e)}")
         return
+
+@app.route('/api/temp-query', methods=['POST'])
+def save_temp_query():
+    """保存临时查询股票列表"""
+    try:
+        data = request.get_json()
+        codes = data.get('codes', [])
+        
+        if not codes:
+            return jsonify({'success': False, 'error': '没有提供股票代码'}), 400
+        
+        # 获取临时查询ID
+        temp_query_id = session.get('temp_query_id')
+        if not temp_query_id:
+            temp_query_id = datetime.now().strftime('%Y%m%d%H%M%S')
+            session['temp_query_id'] = temp_query_id
+        
+        # 保存临时查询
+        global temp_query_stocks
+        temp_query_stocks[temp_query_id] = codes
+        
+        return jsonify({
+            'success': True,
+            'message': f'已保存{len(codes)}个股票代码到临时查询列表'
+        })
+    except Exception as e:
+        logger.exception(f"保存临时查询股票列表时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/temp-query', methods=['GET'])
+def get_temp_query():
+    """获取临时查询股票列表"""
+    try:
+        # 获取临时查询ID
+        temp_query_id = session.get('temp_query_id')
+        if not temp_query_id or temp_query_id not in temp_query_stocks:
+            return jsonify({'codes': []})
+        
+        return jsonify({
+            'codes': temp_query_stocks[temp_query_id]
+        })
+    except Exception as e:
+        logger.exception(f"获取临时查询股票列表时出错: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     try:

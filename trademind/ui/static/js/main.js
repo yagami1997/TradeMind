@@ -18,8 +18,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const symbolsInput = document.getElementById('symbols');
     const watchlistSelect = document.getElementById('watchlist');
 
+    // 加载临时查询列表
+    loadTempQueryStocks();
+
     // 添加浏览器关闭事件监听器
     window.addEventListener('beforeunload', function(e) {
+        // 保存临时查询列表
+        saveTempQueryStocks();
+        
         // 发送关闭服务器的请求
         try {
             // 使用同步请求确保在页面关闭前发送完成
@@ -48,45 +54,92 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 显示加载动画
+        // 如果有输入股票代码，保存到临时查询列表
+        if (symbolsInput.value.trim()) {
+            saveTempQueryStocks();
+        }
+        
+        // 禁用按钮并显示加载动画
         analyzeBtn.disabled = true;
         analyzeSpinner.classList.remove('d-none');
         
-        // 准备请求数据
+        // 获取表单数据
         let symbols = [];
         let names = {};
-        let title = document.getElementById('title').value || '美股技术面分析报告';
         
         if (symbolsInput.value.trim()) {
-            // 处理手动输入的股票代码
-            symbols = symbolsInput.value.trim().split('\n').map(line => {
-                line = line.trim();
-                if (line.includes('=')) {
-                    const [code, name] = line.split('=', 2);
-                    names[code.trim().toUpperCase()] = name.trim();
-                    return code.trim().toUpperCase();
-                }
-                return line.toUpperCase();
-            }).filter(code => code);
+            // 从输入框获取股票代码
+            symbols = symbolsInput.value.trim().split(/[\n,]+/).map(s => s.trim()).filter(s => s);
         } else if (watchlistSelect.value) {
-            // 处理选择的观察列表
-            const watchlistName = watchlistSelect.value;
-            fetch(`/watchlists`)
+            // 从观察列表获取股票代码
+            const selectedGroup = watchlistSelect.value;
+            fetch('/watchlists')
                 .then(response => response.json())
-                .then(watchlists => {
-                    if (watchlists[watchlistName]) {
-                        symbols = Object.keys(watchlists[watchlistName]);
-                        names = watchlists[watchlistName];
-                        title = `${watchlistName}分析报告`;
-                        sendAnalysisRequest(symbols, names, title, analyzeAll);
+                .then(data => {
+                    if (data.success && data.watchlists && data.watchlists[selectedGroup]) {
+                        const stocks = data.watchlists[selectedGroup];
+                        for (const symbol in stocks) {
+                            symbols.push(symbol);
+                            names[symbol] = stocks[symbol];
+                        }
+                        
+                        // 发送分析请求
+                        const title = document.getElementById('title').value || '美股技术面分析报告';
+                        sendAnalysisRequest(symbols, names, title, false);
+                    } else {
+                        alert('获取观察列表失败');
+                        analyzeBtn.disabled = false;
+                        analyzeSpinner.classList.add('d-none');
                     }
+                })
+                .catch(error => {
+                    console.error('获取观察列表时出错:', error);
+                    alert('获取观察列表时出错');
+                    analyzeBtn.disabled = false;
+                    analyzeSpinner.classList.add('d-none');
                 });
-            return; // 异步处理，提前返回
+            return;
         }
         
         // 发送分析请求
+        const title = document.getElementById('title').value || '美股技术面分析报告';
         sendAnalysisRequest(symbols, names, title, analyzeAll);
     });
+    
+    // 加载临时查询股票列表
+    function loadTempQueryStocks() {
+        fetch('/api/temp-query')
+            .then(response => response.json())
+            .then(data => {
+                if (data.codes && data.codes.length > 0) {
+                    symbolsInput.value = data.codes.join('\n');
+                }
+            })
+            .catch(error => {
+                console.error('加载临时查询股票列表时出错:', error);
+            });
+    }
+    
+    // 保存临时查询股票列表
+    function saveTempQueryStocks() {
+        if (!symbolsInput.value.trim()) return;
+        
+        const codes = symbolsInput.value.trim().split(/[\n,]+/).map(s => s.trim()).filter(s => s);
+        if (codes.length === 0) return;
+        
+        fetch('/api/temp-query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                codes: codes
+            })
+        })
+        .catch(error => {
+            console.error('保存临时查询股票列表时出错:', error);
+        });
+    }
     
     // 分析所有股票复选框事件
     document.getElementById('analyzeAll').addEventListener('change', function() {
