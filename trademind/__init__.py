@@ -5,7 +5,7 @@ TradeMind Lite是一个轻量级的股票技术分析工具，可以帮助用户
 K线形态，并生成交易建议。
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 # 导入子模块
 from . import core

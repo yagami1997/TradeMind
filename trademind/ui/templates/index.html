@@ -218,7 +218,7 @@
 
     <footer class="footer mt-5 py-3 bg-light">
         <div class="container text-center">
-            <p class="text-muted mb-0">TradeMind Lite Beta 0.3.1 © 2025 | <a href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a></p>
+            <p class="text-muted mb-0">TradeMind Lite Beta 0.3.2 © 2025 | <a href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a></p>
         </div>
     </footer>
 
@@ -278,12 +278,12 @@
                     
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle-fill"></i> 
-                        <strong>注意：</strong> 不支持期货、ETF期权、外汇等非股票类型数据。如GC（黄金期货）、ES（标普期货）等将被标记为无效。
+                        <strong>注意：</strong> 不支持期货合约（如GC=F黄金期货、CL=F原油期货、ES2503标普期货、NQ2503纳指期货）、期权（如AAPL-C看涨期权）、外汇等非股票类型数据。这些将被标记为无效并无法导入。
                     </div>
                     
                     <!-- 快捷功能按钮 -->
                     <div class="d-grid gap-2 mb-3">
-                        <button type="button" class="btn btn-warning" id="luckyButton">
+                        <button type="button" class="btn btn-info" id="luckyButton">
                             <i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表
                         </button>
                         <div class="form-text text-center">
@@ -293,17 +293,17 @@
                         <!-- 手气不错进度显示区域 -->
                         <div id="luckyProgressContainer" class="mt-3 d-none">
                             <div class="progress mb-2" style="height: 20px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="luckyProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" id="luckyProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                             </div>
                             <div class="alert alert-info" id="luckyStatusText">
                                 正在准备整理自选股列表...
                             </div>
                             <div class="text-center small text-muted" id="luckyAnimatedText">
-                                <div class="spinner-grow spinner-grow-sm text-primary me-1" role="status">
+                                <div class="spinner-grow spinner-grow-sm text-info me-1" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                                 <span>系统正在努力工作中，请稍候...</span>
-                                <div class="spinner-grow spinner-grow-sm text-primary ms-1" role="status">
+                                <div class="spinner-grow spinner-grow-sm text-info ms-1" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
@@ -355,7 +355,13 @@
                                 
                                 <div class="mb-3">
                                     <label for="stockFile" class="form-label">或者上传文件</label>
-                                    <input class="form-control" type="file" id="stockFile" accept=".txt,.csv,.xlsx,.xls">
+                                    <div class="input-group">
+                                        <input class="form-control" type="file" id="stockFile" accept=".txt,.csv,.xlsx,.xls" style="display: none;">
+                                        <input type="text" class="form-control" id="fileNameDisplay" placeholder="未选择文件" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" id="fileImportBtn">
+                                            <i class="bi bi-upload"></i> 选择文件
+                                        </button>
+                                    </div>
                                     <div class="form-text">支持TXT、CSV和Excel文件</div>
                                 </div>
                                 
@@ -377,16 +383,18 @@
                                 
                                 <div class="mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="autoCategories">
+                                        <input class="form-check-input" type="checkbox" id="autoCategories" onchange="toggleGroupNameInput()">
                                         <label class="form-check-label" for="autoCategories">
                                             自动分类股票到不同分组
                                         </label>
+                                        <div class="form-text">选择此项将根据股票类型自动分类，无需指定分组名称</div>
                                     </div>
                                 </div>
                                 
                                 <div class="mb-3" id="groupNameContainer">
-                                    <label for="groupNameInput" class="form-label">分组名称</label>
-                                    <input type="text" class="form-control" id="groupNameInput" placeholder="输入分组名称">
+                                    <label for="groupNameInput" class="form-label">分组名称 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="groupNameInput" placeholder="请输入分组名称（必填，除非选择自动分类）">
+                                    <div class="form-text">必须选择自动分类或指定分组名称才能导入</div>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -411,7 +419,7 @@
                         <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
                             <div class="validation-progress mb-3">
                                 <div class="progress">
-                                    <div class="progress-bar" id="validationProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="validationProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                                 </div>
                                 <div class="validation-stats mt-2 d-flex justify-content-between">
                                     <span id="validationCurrentStatus">验证中...</span>
@@ -419,28 +427,29 @@
                                 </div>
                             </div>
                             
+                            <!-- 验证结果表格 -->
                             <div class="validation-results mb-3">
                                 <div class="card">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0">验证结果</h6>
                                         <div>
-                                            <span class="badge bg-success me-1" id="validCount">0 有效</span>
-                                            <span class="badge bg-danger" id="invalidCount">0 无效</span>
+                                            <span class="badge bg-success me-1" id="validCount">0</span>
+                                            <span class="badge bg-danger" id="invalidCount">0</span>
                                         </div>
                                     </div>
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
-                                            <table class="table table-hover table-striped mb-0">
+                                            <table class="table table-striped table-hover mb-0" id="validationResultsTable">
                                                 <thead>
                                                     <tr>
-                                                        <th>原始代码</th>
-                                                        <th>转换后代码</th>
+                                                        <th>股票代码</th>
                                                         <th>名称</th>
+                                                        <th>价格</th>
                                                         <th>状态</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody id="validationResultsTable">
-                                                    <!-- 验证结果将在这里动态显示 -->
+                                                <tbody>
+                                                    <!-- 验证结果将在这里动态添加 -->
                                                 </tbody>
                                             </table>
                                         </div>
@@ -471,6 +480,13 @@
                                     <p><strong>分组名称：</strong> <span id="confirmGroupName"></span></p>
                                     <p><strong>有效股票数量：</strong> <span id="confirmValidCount"></span></p>
                                     <p><strong>无效股票数量：</strong> <span id="confirmInvalidCount"></span></p>
+                                    
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" id="clearExistingStocks" checked>
+                                        <label class="form-check-label" for="clearExistingStocks">
+                                            清空现有列表并导入（将删除分组中的所有现有股票）
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -557,6 +573,76 @@
             });
             
             // 其他现有的初始化代码
+        });
+
+        // 直接在HTML中添加联动逻辑，确保在页面加载时就能正确工作
+        function toggleGroupNameInput() {
+            const autoCategories = document.getElementById('autoCategories');
+            const groupNameContainer = document.getElementById('groupNameContainer');
+            const groupNameInput = document.getElementById('groupNameInput');
+            const validateStocksBtn = document.getElementById('validateStocksBtn');
+            const stockInput = document.getElementById('stockInput');
+            
+            console.log('toggleGroupNameInput 被调用', {
+                autoChecked: autoCategories ? autoCategories.checked : 'element not found',
+                stockInputValue: stockInput ? stockInput.value : 'element not found'
+            });
+            
+            if (autoCategories && autoCategories.checked) {
+                // 如果选中自动分类，隐藏并禁用分组名称输入
+                if (groupNameContainer) groupNameContainer.classList.add('d-none');
+                if (groupNameInput) {
+                    groupNameInput.disabled = true;
+                    groupNameInput.value = '';
+                }
+                
+                // 如果有股票代码输入，直接启用验证按钮
+                if (validateStocksBtn && stockInput) {
+                    const hasStockCodes = stockInput.value.trim().length > 0;
+                    if (hasStockCodes) {
+                        console.log('自动分类已选中且有股票代码，启用验证按钮');
+                        validateStocksBtn.disabled = false;
+                    } else {
+                        validateStocksBtn.disabled = true;
+                    }
+                }
+            } else {
+                // 如果未选中自动分类，显示并启用分组名称输入
+                if (groupNameContainer) groupNameContainer.classList.remove('d-none');
+                if (groupNameInput) groupNameInput.disabled = false;
+                
+                // 检查是否有分组名称和股票代码，决定验证按钮状态
+                if (validateStocksBtn && stockInput) {
+                    const hasStockCodes = stockInput.value.trim().length > 0;
+                    const hasGroupName = groupNameInput && groupNameInput.value.trim().length > 0;
+                    validateStocksBtn.disabled = !(hasStockCodes && hasGroupName);
+                }
+            }
+            
+            // 强制触发检查验证按钮状态
+            setTimeout(() => {
+                if (window.checkValidateButtonState) {
+                    console.log('触发checkValidateButtonState检查');
+                    window.checkValidateButtonState();
+                }
+            }, 50);
+            
+            // 触发输入事件，确保验证按钮状态更新
+            if (groupNameInput) {
+                const event = new Event('input', { bubbles: true });
+                groupNameInput.dispatchEvent(event);
+            }
+            
+            // 如果有stockInput，也触发其输入事件
+            if (stockInput) {
+                const event = new Event('input', { bubbles: true });
+                stockInput.dispatchEvent(event);
+            }
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleGroupNameInput();
         });
     </script>
 </body>

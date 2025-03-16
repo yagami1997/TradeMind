@@ -1,4 +1,4 @@
-# 🚀 TradeMind Lite 轻量版美股技术分析工具 Beta 0.3.1
+# 🚀 TradeMind Lite 轻量版美股技术分析工具 Beta 0.3.2
 
 ## ⚠️ 重要声明
 
@@ -26,6 +26,13 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 这种方法论显著提高了开发效率，减少了沟通成本，并确保了软件质量的一致性。
 
 ## 📝 更新日志
+
+### 🆕 2025年3月16日功能重大优化更新 (Beta 0.3.2)
+
+- Web界面新增自选股导入功能，支持自动分类和智能行业分组
+- 改进股票代码验证逻辑，增强对指数和ETF的支持
+- 优化用户界面交互体验，提升操作流畅度
+- 修复多个已知问题，提高系统稳定性
 
 ### 🆕 2025年3月15日界面优化更新 (Beta 0.3.1)
 - **Web界面主题优化**：优化三个主题（翠影流金、紫岚烟渚、蓝沁云霁）的色彩搭配，提升视觉体验，在Web界面右上角点击主题图标即可一键切换不同风格
@@ -580,5 +587,5 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Th
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-03-15 05:19:58 PDT</span>
+  <span style="font-size: 14px; color: #888;">2025-03-16 08:00:01 PDT</span>
 </p>
