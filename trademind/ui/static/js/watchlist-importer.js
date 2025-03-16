@@ -429,6 +429,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 初始化进度
         let processedCount = 0;
         
+        // 获取是否翻译的设置
+        const translateCheckbox = document.getElementById('translateNames');
+        const translate = translateCheckbox ? translateCheckbox.checked : true;
+        
         // 顺序处理每一批
         processBatch(0);
         
@@ -500,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     codes: batch,
                     market: market,
-                    translate: true // 请求翻译名称
+                    translate: translate // 使用用户设置的翻译选项
                 })
             })
             .then(response => response.json())
@@ -595,56 +599,86 @@ document.addEventListener('DOMContentLoaded', function() {
             row.classList.add('table-danger');
         }
         
-        // 原始代码
-        const originalCell = document.createElement('td');
-        originalCell.textContent = result.original;
-        row.appendChild(originalCell);
-        
-        // 转换后代码
-        const convertedCell = document.createElement('td');
-        convertedCell.textContent = result.valid ? result.converted : '-';
-        row.appendChild(convertedCell);
+        // 股票代码
+        const codeCell = document.createElement('td');
+        codeCell.textContent = result.code || '-';
+        row.appendChild(codeCell);
         
         // 名称
         const nameCell = document.createElement('td');
         if (result.valid) {
-            // 显示中文名称（如果有）和英文名称
-            if (result.chineseName) {
-                nameCell.innerHTML = `<span class="fw-bold">${result.chineseName}</span>`;
-                if (result.name && result.name !== result.chineseName) {
-                    nameCell.innerHTML += `<br><small class="text-muted">${result.name}</small>`;
-                }
-            } else {
-                nameCell.textContent = result.name || '-';
+            // 显示名称
+            nameCell.textContent = result.name || '-';
+            
+            // 如果有英文名称且与显示名称不同，显示英文名称
+            if (result.english_name && result.english_name !== result.name) {
+                nameCell.innerHTML = `${result.name}<br><small class="text-muted">${result.english_name}</small>`;
             }
         } else {
             nameCell.textContent = '-';
         }
         row.appendChild(nameCell);
         
+        // 价格和货币
+        const priceCell = document.createElement('td');
+        if (result.valid && result.price) {
+            priceCell.textContent = `${result.price} ${result.currency || 'USD'}`;
+        } else {
+            priceCell.textContent = '-';
+        }
+        row.appendChild(priceCell);
+        
         // 状态
         const statusCell = document.createElement('td');
         if (result.valid) {
             let statusHtml = '<span class="badge bg-success">有效</span>';
-            if (result.category) {
-                statusHtml += ` <small class="text-muted">${result.category}</small>`;
+            if (result.market_type) {
+                const marketTypeMap = {
+                    'equity': '股票',
+                    'etf': 'ETF',
+                    'index': '指数'
+                };
+                const marketTypeText = marketTypeMap[result.market_type] || result.market_type;
+                statusHtml += ` <small class="text-muted">${marketTypeText}</small>`;
             }
             statusCell.innerHTML = statusHtml;
         } else {
-            let reason = result.reason || '未知原因';
+            let errorMessage = result.error || '未知错误';
             
             // 处理特殊错误情况
-            if (reason.includes("'NoneType' object has no attribute")) {
-                reason = '服务器处理错误';
-            } else if (reason.includes('期货') || reason.includes('指数') || 
-                reason.includes('不支持') || reason.includes('无效市场')) {
-                statusCell.innerHTML = `<span class="badge bg-danger">无效</span> <strong class="text-danger">${reason}</strong>`;
+            if (errorMessage.includes("'NoneType' object")) {
+                errorMessage = '无法解析股票数据，可能是不支持的股票类型';
+            } else if (errorMessage.includes('期货') || errorMessage.includes('期权')) {
+                // 对于期货和期权错误，使用更明显的警告样式
+                statusCell.innerHTML = `
+                    <div class="alert alert-warning py-1 px-2 mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <small>${errorMessage}</small>
+                    </div>
+                `;
+                row.appendChild(statusCell);
+                validationResultsTable.appendChild(row);
+                return;
+            } else if (errorMessage.includes('不支持的市场类型')) {
+                // 对于不支持的市场类型，使用信息样式
+                statusCell.innerHTML = `
+                    <div class="alert alert-info py-1 px-2 mb-0">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        <small>${errorMessage}</small>
+                    </div>
+                `;
                 row.appendChild(statusCell);
                 validationResultsTable.appendChild(row);
                 return;
             }
             
-            statusCell.innerHTML = `<span class="badge bg-danger">无效</span> <small>${reason}</small>`;
+            // 默认错误显示
+            statusCell.innerHTML = `
+                <div class="alert alert-danger py-1 px-2 mb-0">
+                    <i class="bi bi-x-circle-fill me-1"></i>
+                    <small>${errorMessage}</small>
+                </div>
+            `;
         }
         row.appendChild(statusCell);
         

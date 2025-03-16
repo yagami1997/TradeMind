@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Excel处理库 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- 主题CSS将由JavaScript动态加载 -->
 </head>
 <body>
@@ -50,7 +52,7 @@
     <div class="container mt-4">
         <!-- 头部横幅 -->
         <div class="header-banner">
-            <h1>TradeMind Lite - 美股技术面分析工具</h1>
+            <h1>TradeMind Lite - 美股技术分析工具</h1>
             <p>基于多系统量化模型的美股技术分析工具</p>
             <p id="current-time">当前时间: <span id="la-time">加载中...</span></p>
         </div>
@@ -66,7 +68,12 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="symbols" class="form-label">股票代码</label>
-                                    <textarea class="form-control" id="symbols" name="symbols" rows="3" placeholder="输入股票代码，每行一个，例如：AAPL&#10;MSFT&#10;GOOG"></textarea>
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="symbols" name="symbols" rows="3" placeholder="输入股票代码，每行一个，例如：AAPL&#10;MSFT&#10;GOOG"></textarea>
+                                        <button class="btn btn-accent" type="button" id="importWatchlistBtn" title="导入自选股">
+                                            <i class="bi bi-cloud-upload-fill"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="watchlist" class="form-label">或选择观察列表</label>
@@ -255,9 +262,258 @@
         </div>
     </div>
 
+    <!-- 自选股导入模态框 -->
+    <div class="modal fade" id="importWatchlistModal" tabindex="-1" aria-labelledby="importWatchlistModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importWatchlistModalLabel">导入自选股</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i> 
+                        <strong>提示：</strong> 目前仅支持导入美股和美股指数。指数代码将自动转换为Yahoo Finance格式（如 .DJI → ^DJI）。
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i> 
+                        <strong>注意：</strong> 不支持期货、ETF期权、外汇等非股票类型数据。如GC（黄金期货）、ES（标普期货）等将被标记为无效。
+                    </div>
+                    
+                    <!-- 快捷功能按钮 -->
+                    <div class="d-grid gap-2 mb-3">
+                        <button type="button" class="btn btn-warning" id="luckyButton">
+                            <i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表
+                        </button>
+                        <div class="form-text text-center">
+                            <i class="bi bi-info-circle"></i> 一键整理watchlists.json文件，自动分组、翻译名称、核对有效性，修复用户手动修改导致的问题
+                        </div>
+                        
+                        <!-- 手气不错进度显示区域 -->
+                        <div id="luckyProgressContainer" class="mt-3 d-none">
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="luckyProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                            <div class="alert alert-info" id="luckyStatusText">
+                                正在准备整理自选股列表...
+                            </div>
+                            <div class="text-center small text-muted" id="luckyAnimatedText">
+                                <div class="spinner-grow spinner-grow-sm text-primary me-1" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span>系统正在努力工作中，请稍候...</span>
+                                <div class="spinner-grow spinner-grow-sm text-primary ms-1" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 步骤导航 -->
+                    <ul class="nav nav-tabs mb-3" id="importStepsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab" aria-controls="step1" aria-selected="true">
+                                1. 输入股票代码
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false" disabled>
+                                2. 验证股票代码
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab" aria-controls="step3" aria-selected="false" disabled>
+                                3. 导入确认
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- 步骤内容 -->
+                    <div class="tab-content" id="importStepsContent">
+                        <!-- 步骤1：输入股票代码 -->
+                        <div class="tab-pane fade show active step-1-content" id="step1" role="tabpanel" aria-labelledby="step1-tab">
+                            <form id="stockInputForm">
+                                <div class="mb-3">
+                                    <label for="marketSelect" class="form-label">市场</label>
+                                    <select class="form-select" id="marketSelect">
+                                        <option value="US" selected>美股</option>
+                                        <option value="HK">港股</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="stockInput" class="form-label">股票代码</label>
+                                    <textarea class="form-control" id="stockInput" rows="5" placeholder="每行输入一个股票代码，例如：AAPL"></textarea>
+                                    <div class="form-text">每行输入一个股票代码，例如：AAPL, MSFT, GOOG</div>
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="pasteFromClipboardBtn">
+                                            <i class="bi bi-clipboard"></i> 从剪贴板粘贴
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="stockFile" class="form-label">或者上传文件</label>
+                                    <input class="form-control" type="file" id="stockFile" accept=".txt,.csv,.xlsx,.xls">
+                                    <div class="form-text">支持TXT、CSV和Excel文件</div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="hasHeaderRow">
+                                            <label class="form-check-label" for="hasHeaderRow">
+                                                文件包含表头行
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="codeColumnIndex" class="form-label">代码列索引</label>
+                                        <input type="number" class="form-control" id="codeColumnIndex" min="0" value="0">
+                                        <div class="form-text">从0开始计数</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoCategories">
+                                        <label class="form-check-label" for="autoCategories">
+                                            自动分类股票到不同分组
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3" id="groupNameContainer">
+                                    <label for="groupNameInput" class="form-label">分组名称</label>
+                                    <input type="text" class="form-control" id="groupNameInput" placeholder="输入分组名称">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="translateNames" checked>
+                                        <label class="form-check-label" for="translateNames">
+                                            自动翻译股票名称为中文
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="button" class="btn btn-primary" id="validateStocksBtn">
+                                        验证股票代码
+                                        <span class="spinner-border spinner-border-sm d-none" id="validateSpinner" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- 步骤2：验证股票代码 -->
+                        <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
+                            <div class="validation-progress mb-3">
+                                <div class="progress">
+                                    <div class="progress-bar" id="validationProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                                <div class="validation-stats mt-2 d-flex justify-content-between">
+                                    <span id="validationCurrentStatus">验证中...</span>
+                                    <span id="validationStats">0/0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="validation-results mb-3">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">验证结果</h6>
+                                        <div>
+                                            <span class="badge bg-success me-1" id="validCount">0 有效</span>
+                                            <span class="badge bg-danger" id="invalidCount">0 无效</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-striped mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>原始代码</th>
+                                                        <th>转换后代码</th>
+                                                        <th>名称</th>
+                                                        <th>状态</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="validationResultsTable">
+                                                    <!-- 验证结果将在这里动态显示 -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-secondary" id="backToStep1Btn">返回修改</button>
+                                <button type="button" class="btn btn-primary" id="proceedToStep3Btn">
+                                    继续导入 <span id="validStockCount">(0)</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 步骤3：导入确认 -->
+                        <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>注意：</strong> 导入将覆盖同名分组中的现有股票。请确认以下信息无误。
+                            </div>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">导入信息确认</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>分组名称：</strong> <span id="confirmGroupName"></span></p>
+                                    <p><strong>有效股票数量：</strong> <span id="confirmValidCount"></span></p>
+                                    <p><strong>无效股票数量：</strong> <span id="confirmInvalidCount"></span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-secondary" id="backToStep2Btn">返回修改</button>
+                                <button type="button" class="btn btn-success" id="confirmImportBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="importSpinner" role="status" aria-hidden="true"></span>
+                                    确认导入
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入成功模态框 -->
+    <div class="modal fade" id="importSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">导入成功</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <p id="importSuccessMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-switcher.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/watchlist-importer.js') }}"></script>
+
     <script>
         // 更新时间显示
         function updateTime() {
@@ -291,6 +547,17 @@
         // 每秒更新一次时间
         setInterval(updateTime, 1000);
         updateTime();  // 立即更新一次
+
+        // 自选股导入功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 导入自选股按钮点击事件
+            document.getElementById('importWatchlistBtn').addEventListener('click', function() {
+                const importModal = new bootstrap.Modal(document.getElementById('importWatchlistModal'));
+                importModal.show();
+            });
+            
+            // 其他现有的初始化代码
+        });
     </script>
 </body>
 </html> 
