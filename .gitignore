@@ -39,4 +39,10 @@ project_management/ideaguide.md
 # 版本命名指南（仅供内部使用）
 project_management/version_naming_guide.md
 # 项目特定文件
-project_management/reference/ideaguide.mdproject_management/actuals/reports/
+project_management/reference/ideaguide.md
+# 日报和周报文件
+project_management/actuals/reports/daily/*.md
+project_management/actuals/reports/weekly/*.md
+# 保留目录结构
+!project_management/actuals/reports/daily/.gitkeep
+!project_management/actuals/reports/weekly/.gitkeep
