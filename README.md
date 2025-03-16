@@ -92,7 +92,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
      
      # 克隆仓库
      git clone https://github.com/yagami1997/TradeMind.git
-     cd trademind-lite
+     cd trademind
      ```
    
    - 方法二: 直接下载
@@ -104,7 +104,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 3. **创建虚拟环境 (强烈推荐)**
    ```bash
    # 进入项目目录
-   cd path\to\trademind-lite
+   cd path\to\trademind
    
    # 创建虚拟环境
    python -m venv venv
@@ -162,7 +162,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    ```bash
    # 克隆仓库
    git clone https://github.com/yagami1997/TradeMind.git
-   cd trademind-lite
+   cd trademind
    ```
 
 3. **创建并激活虚拟环境**
@@ -218,7 +218,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    ```bash
    # 克隆仓库
    git clone https://github.com/yagami1997/TradeMind.git
-   cd trademind-lite
+   cd trademind
    ```
 
 3. **创建并激活虚拟环境**
