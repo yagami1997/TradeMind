@@ -1,3 +1,7 @@
+# TradeMind Lite 依赖库列表
+# 最后更新: 2025-03-16 01:39:26 PDT
+# 维护者: Yagami
+
 # 核心数据处理库
 numpy==2.0.2
 pandas==2.2.3
@@ -11,9 +15,10 @@ urllib3==1.26.6  # 固定版本，不使用2.x版本
 Flask==2.3.3
 Werkzeug==2.3.7
 Jinja2==3.1.3
+flask-cors==5.0.1  # 添加CORS支持
 
 # 数据可视化
-matplotlib==3.8.3
+matplotlib==3.9.4  # 更新到最新版本，解决冲突问题
 seaborn==0.13.2
 
 # 系统和工具库
@@ -77,3 +82,6 @@ soupsieve==2.6
 
 # 数据可视化库
 plotly==5.18.0
+
+# 文件末尾
+# 最后更新: 2025-03-16 01:39:26 PDT
