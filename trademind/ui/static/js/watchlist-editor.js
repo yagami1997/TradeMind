@@ -1230,6 +1230,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 保存并关闭
     function saveAndClose() {
+        // 防止重复调用
+        if (window.isSavingAndClosing) {
+            console.log('已经在保存并关闭中，跳过重复调用');
+            return;
+        }
+        
+        window.isSavingAndClosing = true;
+        
         // 显示保存中状态
         const saveBtn = document.getElementById('saveAllBtn');
         const originalText = saveBtn.innerHTML;
@@ -1296,6 +1304,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 恢复按钮状态
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
+            
+            // 重置保存标志
+            window.isSavingAndClosing = false;
         });
     }
     

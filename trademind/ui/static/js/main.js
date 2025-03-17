@@ -18,11 +18,20 @@ function refreshWatchlistDropdown(data) {
     }
     
     try {
-        // 如果有分组顺序，记录它但不调用API
+        // 如果有分组顺序，保存它，但添加防止循环调用的机制
         if (groups_order && Array.isArray(groups_order)) {
-            console.log('记录分组顺序:', groups_order);
-            // 不再调用saveGroupsOrder，避免额外的API请求
-            // saveGroupsOrder(groups_order);
+            // 使用静态标志防止循环调用
+            if (!window.isSavingGroupsOrder) {
+                window.isSavingGroupsOrder = true;
+                console.log('保存分组顺序:', groups_order);
+                saveGroupsOrder(groups_order);
+                // 延迟重置标志
+                setTimeout(() => {
+                    window.isSavingGroupsOrder = false;
+                }, 1000);
+            } else {
+                console.log('跳过保存分组顺序，防止循环调用');
+            }
         }
         
         // 获取下拉菜单元素
@@ -123,6 +132,13 @@ function saveGroupsOrder(groups_order) {
 
 // 加载观察列表
 function loadWatchlists(forceRefresh = false) {
+    // 防止循环调用
+    if (window.isLoadingWatchlists) {
+        console.log('跳过加载观察列表，防止循环调用');
+        return;
+    }
+    
+    window.isLoadingWatchlists = true;
     console.log('加载观察列表...');
     
     // 添加时间戳参数，防止缓存
@@ -149,6 +165,12 @@ function loadWatchlists(forceRefresh = false) {
         })
         .catch(error => {
             console.error('获取观察列表时出错:', error);
+        })
+        .finally(() => {
+            // 延迟重置标志，防止短时间内多次调用
+            setTimeout(() => {
+                window.isLoadingWatchlists = false;
+            }, 1000);
         });
 }
 
