@@ -3,10 +3,26 @@
  */
 
 // 全局函数，用于刷新观察列表下拉框
-function refreshWatchlistDropdown(watchlists) {
-    console.log('主界面刷新观察列表下拉框', watchlists);
+function refreshWatchlistDropdown(data) {
+    // 处理不同格式的输入数据
+    let watchlists = data;
+    let groups_order = null;
+    
+    // 如果传入的是包含watchlists和groups_order的对象
+    if (data && typeof data === 'object' && data.watchlists) {
+        watchlists = data.watchlists;
+        groups_order = data.groups_order;
+        console.log('主界面刷新观察列表下拉框，包含分组顺序:', groups_order);
+    } else {
+        console.log('主界面刷新观察列表下拉框，无分组顺序');
+    }
     
     try {
+        // 如果有分组顺序，保存它
+        if (groups_order && Array.isArray(groups_order)) {
+            saveGroupsOrder(groups_order);
+        }
+        
         // 获取下拉菜单元素
         const watchlistSelect = document.getElementById('watchlist');
         if (!watchlistSelect) {
@@ -22,23 +38,111 @@ function refreshWatchlistDropdown(watchlists) {
             watchlistSelect.remove(1);
         }
         
+        // 确定分组顺序
+        let groupNames = Object.keys(watchlists);
+        
+        // 如果提供了分组顺序，使用它
+        if (groups_order && Array.isArray(groups_order) && groups_order.length > 0) {
+            console.log('使用提供的分组顺序:', groups_order);
+            
+            // 创建一个新的数组，按照指定的顺序排列分组
+            const orderedGroups = [];
+            
+            // 首先添加按顺序排列的分组
+            groups_order.forEach(groupName => {
+                if (watchlists[groupName]) {
+                    orderedGroups.push(groupName);
+                }
+            });
+            
+            // 然后添加未在顺序中指定的分组
+            groupNames.forEach(groupName => {
+                if (!orderedGroups.includes(groupName)) {
+                    orderedGroups.push(groupName);
+                }
+            });
+            
+            // 使用排序后的分组名称
+            groupNames = orderedGroups;
+            console.log('最终使用的分组顺序:', groupNames);
+        }
+        
         // 添加新的选项
-        for (const groupName in watchlists) {
+        groupNames.forEach(groupName => {
             const option = document.createElement('option');
             option.value = groupName;
             option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
             watchlistSelect.appendChild(option);
-        }
+        });
         
         // 恢复之前选中的值，如果它仍然存在
-        if (selectedValue && Array.from(watchlistSelect.options).some(opt => opt.value === selectedValue)) {
+        if (selectedValue && Array.from(watchlistSelect.options).some(option => option.value === selectedValue)) {
             watchlistSelect.value = selectedValue;
         }
         
-        console.log('观察列表下拉框已更新');
+        // 触发change事件，更新股票列表
+        const event = new Event('change');
+        watchlistSelect.dispatchEvent(event);
     } catch (error) {
-        console.error('刷新观察列表下拉框时出错:', error);
+        console.error('刷新观察列表下拉菜单时出错:', error);
     }
+}
+
+// 保存分组顺序
+function saveGroupsOrder(groups_order) {
+    if (!groups_order || !Array.isArray(groups_order)) {
+        console.error('无效的分组顺序:', groups_order);
+        return;
+    }
+    
+    console.log('保存分组顺序:', groups_order);
+    
+    // 发送到后端
+    fetch('/api/update_watchlists_order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ order: groups_order })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('保存分组顺序结果:', data);
+        if (data.success) {
+            console.log('分组顺序保存成功');
+        } else {
+            console.error('保存分组顺序失败:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('保存分组顺序出错:', error);
+    });
+}
+
+// 加载观察列表
+function loadWatchlists() {
+    console.log('加载观察列表...');
+    fetch('/api/watchlists')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.watchlists) {
+                console.log('成功获取观察列表数据:', data);
+                
+                // 创建一个包含watchlists和groups_order的对象
+                const watchlistData = {
+                    watchlists: data.watchlists,
+                    groups_order: data.groups_order || Object.keys(data.watchlists)
+                };
+                
+                // 使用refreshWatchlistDropdown函数更新下拉菜单
+                refreshWatchlistDropdown(watchlistData);
+            } else {
+                console.error('获取观察列表失败:', data);
+            }
+        })
+        .catch(error => {
+            console.error('获取观察列表时出错:', error);
+        });
 }
 
 // 等待DOM加载完成
@@ -59,6 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 加载临时查询列表
     loadTempQueryStocks();
+    
+    // 加载观察列表
+    loadWatchlists();
 
     // 添加浏览器关闭事件监听器
     let isRealClose = true; // 添加标志变量，控制是否真的关闭服务器

@@ -10,6 +10,7 @@ let selectedStocks = [];
 let hasUnsavedChanges = false;
 let watchlistContainer = null; // 全局声明watchlistContainer变量
 let groupOrder = []; // 保存分组顺序
+let hasBeenManuallyEdited = false; // 标记是否已手动编辑过自选股列表
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('页面加载完成，初始化自选股编辑器');
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveAllBtn = document.getElementById('saveAllBtn');
     const importStocksBtn = document.getElementById('importStocksBtn');
     const sortGroupsBtn = document.getElementById('sortGroupsBtn');
+    const closeEditorBtn = document.getElementById('closeEditorBtn');
     
     // 添加滚动监听，确保多选操作栏在滚动时可见
     window.addEventListener('scroll', function() {
@@ -96,6 +98,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success && data.watchlists) {
                     // 直接使用API返回的watchlists数据
                     watchlistData = data.watchlists;
+                    
+                    // 获取手动编辑标志
+                    if (data.hasBeenManuallyEdited !== undefined) {
+                        hasBeenManuallyEdited = data.hasBeenManuallyEdited;
+                        console.log('自选股列表手动编辑状态:', hasBeenManuallyEdited);
+                    }
                     
                     // 如果之前没有从页面获取到分组顺序，则使用API返回的
                     if (!groupOrder || groupOrder.length === 0) {
@@ -462,6 +470,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         watchlistData[groupName] = {};
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
         showToast(`分组 "${groupName}" 已添加`, 'success');
     }
@@ -478,6 +488,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         watchlistData[newName] = watchlistData[oldName];
         delete watchlistData[oldName];
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
         showToast(`分组已重命名为 "${newName}"`, 'success');
     }
@@ -496,6 +508,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         watchlistData[group][code] = name || '';
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
         showToast(`股票 ${code} 已添加到 "${group}"`, 'success');
     }
@@ -519,6 +533,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         watchlistData[group][newCode] = newName;
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
         showToast(`股票 ${code} 已更新`, 'success');
     }
@@ -579,6 +595,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const stockName = watchlistData[fromGroup][code];
             watchlistData[targetGroup][code] = stockName;
             delete watchlistData[fromGroup][code];
+            
+            hasBeenManuallyEdited = true; // 标记已手动编辑
+            hasUnsavedChanges = true; // 标记有未保存的更改
             
             modalInstance.hide();
             modal.remove();
@@ -654,6 +673,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
+            hasBeenManuallyEdited = true; // 标记已手动编辑
+            hasUnsavedChanges = true; // 标记有未保存的更改
+            
             modalInstance.hide();
             modal.remove();
             
@@ -676,6 +698,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!confirm(`确定要删除股票 ${code} 吗?`)) return;
         
         delete watchlistData[group][code];
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
         showToast(`股票 ${code} 已删除`, 'success');
     }
@@ -690,6 +714,8 @@ document.addEventListener('DOMContentLoaded', function() {
             delete watchlistData[stock.group][stock.code];
         });
         
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
         showToast(`已删除 ${selectedStocks.length} 个股票`, 'success');
         
@@ -707,12 +733,19 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
         saveBtn.disabled = true;
         
+        // 准备要发送的数据，包括手动编辑标志和分组顺序
+        const dataToSend = {
+            watchlists: watchlistData,
+            hasBeenManuallyEdited: hasBeenManuallyEdited,
+            groups_order: groupOrder
+        };
+        
         fetch('/api/watchlists', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(watchlistData)
+            body: JSON.stringify(dataToSend)
         })
         .then(response => {
             if (!response.ok) {
@@ -723,6 +756,32 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 showToast('股票列表已保存', 'success');
+                hasUnsavedChanges = false;
+                
+                // 通知主界面刷新下拉框
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        console.log('尝试通知主界面刷新下拉框');
+                        if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                            // 如果主界面有刷新函数，则调用它
+                            // 创建一个包含分组顺序的对象传递给主页面
+                            const dataWithOrder = {
+                                watchlists: watchlistData,
+                                groups_order: groupOrder
+                            };
+                            window.opener.refreshWatchlistDropdown(dataWithOrder);
+                            console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
+                            
+                            // 确保主页面保存分组顺序
+                            if (typeof window.opener.saveGroupsOrder === 'function') {
+                                window.opener.saveGroupsOrder(groupOrder);
+                                console.log('已通知主界面保存分组顺序');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('通知主界面刷新下拉框时出错:', error);
+                }
             } else {
                 throw new Error(data.error || '保存失败');
             }
@@ -802,7 +861,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 创建排序模态框
         const modal = document.createElement('div');
         modal.className = 'modal fade';
-        modal.id = 'groupSortModal';
+        modal.id = 'sortGroupsModal'; // 修改为与CSS选择器一致的ID
         modal.innerHTML = `
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -1104,6 +1163,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('API没有返回分组顺序，使用新的顺序:', groupOrder);
             }
             
+            // 标记已手动编辑和有未保存的更改
+            hasBeenManuallyEdited = true;
+            hasUnsavedChanges = true;
+            
             // 移除保存提示
             saveIndicator.innerHTML = '<i class="fas fa-check"></i> 已保存';
             saveIndicator.classList.add('success');
@@ -1111,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 saveIndicator.remove();
                 // 关闭模态框
-                const modal = document.getElementById('groupSortModal');
+                const modal = document.getElementById('sortGroupsModal');
                 const modalInstance = bootstrap.Modal.getInstance(modal);
                 modalInstance.hide();
                 
@@ -1148,12 +1211,112 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // 关闭编辑器
+    function closeEditor() {
+        // 检查是否有未保存的更改
+        if (hasUnsavedChanges) {
+            if (confirm('您有未保存的更改，是否在关闭前保存？')) {
+                // 保存更改后关闭
+                saveAndClose();
+            } else {
+                // 不保存直接关闭
+                window.close();
+            }
+        } else {
+            // 没有更改，直接关闭
+            window.close();
+        }
+    }
+    
+    // 保存并关闭
+    function saveAndClose() {
+        // 显示保存中状态
+        const saveBtn = document.getElementById('saveAllBtn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
+        saveBtn.disabled = true;
+        
+        // 准备要发送的数据，包括手动编辑标志和分组顺序
+        const dataToSend = {
+            watchlists: watchlistData,
+            hasBeenManuallyEdited: hasBeenManuallyEdited,
+            groups_order: groupOrder
+        };
+        
+        fetch('/api/watchlists', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`服务器返回错误: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showToast('股票列表已保存', 'success');
+                
+                // 通知主界面刷新下拉框
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        console.log('尝试通知主界面刷新下拉框');
+                        
+                        // 首先尝试调用主页面的loadWatchlists函数（如果存在）
+                        if (typeof window.opener.loadWatchlists === 'function') {
+                            window.opener.loadWatchlists();
+                            console.log('已通知主界面重新加载观察列表数据');
+                        } 
+                        // 如果loadWatchlists不存在，则使用refreshWatchlistDropdown
+                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                            // 如果主界面有刷新函数，则调用它
+                            // 创建一个包含分组顺序的对象传递给主页面
+                            const dataWithOrder = {
+                                watchlists: watchlistData,
+                                groups_order: groupOrder
+                            };
+                            window.opener.refreshWatchlistDropdown(dataWithOrder);
+                            console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
+                            
+                            // 确保主页面保存分组顺序
+                            if (typeof window.opener.saveGroupsOrder === 'function') {
+                                window.opener.saveGroupsOrder(groupOrder);
+                                console.log('已通知主界面保存分组顺序');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('通知主界面刷新下拉框时出错:', error);
+                }
+                
+                // 延迟关闭窗口，让用户看到保存成功的提示
+                setTimeout(() => {
+                    window.close();
+                }, 500);
+            } else {
+                throw new Error(data.error || '保存失败');
+            }
+        })
+        .catch(error => {
+            console.error('保存失败:', error);
+            showToast('保存失败: ' + error.message, 'danger');
+            
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+    
     // 事件监听
     addGroupBtn.addEventListener('click', addGroup);
     refreshBtn.addEventListener('click', loadWatchlistData);
     saveAllBtn.addEventListener('click', saveAllChanges);
     importStocksBtn.addEventListener('click', importStocks);
     sortGroupsBtn.addEventListener('click', sortGroups);
+    closeEditorBtn.addEventListener('click', closeEditor);
     
     // 初始加载
     loadWatchlistData();
