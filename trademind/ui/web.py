@@ -1585,11 +1585,6 @@ def api_get_watchlists():
         user_id = session.get('user_id', 'default')
         
         if request.method == 'GET':
-            # 检查是否请求强制刷新
-            force_refresh = request.args.get('force', 'false').lower() == 'true'
-            if force_refresh:
-                logger.info(f"收到强制刷新观察列表请求")
-            
             # 使用get_user_watchlists函数获取用户的自选股列表
             user_watchlists = get_user_watchlists(user_id)
             
@@ -1645,20 +1640,18 @@ def api_get_watchlists():
             # 获取手动编辑标志
             has_been_manually_edited = get_user_watchlist_edit_status(user_id)
             
-            # 如果是强制刷新请求，添加额外的响应头防止缓存
+            # 添加防缓存响应头
             response = jsonify({
                 'success': True,
                 'watchlists': user_watchlists,
                 'groups_order': groups_order,  # 添加分组顺序字段
-                'hasBeenManuallyEdited': has_been_manually_edited,  # 添加手动编辑标志
-                'forceRefreshed': force_refresh  # 添加强制刷新标志
+                'hasBeenManuallyEdited': has_been_manually_edited  # 添加手动编辑标志
             })
             
-            if force_refresh:
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = '0'
-                logger.info("已添加防缓存响应头")
+            # 添加防缓存响应头
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
             
             return response
         elif request.method == 'POST':
