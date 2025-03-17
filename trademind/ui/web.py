@@ -1022,12 +1022,16 @@ def auto_organize_watchlist():
         organize_progress['completed'] = True
         organize_progress['in_progress'] = False
         
+        # 获取最终的分组顺序
+        groups_order = list(updated_watchlists.keys())
+        
         # 返回结果
         return jsonify({
             'success': True,
             'message': f'成功整理自选股列表，共{stats["stocks"]}个股票，{stats["groups"]}个分组，去除{stats["duplicates"]}个重复项',
             'stats': stats,
-            'watchlists': updated_watchlists
+            'watchlists': updated_watchlists,
+            'groups_order': groups_order  # 添加分组顺序字段
         })
         
     except Exception as e:
@@ -1566,17 +1570,28 @@ def get_temp_query():
 
 @app.route('/watchlist-editor')
 def watchlist_editor():
-    """股票列表编辑器页面"""
-    try:
-        # 获取当前用户ID
-        user_id = session.get('user_id', 'default')
+    """渲染自选股编辑器页面"""
+    # 设置默认用户ID
+    if 'user_id' not in session:
+        session['user_id'] = 'default'
         
-        return render_template('watchlist_editor.html', 
-                              version=__version__,
-                              user_id=user_id)
-    except Exception as e:
-        logger.exception(f"访问股票列表编辑器页面时出错: {str(e)}")
-        return render_template('error.html', error=str(e))
+    # 加载自选股列表
+    load_watchlists()
+    
+    # 获取当前用户ID
+    user_id = session.get('user_id', 'default')
+    
+    # 获取用户的自选股列表
+    user_watchlists = get_user_watchlists(user_id)
+    
+    # 获取分组顺序
+    groups_order = list(user_watchlists.keys())
+    
+    # 记录日志，显示分组顺序
+    logger.info(f"渲染自选股编辑器，分组顺序: {groups_order}")
+    
+    # 渲染模板
+    return render_template('watchlist_editor.html', watchlists=user_watchlists, groups_order=groups_order)
 
 @app.route('/api/watchlists', methods=['GET', 'POST'])
 def api_get_watchlists():
@@ -1589,9 +1604,20 @@ def api_get_watchlists():
             # 使用get_user_watchlists函数获取用户的自选股列表
             user_watchlists = get_user_watchlists(user_id)
             
+            # 记录日志，显示分组顺序
+            logger.info(f"获取用户自选股列表，分组顺序: {list(user_watchlists.keys())}")
+            
+            # 添加详细的调试日志
+            for i, group in enumerate(user_watchlists.keys()):
+                logger.info(f"分组 {i+1}: {group}")
+            
+            # 明确指定分组顺序
+            groups_order = list(user_watchlists.keys())
+            
             return jsonify({
                 'success': True,
-                'watchlists': user_watchlists
+                'watchlists': user_watchlists,
+                'groups_order': groups_order  # 添加分组顺序字段
             })
         elif request.method == 'POST':
             # 获取请求数据
@@ -1624,7 +1650,117 @@ def api_get_watchlists():
                     'error': '保存自选股列表失败'
                 }), 500
     except Exception as e:
-        logger.exception(f"操作自选股列表API时出错: {str(e)}")
+        logger.exception(f"获取或保存用户自选股列表时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/watchlists/order', methods=['POST'])
+def api_update_watchlists_order():
+    """更新自选股分组排序 - API接口"""
+    try:
+        # 获取当前用户ID
+        user_id = session.get('user_id', 'default')
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data or 'order' not in data:
+            return jsonify({'success': False, 'error': '未收到有效的排序数据'}), 400
+        
+        # 获取新的排序
+        new_order = data['order']
+        
+        # 获取当前的自选股列表
+        current_watchlists = get_user_watchlists(user_id)
+        
+        # 创建一个新的有序字典
+        ordered_watchlists = {}
+        
+        # 按照新的顺序重建字典
+        for group_name in new_order:
+            if group_name in current_watchlists:
+                ordered_watchlists[group_name] = current_watchlists[group_name]
+        
+        # 添加可能遗漏的分组（不在新顺序中的分组）
+        for group_name, stocks in current_watchlists.items():
+            if group_name not in ordered_watchlists:
+                ordered_watchlists[group_name] = stocks
+        
+        # 保存更新后的自选股列表
+        success = save_user_watchlists(user_id, ordered_watchlists)
+        
+        if success:
+            # 更新全局变量
+            global watchlists
+            watchlists = ordered_watchlists
+            
+            return jsonify({
+                'success': True,
+                'message': '分组排序已保存',
+                'watchlists': ordered_watchlists
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '保存分组排序失败'
+            }), 500
+    except Exception as e:
+        logger.exception(f"更新自选股分组排序时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/update_watchlists_order', methods=['POST'])
+def api_update_watchlists_order_new():
+    """更新自选股分组排序 - 新API接口"""
+    try:
+        # 获取当前用户ID
+        user_id = session.get('user_id', 'default')
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data or 'order' not in data:
+            return jsonify({'success': False, 'error': '未收到有效的排序数据'}), 400
+        
+        # 获取新的排序
+        new_order = data['order']
+        
+        # 获取当前的自选股列表
+        current_watchlists = get_user_watchlists(user_id)
+        
+        # 创建一个新的有序字典
+        ordered_watchlists = {}
+        
+        # 按照新的顺序重建字典
+        for group_name in new_order:
+            if group_name in current_watchlists:
+                ordered_watchlists[group_name] = current_watchlists[group_name]
+        
+        # 添加可能遗漏的分组（不在新顺序中的分组）
+        for group_name, stocks in current_watchlists.items():
+            if group_name not in ordered_watchlists:
+                ordered_watchlists[group_name] = stocks
+        
+        # 保存更新后的自选股列表
+        success = save_user_watchlists(user_id, ordered_watchlists)
+        
+        if success:
+            # 更新全局变量
+            global watchlists
+            watchlists = ordered_watchlists
+            
+            # 获取最终的分组顺序
+            groups_order = list(ordered_watchlists.keys())
+            
+            return jsonify({
+                'success': True,
+                'message': '分组排序已保存',
+                'watchlists': ordered_watchlists,
+                'groups_order': groups_order  # 添加分组顺序字段
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '保存分组排序失败'
+            }), 500
+    except Exception as e:
+        logger.exception(f"更新自选股分组排序时出错: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == "__main__":

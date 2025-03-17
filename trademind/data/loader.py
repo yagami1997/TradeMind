@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Optional, List, Tuple, Any, Union
 import re
+from collections import OrderedDict
 
 # 设置日志
 logger = logging.getLogger(__name__)
@@ -1062,9 +1063,10 @@ def get_user_watchlists(user_id: str) -> Dict:
         if not os.path.exists(watchlists_file):
             return {}
         
-        # 读取用户特定的文件
+        # 读取用户特定的文件，确保保持JSON中的顺序
         with open(watchlists_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            # 使用object_pairs_hook=OrderedDict参数确保保持JSON中的顺序
+            return json.load(f, object_pairs_hook=OrderedDict)
     
     except Exception as e:
         logger.error(f"获取用户自选股列表时出错: {str(e)}")
@@ -1079,7 +1081,7 @@ def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
         watchlists: 自选股列表
         
     返回:
-        bool: 是否成功保存
+        bool: 是否保存成功
     """
     try:
         # 获取项目根目录
@@ -1094,7 +1096,7 @@ def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
         # 自选股文件路径
         watchlists_file = os.path.join(user_config_dir, 'watchlists.json')
         
-        # 保存文件
+        # 保存用户特定的文件，确保保持字典的顺序
         with open(watchlists_file, 'w', encoding='utf-8') as f:
             json.dump(watchlists, f, ensure_ascii=False, indent=4)
         
