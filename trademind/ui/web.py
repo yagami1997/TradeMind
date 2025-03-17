@@ -2041,6 +2041,75 @@ def save_groups_order(user_id, groups_order):
         logger.exception(f"保存用户自选股分组顺序出错: {str(e)}")
         return False
 
+def save_user_watchlists(user_id, watchlists_data):
+    """保存用户的自选股列表"""
+    try:
+        # 获取项目根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # 获取用户配置目录
+        user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+        
+        # 构建文件路径
+        file_path = os.path.join(user_config_dir, 'watchlists.json')
+        
+        # 确保目录存在
+        os.makedirs(user_config_dir, exist_ok=True)
+        
+        # 获取分组顺序
+        try:
+            # 构建分组顺序文件路径
+            order_file_path = os.path.join(user_config_dir, 'groups_order.json')
+            
+            # 如果文件存在，读取保存的顺序
+            if os.path.exists(order_file_path):
+                with open(order_file_path, 'r', encoding='utf-8') as f:
+                    saved_data = json.load(f)
+                    groups_order = saved_data.get('groups_order', [])
+                    
+                # 验证顺序是否有效
+                valid_order = all(group in watchlists_data for group in groups_order)
+                if not valid_order:
+                    # 如果顺序无效，使用当前数据的顺序
+                    groups_order = list(watchlists_data.keys())
+            else:
+                # 如果文件不存在，使用当前数据的顺序
+                groups_order = list(watchlists_data.keys())
+                
+            # 创建有序字典
+            ordered_watchlists = {}
+            
+            # 按照顺序添加分组
+            for group_name in groups_order:
+                if group_name in watchlists_data:
+                    ordered_watchlists[group_name] = watchlists_data[group_name]
+            
+            # 添加可能遗漏的分组
+            for group_name, stocks in watchlists_data.items():
+                if group_name not in ordered_watchlists:
+                    ordered_watchlists[group_name] = stocks
+                    
+            # 使用有序字典保存
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(ordered_watchlists, f, ensure_ascii=False, indent=4)
+                
+            # 更新分组顺序文件
+            updated_groups_order = list(ordered_watchlists.keys())
+            with open(order_file_path, 'w', encoding='utf-8') as f:
+                json.dump({'groups_order': updated_groups_order}, f, ensure_ascii=False, indent=4)
+                
+            logger.info(f"成功保存自选股列表和分组顺序: {updated_groups_order}")
+        except Exception as e:
+            # 如果获取顺序失败，直接保存原始数据
+            logger.error(f"获取分组顺序失败: {str(e)}，使用原始顺序保存")
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(watchlists_data, f, ensure_ascii=False, indent=4)
+        
+        return True
+    except Exception as e:
+        logger.exception(f"保存用户自选股列表出错: {str(e)}")
+        return False
+
 if __name__ == "__main__":
     try:
         run_web_server(port=3336)
