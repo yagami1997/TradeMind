@@ -744,6 +744,164 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast(`分组 "${groupName}" 已删除`, 'success');
     }
     
+    // 批量删除股票
+    function deleteSelectedStocks() {
+        if (selectedStocks.length === 0) return;
+        
+        if (!confirm(`确定要删除选中的 ${selectedStocks.length} 个股票吗?`)) return;
+        
+        selectedStocks.forEach(stock => {
+            delete watchlistData[stock.group][stock.code];
+        });
+        
+        hasBeenManuallyEdited = true; // 标记已手动编辑
+        hasUnsavedChanges = true; // 标记有未保存的更改
+        renderWatchlist();
+        showToast(`已删除 ${selectedStocks.length} 个股票`, 'success');
+        
+        // 延迟清除选择，让用户能看到删除效果
+        setTimeout(() => {
+            clearSelection();
+        }, 1500);
+    }
+    
+    // 保存所有更改
+    function saveAllChanges() {
+        const saveBtn = document.getElementById('saveAllBtn');
+        const originalText = saveBtn.innerHTML;
+        
+        // 更新按钮状态
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...';
+        saveBtn.disabled = true;
+        
+        // 获取当前分组顺序
+        const currentGroupOrder = Object.keys(watchlistData);
+        
+        // 如果groupOrder为空或不包含所有分组，则更新它
+        if (!groupOrder || groupOrder.length === 0 || !currentGroupOrder.every(group => groupOrder.includes(group))) {
+            console.log('更新分组顺序:', currentGroupOrder);
+            groupOrder = currentGroupOrder;
+        }
+        
+        // 确保所有新添加的分组都在groupOrder中
+        currentGroupOrder.forEach(group => {
+            if (!groupOrder.includes(group)) {
+                groupOrder.push(group);
+            }
+        });
+        
+        // 移除不存在的分组
+        groupOrder = groupOrder.filter(group => currentGroupOrder.includes(group));
+        
+        console.log('保存时使用的分组顺序:', groupOrder);
+        
+        // 准备要发送的数据
+        const data = {
+            watchlists: watchlistData,
+            hasBeenManuallyEdited: hasBeenManuallyEdited,
+            groups_order: groupOrder
+        };
+        
+        // 发送请求
+        fetch('/api/watchlists', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`服务器返回错误: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 更新状态
+                hasUnsavedChanges = false;
+                
+                // 恢复按钮状态
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                
+                // 显示成功提示
+                showToast('保存成功', 'success');
+                
+                // 尝试通知主界面刷新下拉框
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        console.log('尝试通知主界面刷新下拉框');
+                        
+                        // 设置一个标记，表示自选股列表已更新
+                        window.opener.localStorage.setItem('watchlistUpdated', 'true');
+                        window.opener.localStorage.setItem('watchlistUpdatedTime', new Date().getTime().toString());
+                        
+                        // 尝试触发主页面的自定义事件
+                        try {
+                            const event = new CustomEvent('watchlistUpdated', { 
+                                detail: { 
+                                    time: new Date().getTime(),
+                                    groups: groupOrder
+                                } 
+                            });
+                            window.opener.document.dispatchEvent(event);
+                            console.log('已触发主页面的watchlistUpdated事件');
+                        } catch (error) {
+                            console.error('触发主页面的watchlistUpdated事件时出错:', error);
+                        }
+                    }
+                } catch (error) {
+                    console.error('通知主界面刷新下拉框时出错:', error);
+                }
+            } else {
+                throw new Error(data.error || '保存失败');
+            }
+        })
+        .catch(error => {
+            console.error('保存失败:', error);
+            showToast('保存失败: ' + error.message, 'danger');
+            
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+    
+    // 显示提示消息
+    function showToast(message, type = 'info') {
+        const toastContainer = document.querySelector('.toast-container') || (() => {
+            const container = document.createElement('div');
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(container);
+            return container;
+        })();
+        
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', function() {
+            toast.remove();
+        });
+    }
+    
     // 通知主界面刷新下拉框
     function notifyMainPageBeforeClose() {
         try {
