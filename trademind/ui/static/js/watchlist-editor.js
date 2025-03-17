@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const refreshBtn = document.getElementById('refreshBtn');
     const saveAllBtn = document.getElementById('saveAllBtn');
     const importStocksBtn = document.getElementById('importStocksBtn');
-    const cleanReportsBtn = document.getElementById('cleanReportsBtn');
     
     // 添加滚动监听，确保多选操作栏在滚动时可见
     window.addEventListener('scroll', function() {
@@ -532,6 +531,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             renderWatchlist();
             showToast(`股票 ${code} 已移动到 "${targetGroup}"`, 'success');
+            
+            // 延迟清除选择，让用户能看到移动效果
+            setTimeout(() => {
+                clearSelection();
+            }, 1500);
         };
         
         modal.addEventListener('hidden.bs.modal', function() {
@@ -599,9 +603,13 @@ document.addEventListener('DOMContentLoaded', function() {
             modalInstance.hide();
             modal.remove();
             
-            clearSelection();
             renderWatchlist();
             showToast(`已将选中股票移动到 "${targetGroup}"`, 'success');
+            
+            // 延迟清除选择，让用户能看到移动效果
+            setTimeout(() => {
+                clearSelection();
+            }, 1500);
         };
         
         modal.addEventListener('hidden.bs.modal', function() {
@@ -628,9 +636,13 @@ document.addEventListener('DOMContentLoaded', function() {
             delete watchlistData[stock.group][stock.code];
         });
         
-        clearSelection();
         renderWatchlist();
         showToast(`已删除 ${selectedStocks.length} 个股票`, 'success');
+        
+        // 延迟清除选择，让用户能看到删除效果
+        setTimeout(() => {
+            clearSelection();
+        }, 1500);
     }
     
     // 保存所有修改
@@ -706,25 +718,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 清理报告
-    function cleanReports() {
-        if (!confirm('确定要清理所有报告文件吗?')) return;
-        
-        fetch('/api/clean-reports', { method: 'POST' })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('清理失败');
-                }
-                return response.json();
-            })
-            .then(data => {
-                showToast('报告文件已清理', 'success');
-            })
-            .catch(error => {
-                showToast('清理失败: ' + error.message, 'danger');
-            });
-    }
-    
     // 导入股票
     function importStocks() {
         // 尝试获取主页面的引用
@@ -748,7 +741,6 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshBtn.addEventListener('click', loadWatchlistData);
     saveAllBtn.addEventListener('click', saveAllChanges);
     importStocksBtn.addEventListener('click', importStocks);
-    cleanReportsBtn.addEventListener('click', cleanReports);
     
     // 初始加载
     loadWatchlistData();
@@ -761,10 +753,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return e.returnValue;
         }
     });
+    
+    // 清除选择
+    function clearSelection() {
+        selectedStocks = [];
+        renderMultiSelectActions();
+    }
 }); 
-
-// 清除选择
-function clearSelection() {
-    selectedStocks = [];
-    renderMultiSelectActions();
-} 
