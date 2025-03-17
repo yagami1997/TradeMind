@@ -120,9 +120,16 @@ function saveGroupsOrder(groups_order) {
 }
 
 // 加载观察列表
-function loadWatchlists() {
-    console.log('加载观察列表...');
-    fetch('/api/watchlists')
+function loadWatchlists(forceRefresh = false) {
+    console.log('加载观察列表...' + (forceRefresh ? '(强制刷新)' : ''));
+    
+    // 添加时间戳参数，防止缓存
+    const timestamp = new Date().getTime();
+    const url = forceRefresh ? 
+        `/api/watchlists?t=${timestamp}&force=true` : 
+        `/api/watchlists?t=${timestamp}`;
+    
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.watchlists) {
@@ -136,6 +143,11 @@ function loadWatchlists() {
                 
                 // 使用refreshWatchlistDropdown函数更新下拉菜单
                 refreshWatchlistDropdown(watchlistData);
+                
+                // 如果是强制刷新，记录日志
+                if (forceRefresh) {
+                    console.log('观察列表已强制刷新');
+                }
             } else {
                 console.error('获取观察列表失败:', data);
             }
