@@ -1098,6 +1098,285 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // 导入股票
+    function importStocks() {
+        // 创建模态框
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">导入股票</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="importFormat" class="form-label">导入格式</label>
+                            <select class="form-select" id="importFormat">
+                                <option value="simple">简单格式 (每行一个股票代码)</option>
+                                <option value="csv">CSV格式 (代码,名称)</option>
+                                <option value="json">JSON格式</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="targetGroup" class="form-label">目标分组</label>
+                            <select class="form-select" id="targetGroup">
+                                ${Object.keys(watchlistData).map(group => `<option value="${group}">${group}</option>`).join('')}
+                                <option value="__new__">创建新分组...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="newGroupNameContainer" style="display: none;">
+                            <label for="newGroupName" class="form-label">新分组名称</label>
+                            <input type="text" class="form-control" id="newGroupName" placeholder="输入新分组名称">
+                        </div>
+                        <div class="mb-3">
+                            <label for="importData" class="form-label">导入数据</label>
+                            <textarea class="form-control" id="importData" rows="10" placeholder="请粘贴要导入的数据"></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            <h6>导入格式说明:</h6>
+                            <p><strong>简单格式:</strong> 每行一个股票代码，例如:</p>
+                            <pre>600000
+601318
+000001</pre>
+                            <p><strong>CSV格式:</strong> 每行一个股票，格式为"代码,名称"，例如:</p>
+                            <pre>600000,浦发银行
+601318,中国平安
+000001,平安银行</pre>
+                            <p><strong>JSON格式:</strong> 格式为 {"代码": "名称", ...}，例如:</p>
+                            <pre>{"600000": "浦发银行", "601318": "中国平安", "000001": "平安银行"}</pre>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="confirmImportBtn">导入</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+        
+        // 处理新分组选项
+        const targetGroupSelect = document.getElementById('targetGroup');
+        const newGroupNameContainer = document.getElementById('newGroupNameContainer');
+        
+        targetGroupSelect.addEventListener('change', function() {
+            if (this.value === '__new__') {
+                newGroupNameContainer.style.display = 'block';
+            } else {
+                newGroupNameContainer.style.display = 'none';
+            }
+        });
+        
+        // 处理导入按钮点击
+        document.getElementById('confirmImportBtn').onclick = function() {
+            const format = document.getElementById('importFormat').value;
+            let targetGroup = document.getElementById('targetGroup').value;
+            const importData = document.getElementById('importData').value.trim();
+            
+            if (!importData) {
+                showToast('请输入要导入的数据', 'warning');
+                return;
+            }
+            
+            // 处理新分组
+            if (targetGroup === '__new__') {
+                const newGroupName = document.getElementById('newGroupName').value.trim();
+                if (!newGroupName) {
+                    showToast('请输入新分组名称', 'warning');
+                    return;
+                }
+                
+                if (watchlistData[newGroupName]) {
+                    showToast(`分组 "${newGroupName}" 已存在`, 'warning');
+                    return;
+                }
+                
+                // 创建新分组
+                watchlistData[newGroupName] = {};
+                targetGroup = newGroupName;
+                
+                // 将新分组添加到分组顺序中
+                if (!groupOrder.includes(newGroupName)) {
+                    groupOrder.push(newGroupName);
+                }
+            }
+            
+            // 解析并导入数据
+            let importedCount = 0;
+            let duplicateCount = 0;
+            
+            try {
+                if (format === 'simple') {
+                    // 简单格式: 每行一个股票代码
+                    const lines = importData.split('\n');
+                    lines.forEach(line => {
+                        const code = line.trim();
+                        if (code) {
+                            if (!watchlistData[targetGroup][code]) {
+                                watchlistData[targetGroup][code] = '';
+                                importedCount++;
+                            } else {
+                                duplicateCount++;
+                            }
+                        }
+                    });
+                } else if (format === 'csv') {
+                    // CSV格式: 代码,名称
+                    const lines = importData.split('\n');
+                    lines.forEach(line => {
+                        const parts = line.split(',');
+                        if (parts.length >= 1) {
+                            const code = parts[0].trim();
+                            const name = parts.length > 1 ? parts[1].trim() : '';
+                            
+                            if (code) {
+                                if (!watchlistData[targetGroup][code]) {
+                                    watchlistData[targetGroup][code] = name;
+                                    importedCount++;
+                                } else {
+                                    duplicateCount++;
+                                }
+                            }
+                        }
+                    });
+                } else if (format === 'json') {
+                    // JSON格式: {"代码": "名称", ...}
+                    const jsonData = JSON.parse(importData);
+                    Object.keys(jsonData).forEach(code => {
+                        if (!watchlistData[targetGroup][code]) {
+                            watchlistData[targetGroup][code] = jsonData[code] || '';
+                            importedCount++;
+                        } else {
+                            duplicateCount++;
+                        }
+                    });
+                }
+                
+                if (importedCount > 0) {
+                    hasBeenManuallyEdited = true; // 标记已手动编辑
+                    hasUnsavedChanges = true; // 标记有未保存的更改
+                    
+                    modalInstance.hide();
+                    modal.remove();
+                    
+                    renderWatchlist();
+                    
+                    let message = `已导入 ${importedCount} 个股票到 "${targetGroup}"`;
+                    if (duplicateCount > 0) {
+                        message += `，${duplicateCount} 个重复项已跳过`;
+                    }
+                    showToast(message, 'success');
+                } else if (duplicateCount > 0) {
+                    showToast(`所有股票都已存在，${duplicateCount} 个重复项已跳过`, 'warning');
+                } else {
+                    showToast('没有导入任何股票，请检查数据格式', 'warning');
+                }
+            } catch (error) {
+                console.error('导入失败:', error);
+                showToast('导入失败: ' + error.message, 'danger');
+            }
+        };
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+    }
+    
+    // 排序分组
+    function sortGroups() {
+        // 创建模态框
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">排序分组</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>拖动分组调整顺序:</p>
+                        <ul class="list-group sortable-groups" id="sortableGroups">
+                            ${groupOrder.map((group, index) => `
+                                <li class="list-group-item" data-group="${group}">
+                                    <i class="bi bi-grip-vertical me-2"></i>
+                                    <span>${index + 1}. ${group}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="confirmSortBtn">保存顺序</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+        
+        // 初始化拖拽排序
+        const sortableList = document.getElementById('sortableGroups');
+        let sortable;
+        
+        // 检查是否有Sortable库
+        if (typeof Sortable !== 'undefined') {
+            sortable = new Sortable(sortableList, {
+                animation: 150,
+                handle: '.bi-grip-vertical',
+                ghostClass: 'sortable-ghost'
+            });
+        } else {
+            // 如果没有Sortable库，显示提示
+            sortableList.innerHTML += `
+                <li class="list-group-item text-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    拖拽排序功能需要Sortable.js库，但未找到该库。请手动调整顺序。
+                </li>
+            `;
+        }
+        
+        // 处理保存按钮点击
+        document.getElementById('confirmSortBtn').onclick = function() {
+            // 获取新的分组顺序
+            const newOrder = [];
+            document.querySelectorAll('#sortableGroups li').forEach(item => {
+                const group = item.dataset.group;
+                if (group) {
+                    newOrder.push(group);
+                }
+            });
+            
+            if (newOrder.length === groupOrder.length) {
+                // 更新分组顺序
+                groupOrder = newOrder;
+                
+                hasUnsavedChanges = true; // 标记有未保存的更改
+                
+                modalInstance.hide();
+                modal.remove();
+                
+                renderWatchlist();
+                showToast('分组顺序已更新', 'success');
+            } else {
+                showToast('分组顺序不完整，请检查', 'warning');
+            }
+        };
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+    }
+    
     // 事件监听
     addGroupBtn.addEventListener('click', addGroup);
     refreshBtn.addEventListener('click', loadWatchlistData);
