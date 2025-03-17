@@ -1779,20 +1779,43 @@ def api_update_watchlists_order_new():
     try:
         # 获取当前用户ID
         user_id = session.get('user_id', 'default')
+        logger.info(f"收到更新分组排序请求，用户ID: {user_id}")
         
         # 获取请求数据
-        data = request.get_json()
-        if not data or 'order' not in data:
-            logger.warning("未收到有效的排序数据")
-            return jsonify({'success': False, 'error': '未收到有效的排序数据'}), 400
-        
-        # 获取新的排序
-        new_order = data['order']
-        logger.info(f"收到新的分组顺序: {new_order}")
+        try:
+            data = request.get_json()
+            if not data or 'order' not in data:
+                logger.warning("未收到有效的排序数据")
+                return jsonify({'success': False, 'error': '未收到有效的排序数据'}), 400
+            
+            # 获取新的排序
+            new_order = data['order']
+            logger.info(f"收到新的分组顺序: {new_order}")
+            
+            # 验证排序数据
+            if not isinstance(new_order, list):
+                logger.warning(f"排序数据格式错误，应为列表，实际为: {type(new_order)}")
+                return jsonify({'success': False, 'error': '排序数据格式错误'}), 400
+            
+            if len(new_order) == 0:
+                logger.warning("排序数据为空列表")
+                return jsonify({'success': False, 'error': '排序数据为空'}), 400
+        except Exception as parse_error:
+            logger.exception(f"解析请求数据时出错: {str(parse_error)}")
+            return jsonify({'success': False, 'error': f"解析请求数据时出错: {str(parse_error)}"}), 400
         
         try:
             # 获取当前的自选股列表
             current_watchlists = get_user_watchlists(user_id)
+            logger.info(f"当前自选股列表分组: {list(current_watchlists.keys())}")
+            
+            # 验证排序数据中的分组是否存在
+            invalid_groups = [group for group in new_order if group not in current_watchlists]
+            if invalid_groups:
+                logger.warning(f"排序数据中包含不存在的分组: {invalid_groups}")
+                # 不返回错误，而是过滤掉不存在的分组
+                new_order = [group for group in new_order if group in current_watchlists]
+                logger.info(f"过滤后的分组顺序: {new_order}")
             
             # 创建一个新的有序字典
             ordered_watchlists = {}
@@ -1809,9 +1832,11 @@ def api_update_watchlists_order_new():
             
             # 保存更新后的自选股列表
             success = save_user_watchlists(user_id, ordered_watchlists)
+            logger.info(f"保存自选股列表结果: {success}")
             
             # 保存分组顺序到专门的文件
             order_saved = save_groups_order(user_id, new_order)
+            logger.info(f"保存分组顺序结果: {order_saved}")
             
             if success:
                 # 更新全局变量
@@ -1899,6 +1924,15 @@ def save_user_watchlist_edit_status(user_id, has_been_manually_edited):
 def save_groups_order(user_id, groups_order):
     """保存用户自选股分组顺序"""
     try:
+        # 验证输入参数
+        if not user_id:
+            logger.error("保存分组顺序失败: 用户ID为空")
+            return False
+        
+        if not groups_order or not isinstance(groups_order, list) or len(groups_order) == 0:
+            logger.error(f"保存分组顺序失败: 无效的分组顺序 - {groups_order}")
+            return False
+        
         # 获取项目根目录
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         
@@ -1909,15 +1943,43 @@ def save_groups_order(user_id, groups_order):
         file_path = os.path.join(user_config_dir, 'groups_order.json')
         
         # 确保目录存在
-        os.makedirs(user_config_dir, exist_ok=True)
+        try:
+            os.makedirs(user_config_dir, exist_ok=True)
+        except Exception as mkdir_error:
+            logger.exception(f"创建用户配置目录失败: {str(mkdir_error)}")
+            return False
         
         # 保存顺序到文件
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump({'groups_order': groups_order}, f, ensure_ascii=False, indent=4)
-        
-        return True
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump({'groups_order': groups_order}, f, ensure_ascii=False, indent=4)
+            
+            logger.info(f"成功保存分组顺序到文件: {file_path}")
+            logger.info(f"保存的分组顺序: {groups_order}")
+            return True
+        except Exception as write_error:
+            logger.exception(f"写入分组顺序文件失败: {str(write_error)}")
+            
+            # 尝试使用临时文件
+            try:
+                temp_file = file_path + '.temp'
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump({'groups_order': groups_order}, f, ensure_ascii=False, indent=4)
+                logger.info(f"已写入临时文件: {temp_file}")
+                
+                # 尝试重命名临时文件
+                try:
+                    os.replace(temp_file, file_path)
+                    logger.info(f"成功将临时文件重命名为: {file_path}")
+                    return True
+                except Exception as rename_error:
+                    logger.exception(f"重命名临时文件失败: {str(rename_error)}")
+                    return False
+            except Exception as temp_write_error:
+                logger.exception(f"写入临时文件也失败: {str(temp_write_error)}")
+                return False
     except Exception as e:
-        app.logger.error(f"保存用户自选股分组顺序出错: {str(e)}")
+        logger.exception(f"保存用户自选股分组顺序出错: {str(e)}")
         return False
 
 if __name__ == "__main__":

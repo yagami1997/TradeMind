@@ -758,24 +758,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('股票列表已保存', 'success');
                 hasUnsavedChanges = false;
                 
-                // 通知主界面刷新下拉框
+                // 通知主界面刷新下拉框 - 简化这部分代码
                 try {
                     if (window.opener && !window.opener.closed) {
                         console.log('尝试通知主界面刷新下拉框');
+                        
+                        // 创建一个包含分组顺序的对象传递给主页面
+                        const dataWithOrder = {
+                            watchlists: watchlistData,
+                            groups_order: groupOrder
+                        };
+                        
+                        // 只调用一次刷新函数，避免多次调用
                         if (typeof window.opener.refreshWatchlistDropdown === 'function') {
-                            // 如果主界面有刷新函数，则调用它
-                            // 创建一个包含分组顺序的对象传递给主页面
-                            const dataWithOrder = {
-                                watchlists: watchlistData,
-                                groups_order: groupOrder
-                            };
                             window.opener.refreshWatchlistDropdown(dataWithOrder);
                             console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                            
-                            // 确保主页面保存分组顺序
-                            if (typeof window.opener.saveGroupsOrder === 'function') {
-                                window.opener.saveGroupsOrder(groupOrder);
-                                console.log('已通知主界面保存分组顺序');
+                        } else {
+                            // 如果主页面没有刷新函数，尝试重新加载主页面
+                            console.log('主页面没有刷新函数，尝试重新加载');
+                            try {
+                                // 使用setTimeout避免阻塞当前窗口关闭
+                                setTimeout(() => {
+                                    window.opener.location.reload();
+                                }, 100);
+                            } catch (reloadError) {
+                                console.error('重新加载主页面出错:', reloadError);
                             }
                         }
                     }
@@ -789,8 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('保存失败:', error);
             showToast('保存失败: ' + error.message, 'danger');
-        })
-        .finally(() => {
+            
             // 恢复按钮状态
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
@@ -1181,18 +1187,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 重新渲染观察列表
                 renderWatchlist();
                 
-                // 通知主界面刷新下拉框
+                // 通知主界面刷新下拉框 - 简化这部分代码
                 try {
                     if (window.opener && !window.opener.closed) {
                         console.log('尝试通知主界面刷新下拉框');
+                        
+                        // 创建一个包含分组顺序的对象传递给主页面
+                        const dataWithOrder = {
+                            watchlists: watchlistData,
+                            groups_order: groupOrder
+                        };
+                        
+                        // 只调用一次刷新函数，避免多次调用
                         if (typeof window.opener.refreshWatchlistDropdown === 'function') {
-                            // 如果主界面有刷新函数，则调用它并传递更新后的数据
-                            window.opener.refreshWatchlistDropdown(data.watchlists);
-                            console.log('已通知主界面刷新下拉框');
+                            window.opener.refreshWatchlistDropdown(dataWithOrder);
+                            console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
                         } else {
-                            // 如果没有刷新函数，则尝试重新加载主界面
-                            console.log('主界面没有刷新函数，尝试重新加载');
-                            window.opener.location.reload();
+                            // 如果主页面没有刷新函数，尝试重新加载主页面
+                            console.log('主页面没有刷新函数，尝试重新加载');
+                            try {
+                                // 使用setTimeout避免阻塞当前窗口关闭
+                                setTimeout(() => {
+                                    window.opener.location.reload();
+                                }, 100);
+                            } catch (reloadError) {
+                                console.error('重新加载主页面出错:', reloadError);
+                            }
                         }
                     }
                 } catch (error) {
@@ -1283,6 +1303,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (typeof window.opener.refreshWatchlistDropdown === 'function') {
                             window.opener.refreshWatchlistDropdown(dataWithOrder);
                             console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
+                        } else {
+                            // 如果主页面没有刷新函数，尝试重新加载主页面
+                            console.log('主页面没有刷新函数，尝试重新加载');
+                            try {
+                                // 使用setTimeout避免阻塞当前窗口关闭
+                                setTimeout(() => {
+                                    window.opener.location.reload();
+                                }, 100);
+                            } catch (reloadError) {
+                                console.error('重新加载主页面出错:', reloadError);
+                            }
                         }
                     }
                 } catch (error) {
