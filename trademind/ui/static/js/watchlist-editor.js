@@ -221,8 +221,14 @@ document.addEventListener('DOMContentLoaded', function() {
             editGroupNameBtn.innerHTML = '<i class="bi bi-pencil"></i> 编辑分组名';
             editGroupNameBtn.onclick = () => editGroupName(groupName);
             
+            const deleteGroupBtn = document.createElement('button');
+            deleteGroupBtn.className = 'btn btn-sm btn-outline-danger ms-2';
+            deleteGroupBtn.innerHTML = '<i class="bi bi-trash"></i> 删除分组';
+            deleteGroupBtn.onclick = () => deleteGroup(groupName);
+            
             headerDiv.appendChild(groupTitle);
             headerDiv.appendChild(editGroupNameBtn);
+            headerDiv.appendChild(deleteGroupBtn);
             groupDiv.appendChild(headerDiv);
             
             // 创建股票列表
@@ -470,6 +476,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         watchlistData[groupName] = {};
+        
+        // 将新分组添加到分组顺序中
+        if (!groupOrder.includes(groupName)) {
+            groupOrder.push(groupName);
+            console.log(`新分组 "${groupName}" 已添加到分组顺序:`, groupOrder);
+        }
+        
         hasBeenManuallyEdited = true; // 标记已手动编辑
         hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
@@ -704,555 +717,31 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast(`股票 ${code} 已删除`, 'success');
     }
     
-    // 批量删除股票
-    function deleteSelectedStocks() {
-        if (selectedStocks.length === 0) return;
+    // 删除分组
+    function deleteGroup(groupName) {
+        // 检查分组是否为空
+        const stockCount = Object.keys(watchlistData[groupName]).length;
         
-        if (!confirm(`确定要删除选中的 ${selectedStocks.length} 个股票吗?`)) return;
+        let confirmMessage = `确定要删除分组 "${groupName}" 吗?`;
+        if (stockCount > 0) {
+            confirmMessage = `分组 "${groupName}" 包含 ${stockCount} 个股票，删除分组将同时删除所有股票。确定要删除吗?`;
+        }
         
-        selectedStocks.forEach(stock => {
-            delete watchlistData[stock.group][stock.code];
-        });
+        if (!confirm(confirmMessage)) return;
+        
+        // 删除分组
+        delete watchlistData[groupName];
+        
+        // 从分组顺序中移除
+        const index = groupOrder.indexOf(groupName);
+        if (index !== -1) {
+            groupOrder.splice(index, 1);
+        }
         
         hasBeenManuallyEdited = true; // 标记已手动编辑
         hasUnsavedChanges = true; // 标记有未保存的更改
         renderWatchlist();
-        showToast(`已删除 ${selectedStocks.length} 个股票`, 'success');
-        
-        // 延迟清除选择，让用户能看到删除效果
-        setTimeout(() => {
-            clearSelection();
-        }, 1500);
-    }
-    
-    // 保存所有修改
-    function saveAllChanges() {
-        // 显示保存中状态
-        const saveBtn = document.getElementById('saveAllBtn');
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
-        saveBtn.disabled = true;
-        
-        // 准备要发送的数据，包括手动编辑标志和分组顺序
-        const dataToSend = {
-            watchlists: watchlistData,
-            hasBeenManuallyEdited: hasBeenManuallyEdited,
-            groups_order: groupOrder
-        };
-        
-        fetch('/api/watchlists', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`服务器返回错误: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                showToast('股票列表已保存', 'success');
-                hasUnsavedChanges = false;
-                
-                // 恢复按钮状态
-                saveBtn.innerHTML = originalText;
-                saveBtn.disabled = false;
-                
-                // 通知主界面刷新下拉框 - 使用更可靠的方法
-                try {
-                    if (window.opener && !window.opener.closed) {
-                        console.log('尝试通知主界面刷新下拉框');
-                        
-                        // 方法1: 尝试调用主页面的loadWatchlists函数
-                        if (typeof window.opener.loadWatchlists === 'function') {
-                            window.opener.loadWatchlists();
-                            console.log('已通知主界面重新加载观察列表数据');
-                        }
-                        // 方法2: 尝试使用refreshWatchlistDropdown函数
-                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
-                            // 创建一个包含分组顺序的对象传递给主页面
-                            const dataWithOrder = {
-                                watchlists: watchlistData,
-                                groups_order: groupOrder
-                            };
-                            window.opener.refreshWatchlistDropdown(dataWithOrder);
-                            console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                        }
-                        
-                        // 方法3: 尝试直接刷新主页面的观察列表下拉框
-                        try {
-                            // 设置一个标记，表示编辑器已保存数据
-                            window.opener.localStorage.setItem('watchlistEditorSaved', 'true');
-                            window.opener.localStorage.setItem('watchlistEditorSavedTime', new Date().getTime().toString());
-                            
-                            // 尝试触发主页面的自定义事件
-                            const event = new CustomEvent('watchlistUpdated', { 
-                                detail: { 
-                                    time: new Date().getTime(),
-                                    groups: groupOrder
-                                } 
-                            });
-                            window.opener.document.dispatchEvent(event);
-                            console.log('已触发主页面的watchlistUpdated事件');
-                            
-                            // 如果以上方法都不起作用，尝试重新加载主页面
-                            setTimeout(() => {
-                                if (window.opener && !window.opener.closed) {
-                                    // 检查是否需要重新加载
-                                    const needsReload = !window.opener.document.getElementById('watchlistReloadFlag');
-                                    if (needsReload) {
-                                        console.log('尝试重新加载主页面');
-                                        window.opener.location.reload();
-                                    }
-                                }
-                            }, 500);
-                        } catch (refreshError) {
-                            console.error('刷新主页面出错:', refreshError);
-                        }
-                    }
-                } catch (error) {
-                    console.error('通知主界面刷新下拉框时出错:', error);
-                }
-            } else {
-                throw new Error(data.error || '保存失败');
-            }
-        })
-        .catch(error => {
-            console.error('保存失败:', error);
-            showToast('保存失败: ' + error.message, 'danger');
-            
-            // 恢复按钮状态
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-    }
-    
-    // 显示提示消息
-    function showToast(message, type = 'info') {
-        const toastContainer = document.querySelector('.toast-container') || (() => {
-            const container = document.createElement('div');
-            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            document.body.appendChild(container);
-            return container;
-        })();
-        
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-        
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', function() {
-            toast.remove();
-        });
-    }
-    
-    // 导入股票
-    function importStocks() {
-        // 尝试获取主页面的引用
-        try {
-            if (window.opener && !window.opener.closed) {
-                // 如果有父窗口，尝试在父窗口打开导入模态框
-                window.opener.location.href = '/?action=import';
-                window.close();
-            } else {
-                // 如果没有父窗口，直接跳转到主页并打开导入模态框
-                window.location.href = '/?action=import';
-            }
-        } catch (e) {
-            // 如果出错，直接跳转到主页并打开导入模态框
-            window.location.href = '/?action=import';
-        }
-    }
-    
-    // 分组排序功能
-    function sortGroups() {
-        if (!watchlistData || Object.keys(watchlistData).length <= 1) {
-            showToast('至少需要两个分组才能排序', 'warning');
-            return;
-        }
-        
-        console.log('当前分组顺序:', groupOrder);
-        
-        // 创建排序模态框
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.id = 'sortGroupsModal'; // 修改为与CSS选择器一致的ID
-        modal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">分组排序</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-3">拖动分组调整顺序，排序将影响分组在下拉菜单中的显示顺序。</p>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle-fill"></i> 提示：按住分组右侧的拖动手柄 <i class="bi bi-grip-vertical"></i> 进行拖动
-                        </div>
-                        <ul id="sortableGroupList" class="list-group sortable-list">
-                            ${groupOrder.map((groupName, index) => `
-                                <li class="list-group-item group-item d-flex justify-content-between align-items-center" data-group-name="${groupName}">
-                                    <div class="group-name">${groupName}</div>
-                                    <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary" id="saveGroupOrderBtn">保存排序</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
-        
-        // 初始化拖拽排序
-        const sortableList = document.getElementById('sortableGroupList');
-        let draggedItem = null;
-        let draggedIndex = -1;
-        let placeholder = null;
-        let lastY = 0;
-        let animationFrame = null;
-        
-        // 创建占位元素
-        function createPlaceholder(height) {
-            const el = document.createElement('li');
-            el.className = 'list-group-item placeholder';
-            el.style.height = `${height}px`;
-            return el;
-        }
-        
-        // 平滑滚动函数
-        function smoothScroll(target, duration) {
-            const start = window.pageYOffset;
-            const distance = target - start;
-            let startTime = null;
-            
-            function animation(currentTime) {
-                if (startTime === null) startTime = currentTime;
-                const timeElapsed = currentTime - startTime;
-                const progress = Math.min(timeElapsed / duration, 1);
-                const ease = progress => 0.5 - 0.5 * Math.cos(progress * Math.PI);
-                window.scrollTo(0, start + distance * ease(progress));
-                
-                if (timeElapsed < duration) {
-                    requestAnimationFrame(animation);
-                }
-            }
-            
-            requestAnimationFrame(animation);
-        }
-        
-        // 为每个列表项添加拖拽事件
-        const listItems = sortableList.querySelectorAll('li');
-        listItems.forEach((item, index) => {
-            // 拖动手柄添加事件
-            const dragHandle = item.querySelector('.drag-handle');
-            
-            dragHandle.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // 记录初始索引
-                draggedItem = item;
-                draggedIndex = Array.from(sortableList.children).indexOf(item);
-                lastY = e.clientY;
-                
-                // 获取元素尺寸
-                const rect = item.getBoundingClientRect();
-                const itemHeight = rect.height;
-                
-                // 创建占位元素
-                placeholder = createPlaceholder(itemHeight);
-                
-                // 设置拖动样式
-                item.classList.add('dragging');
-                item.style.width = `${rect.width}px`;
-                item.style.height = `${itemHeight}px`;
-                item.style.position = 'absolute';
-                item.style.zIndex = '1000';
-                
-                // 计算更靠近左侧的位置
-                const containerRect = sortableList.getBoundingClientRect();
-                const leftPosition = Math.max(containerRect.left + 20, rect.left - 50); // 向左偏移50px，但不超出容器
-                
-                item.style.left = `${leftPosition}px`;
-                item.style.top = `${rect.top}px`;
-                
-                // 添加占位元素
-                sortableList.insertBefore(placeholder, item);
-                
-                // 记录鼠标在元素内的相对位置
-                const mouseOffsetY = e.clientY - rect.top;
-                
-                // 自动滚动区域
-                const modalBody = modal.querySelector('.modal-body');
-                const modalRect = modalBody.getBoundingClientRect();
-                const scrollThreshold = 50; // 距离边缘多少像素开始滚动
-                
-                // 鼠标移动事件
-                function onMouseMove(e) {
-                    if (!draggedItem) return;
-                    
-                    // 使用 requestAnimationFrame 优化性能
-                    if (animationFrame) {
-                        cancelAnimationFrame(animationFrame);
-                    }
-                    
-                    animationFrame = requestAnimationFrame(() => {
-                        // 计算移动距离，减缓移动速度
-                        const deltaY = (e.clientY - lastY) * 0.6; // 降低移动速度为原来的60%
-                        lastY = e.clientY;
-                        
-                        // 更新拖动元素位置，使用更平滑的动画
-                        const currentTop = parseInt(draggedItem.style.top) || 0;
-                        const newTop = currentTop + deltaY;
-                        
-                        // 使用 transform 代替 top 属性，提高性能
-                        draggedItem.style.transform = `translateY(${newTop - rect.top}px)`;
-                        draggedItem.style.top = `${newTop}px`;
-                        
-                        // 自动滚动，降低滚动速度
-                        if (e.clientY < modalRect.top + scrollThreshold) {
-                            // 向上滚动，速度更慢
-                            modalBody.scrollBy(0, -3);
-                        } else if (e.clientY > modalRect.bottom - scrollThreshold) {
-                            // 向下滚动，速度更慢
-                            modalBody.scrollBy(0, 3);
-                        }
-                        
-                        // 获取拖动元素的中心位置
-                        const draggedRect = draggedItem.getBoundingClientRect();
-                        const draggedMiddle = draggedRect.top + draggedRect.height / 2;
-                        
-                        // 确定应该插入的位置，添加缓冲区减少频繁切换
-                        let targetIndex = -1;
-                        const bufferZone = 10; // 添加10px的缓冲区
-                        
-                        // 遍历所有项（除了占位符和拖动项）
-                        Array.from(sortableList.children).forEach((child, index) => {
-                            if (child === placeholder || child === draggedItem) return;
-                            
-                            const childRect = child.getBoundingClientRect();
-                            const childMiddle = childRect.top + childRect.height / 2;
-                            
-                            // 使用缓冲区判断是否越过中点
-                            if (draggedMiddle < childMiddle - bufferZone) {
-                                if (targetIndex === -1 || index < targetIndex) {
-                                    targetIndex = index;
-                                }
-                            }
-                        });
-                        
-                        // 如果没有找到合适的位置，则放在最后
-                        if (targetIndex === -1) {
-                            // 避免频繁移动，只有当占位符不在最后时才移动
-                            if (placeholder !== sortableList.lastChild) {
-                                sortableList.appendChild(placeholder);
-                            }
-                        } else {
-                            const targetChild = sortableList.children[targetIndex];
-                            // 避免频繁移动，只有当占位符位置变化时才移动
-                            if (placeholder.nextSibling !== targetChild) {
-                                sortableList.insertBefore(placeholder, targetChild);
-                            }
-                        }
-                    });
-                }
-                
-                // 鼠标释放事件
-                function onMouseUp(e) {
-                    if (!draggedItem) return;
-                    
-                    // 取消动画帧
-                    if (animationFrame) {
-                        cancelAnimationFrame(animationFrame);
-                        animationFrame = null;
-                    }
-                    
-                    // 移除事件监听
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                    
-                    // 获取占位符的位置
-                    const placeholderIndex = Array.from(sortableList.children).indexOf(placeholder);
-                    
-                    // 平滑过渡到最终位置
-                    const finalRect = placeholder.getBoundingClientRect();
-                    const currentRect = draggedItem.getBoundingClientRect();
-                    const deltaY = finalRect.top - currentRect.top;
-                    
-                    // 添加过渡效果，延长过渡时间
-                    draggedItem.style.transition = 'transform 0.3s ease-out, top 0.3s ease-out';
-                    draggedItem.style.transform = `translateY(${deltaY}px)`;
-                    
-                    // 延迟后恢复正常布局，延长延迟时间
-                    setTimeout(() => {
-                        // 移除占位符
-                        placeholder.remove();
-                        
-                        // 恢复拖动元素的样式
-                        draggedItem.classList.remove('dragging');
-                        draggedItem.style.position = '';
-                        draggedItem.style.top = '';
-                        draggedItem.style.left = '';
-                        draggedItem.style.width = '';
-                        draggedItem.style.height = '';
-                        draggedItem.style.zIndex = '';
-                        draggedItem.style.transform = '';
-                        draggedItem.style.transition = '';
-                        
-                        // 将拖动元素插入到占位符的位置
-                        if (placeholderIndex >= 0) {
-                            if (placeholderIndex >= sortableList.children.length) {
-                                sortableList.appendChild(draggedItem);
-                            } else {
-                                sortableList.insertBefore(draggedItem, sortableList.children[placeholderIndex]);
-                            }
-                        }
-                        
-                        // 重置变量
-                        draggedItem = null;
-                        draggedIndex = -1;
-                        placeholder = null;
-                    }, 300); // 延长到300ms
-                }
-                
-                // 添加事件监听
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
-        });
-        
-        // 保存排序按钮点击事件
-        document.getElementById('saveGroupOrderBtn').addEventListener('click', function() {
-            // 直接调用saveGroupOrder函数，让它处理所有逻辑
-            saveGroupOrder();
-        });
-        
-        // 模态框关闭事件
-        modal.addEventListener('hidden.bs.modal', function() {
-            modal.remove();
-        });
-    }
-    
-    // 保存分组排序
-    function saveGroupOrder() {
-        // 获取新的分组顺序
-        const newOrder = [];
-        document.querySelectorAll('#sortableGroupList li').forEach(item => {
-            newOrder.push(item.dataset.groupName);
-        });
-        
-        console.log('新的分组顺序:', newOrder);
-        
-        // 显示保存中提示
-        const saveIndicator = document.createElement('div');
-        saveIndicator.className = 'alert alert-info';
-        saveIndicator.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在保存分组顺序...';
-        
-        // 获取模态框的内容区域
-        const modalBody = document.querySelector('#sortGroupsModal .modal-body');
-        modalBody.appendChild(saveIndicator);
-        
-        // 禁用保存按钮
-        const saveBtn = document.getElementById('saveGroupOrderBtn');
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
-        saveBtn.disabled = true;
-        
-        // 发送请求保存排序
-        fetch('/api/update_watchlists_order', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                order: newOrder
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`服务器返回错误: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // 更新全局变量
-                groupOrder = newOrder;
-                
-                // 显示成功提示
-                saveIndicator.className = 'alert alert-success';
-                saveIndicator.innerHTML = '<i class="bi bi-check-circle"></i> 分组顺序已保存';
-                
-                // 恢复按钮状态
-                saveBtn.innerHTML = originalText;
-                saveBtn.disabled = false;
-                
-                // 关闭模态框
-                setTimeout(() => {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('sortGroupsModal'));
-                    if (modal) {
-                        modal.hide();
-                    }
-                    
-                    // 刷新观察列表显示
-                    renderWatchlist();
-                    
-                    // 标记有未保存的更改
-                    hasUnsavedChanges = true;
-                    // 标记已手动编辑
-                    hasBeenManuallyEdited = true;
-                    
-                    // 显示提示
-                    showToast('分组顺序已更新，请记得保存所有更改', 'success');
-                }, 1000);
-            } else {
-                // 显示错误提示
-                saveIndicator.className = 'alert alert-danger';
-                saveIndicator.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 保存失败: ' + (data.error || '未知错误');
-                
-                // 恢复按钮状态
-                saveBtn.innerHTML = originalText;
-                saveBtn.disabled = false;
-            }
-        })
-        .catch(error => {
-            // 显示错误提示
-            saveIndicator.className = 'alert alert-danger';
-            saveIndicator.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 保存失败: ' + error.message;
-            
-            // 恢复按钮状态
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-            
-            console.error('保存分组顺序失败:', error);
-        });
+        showToast(`分组 "${groupName}" 已删除`, 'success');
     }
     
     // 通知主界面刷新下拉框
@@ -1296,6 +785,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 关闭编辑器
     function closeEditor() {
+        // 弹出提示信息
+        alert('请手动刷新Web主页，加载最新的自选股分组');
+        
         // 检查是否有未保存的更改
         if (hasUnsavedChanges) {
             if (confirm('您有未保存的更改，是否在关闭前保存？')) {
@@ -1331,6 +823,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const originalText = saveBtn.innerHTML;
         saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
         saveBtn.disabled = true;
+        
+        // 确保groupOrder包含所有分组
+        const allGroups = Object.keys(watchlistData);
+        // 添加可能缺失的分组（新添加的分组）
+        allGroups.forEach(group => {
+            if (!groupOrder.includes(group)) {
+                console.log(`添加新分组 "${group}" 到分组顺序中`);
+                groupOrder.push(group);
+            }
+        });
+        
+        // 移除不存在的分组
+        groupOrder = groupOrder.filter(group => allGroups.includes(group));
+        
+        console.log('保存前的分组顺序:', groupOrder);
         
         // 准备要发送的数据，包括手动编辑标志和分组顺序
         const dataToSend = {
