@@ -1583,18 +1583,15 @@ def api_get_watchlists():
     try:
         # 获取当前用户ID
         user_id = session.get('user_id', 'default')
+        logger.info(f"收到 {request.method} 请求 /api/watchlists，用户ID: {user_id}")
         
         if request.method == 'GET':
             try:
                 # 使用get_user_watchlists函数获取用户的自选股列表
                 user_watchlists = get_user_watchlists(user_id)
                 
-                # 记录日志，显示分组顺序
-                logger.info(f"获取用户自选股列表，分组顺序: {list(user_watchlists.keys())}")
-                
-                # 添加详细的调试日志
-                for i, group in enumerate(user_watchlists.keys()):
-                    logger.info(f"分组 {i+1}: {group}")
+                # 简化日志记录，避免过多输出
+                logger.info(f"获取用户自选股列表成功，分组数量: {len(user_watchlists)}")
                 
                 # 尝试读取保存的分组顺序
                 try:
@@ -1617,22 +1614,21 @@ def api_get_watchlists():
                             if saved_groups_order and all(group in user_watchlists for group in saved_groups_order):
                                 # 使用保存的顺序
                                 groups_order = saved_groups_order
-                                logger.info(f"使用保存的分组顺序: {groups_order}")
+                                logger.info(f"使用保存的分组顺序，分组数量: {len(groups_order)}")
                                 
                                 # 添加可能缺失的分组（新添加的分组）
                                 for group in user_watchlists.keys():
                                     if group not in groups_order:
                                         groups_order.append(group)
-                                        logger.info(f"添加缺失的分组到顺序中: {group}")
                             else:
                                 # 如果保存的顺序无效，使用默认顺序
                                 groups_order = list(user_watchlists.keys())
-                                logger.info(f"保存的分组顺序无效，使用默认顺序: {groups_order}")
+                                logger.info(f"保存的分组顺序无效，使用默认顺序")
                         
                     else:
                         # 如果文件不存在，使用默认顺序
                         groups_order = list(user_watchlists.keys())
-                        logger.info(f"未找到保存的分组顺序，使用默认顺序: {groups_order}")
+                        logger.info(f"未找到保存的分组顺序，使用默认顺序")
                 except Exception as e:
                     # 如果出错，使用默认顺序
                     groups_order = list(user_watchlists.keys())
@@ -1691,7 +1687,7 @@ def api_get_watchlists():
                     # 如果提供了分组顺序，保存它
                     if groups_order:
                         save_groups_order(user_id, groups_order)
-                        logger.info(f"保存用户分组顺序: {groups_order}")
+                        logger.info(f"保存用户分组顺序: {len(groups_order)} 个分组")
                 
                 if success:
                     # 更新全局变量
