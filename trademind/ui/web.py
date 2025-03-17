@@ -1151,6 +1151,22 @@ def shutdown_server():
     """
     global server_running, analysis_progress
     try:
+        # 添加安全检查，防止意外关闭
+        # 检查请求来源
+        referrer = request.headers.get('Referer', '')
+        user_agent = request.headers.get('User-Agent', '')
+        
+        # 记录关闭请求的详细信息
+        logger.warning(f"收到关闭服务器请求: Referrer={referrer}, User-Agent={user_agent}")
+        
+        # 检查是否是浏览器刷新导致的请求
+        is_refresh = 'beforeunload' in request.headers.get('Sec-Fetch-Mode', '')
+        
+        # 如果是刷新导致的请求，不关闭服务器
+        if is_refresh:
+            logger.warning("检测到页面刷新导致的关闭请求，忽略此请求")
+            return jsonify({'success': False, 'message': '页面刷新不会关闭服务器'})
+        
         # 设置服务器停止标志
         if 'server_running' in globals() and server_running is not None:
             server_running.clear()
