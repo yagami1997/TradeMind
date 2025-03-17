@@ -758,6 +758,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('股票列表已保存', 'success');
                 hasUnsavedChanges = false;
                 
+                // 恢复按钮状态
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                
                 // 通知主界面刷新下拉框 - 使用更可靠的方法
                 try {
                     if (window.opener && !window.opener.closed) {
@@ -1168,136 +1172,87 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示保存中提示
         const saveIndicator = document.createElement('div');
-        saveIndicator.className = 'save-indicator';
-        saveIndicator.innerHTML = '<div class="spinner-border spinner-border-sm text-light" role="status"></div> 保存中...';
-        document.body.appendChild(saveIndicator);
+        saveIndicator.className = 'alert alert-info';
+        saveIndicator.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在保存分组顺序...';
         
-        // 发送到后端
+        // 获取模态框的内容区域
+        const modalBody = document.querySelector('#sortGroupsModal .modal-body');
+        modalBody.appendChild(saveIndicator);
+        
+        // 禁用保存按钮
+        const saveBtn = document.getElementById('saveGroupOrderBtn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
+        saveBtn.disabled = true;
+        
+        // 发送请求保存排序
         fetch('/api/update_watchlists_order', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ order: newOrder })
+            body: JSON.stringify({
+                order: newOrder
+            })
         })
-        .then(response => response.json())
-        .then(data => {
-            console.log('保存结果:', data);
-            
-            // 更新全局分组顺序
-            if (data.groups_order && Array.isArray(data.groups_order)) {
-                groupOrder = data.groups_order;
-                console.log('使用API返回的分组顺序:', groupOrder);
-            } else {
-                groupOrder = newOrder;
-                console.log('API没有返回分组顺序，使用新的顺序:', groupOrder);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`服务器返回错误: ${response.status}`);
             }
-            
-            // 标记已手动编辑和有未保存的更改
-            hasBeenManuallyEdited = true;
-            hasUnsavedChanges = true;
-            
-            // 移除保存提示
-            saveIndicator.innerHTML = '<i class="fas fa-check"></i> 已保存';
-            saveIndicator.classList.add('success');
-            
-            setTimeout(() => {
-                saveIndicator.remove();
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 更新全局变量
+                groupOrder = newOrder;
+                
+                // 显示成功提示
+                saveIndicator.className = 'alert alert-success';
+                saveIndicator.innerHTML = '<i class="bi bi-check-circle"></i> 分组顺序已保存';
+                
+                // 恢复按钮状态
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                
                 // 关闭模态框
-                const modal = document.getElementById('sortGroupsModal');
-                const modalInstance = bootstrap.Modal.getInstance(modal);
-                modalInstance.hide();
-                
-                // 重新渲染观察列表
-                renderWatchlist();
-                
-                // 通知主界面刷新下拉框 - 使用更可靠的方法
-                try {
-                    if (window.opener && !window.opener.closed) {
-                        console.log('尝试通知主界面刷新下拉框');
-                        
-                        // 方法1: 尝试调用主页面的loadWatchlists函数
-                        if (typeof window.opener.loadWatchlists === 'function') {
-                            window.opener.loadWatchlists();
-                            console.log('已通知主界面重新加载观察列表数据');
-                        }
-                        // 方法2: 尝试使用refreshWatchlistDropdown函数
-                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
-                            // 创建一个包含分组顺序的对象传递给主页面
-                            const dataWithOrder = {
-                                watchlists: watchlistData,
-                                groups_order: groupOrder
-                            };
-                            window.opener.refreshWatchlistDropdown(dataWithOrder);
-                            console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                        }
-                        
-                        // 方法3: 尝试直接刷新主页面的观察列表下拉框
-                        try {
-                            // 设置一个标记，表示编辑器已保存数据
-                            window.opener.localStorage.setItem('watchlistEditorSaved', 'true');
-                            window.opener.localStorage.setItem('watchlistEditorSavedTime', new Date().getTime().toString());
-                            
-                            // 尝试触发主页面的自定义事件
-                            const event = new CustomEvent('watchlistUpdated', { 
-                                detail: { 
-                                    time: new Date().getTime(),
-                                    groups: groupOrder
-                                } 
-                            });
-                            window.opener.document.dispatchEvent(event);
-                            console.log('已触发主页面的watchlistUpdated事件');
-                            
-                            // 如果以上方法都不起作用，尝试重新加载主页面
-                            setTimeout(() => {
-                                if (window.opener && !window.opener.closed) {
-                                    // 检查是否需要重新加载
-                                    const needsReload = !window.opener.document.getElementById('watchlistReloadFlag');
-                                    if (needsReload) {
-                                        console.log('尝试重新加载主页面');
-                                        window.opener.location.reload();
-                                    }
-                                }
-                            }, 500);
-                        } catch (refreshError) {
-                            console.error('刷新主页面出错:', refreshError);
-                        }
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('sortGroupsModal'));
+                    if (modal) {
+                        modal.hide();
                     }
-                } catch (error) {
-                    console.error('通知主界面刷新下拉框时出错:', error);
-                }
-            }, 1000);
+                    
+                    // 刷新观察列表显示
+                    renderWatchlist();
+                    
+                    // 标记有未保存的更改
+                    hasUnsavedChanges = true;
+                    // 标记已手动编辑
+                    hasBeenManuallyEdited = true;
+                    
+                    // 显示提示
+                    showToast('分组顺序已更新，请记得保存所有更改', 'success');
+                }, 1000);
+            } else {
+                // 显示错误提示
+                saveIndicator.className = 'alert alert-danger';
+                saveIndicator.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 保存失败: ' + (data.error || '未知错误');
+                
+                // 恢复按钮状态
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }
         })
         .catch(error => {
-            console.error('保存分组顺序出错:', error);
-            saveIndicator.innerHTML = '<i class="fas fa-times"></i> 保存失败';
-            saveIndicator.classList.add('error');
+            // 显示错误提示
+            saveIndicator.className = 'alert alert-danger';
+            saveIndicator.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 保存失败: ' + error.message;
             
-            setTimeout(() => {
-                saveIndicator.remove();
-            }, 2000);
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            
+            console.error('保存分组顺序失败:', error);
         });
-    }
-    
-    // 关闭编辑器
-    function closeEditor() {
-        // 检查是否有未保存的更改
-        if (hasUnsavedChanges) {
-            if (confirm('您有未保存的更改，是否在关闭前保存？')) {
-                // 保存更改后关闭
-                saveAndClose();
-            } else {
-                // 不保存直接关闭
-                // 在关闭前尝试通知主界面刷新
-                notifyMainPageBeforeClose();
-                window.close();
-            }
-        } else {
-            // 没有更改，直接关闭
-            // 在关闭前尝试通知主界面刷新
-            notifyMainPageBeforeClose();
-            window.close();
-        }
     }
     
     // 通知主界面刷新下拉框
@@ -1325,9 +1280,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.opener.loadWatchlists(true);
                     console.log('已直接调用主页面的loadWatchlists函数');
                 }
+                
+                // 如果有未保存的更改，提示用户
+                if (hasUnsavedChanges) {
+                    console.log('有未保存的更改，提示用户');
+                    return confirm('您有未保存的更改，确定要关闭吗？');
+                }
             }
+            return true;
         } catch (error) {
             console.error('通知主界面刷新下拉框时出错:', error);
+            return true;
+        }
+    }
+    
+    // 关闭编辑器
+    function closeEditor() {
+        // 检查是否有未保存的更改
+        if (hasUnsavedChanges) {
+            if (confirm('您有未保存的更改，是否在关闭前保存？')) {
+                // 保存更改后关闭
+                saveAndClose();
+            } else {
+                // 不保存直接关闭
+                // 在关闭前尝试通知主界面刷新
+                if (notifyMainPageBeforeClose()) {
+                    window.close();
+                }
+            }
+        } else {
+            // 没有更改，直接关闭
+            // 在关闭前尝试通知主界面刷新
+            notifyMainPageBeforeClose();
+            window.close();
         }
     }
     

@@ -118,14 +118,52 @@ def analyze_stocks():
         
         # 如果选择分析所有股票
         if analyze_all:
+            # 获取用户ID
+            user_id = session.get('user_id', 'default')
+            
+            # 获取分组顺序
+            try:
+                # 获取项目根目录
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                
+                # 获取用户配置目录
+                user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+                
+                # 构建文件路径
+                file_path = os.path.join(user_config_dir, 'groups_order.json')
+                
+                # 如果文件存在，读取保存的顺序
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        saved_data = json.load(f)
+                        groups_order = saved_data.get('groups_order', [])
+                else:
+                    # 如果文件不存在，使用默认顺序
+                    groups_order = list(watchlists.keys())
+            except Exception as e:
+                logger.error(f"读取分组顺序出错: {str(e)}")
+                groups_order = list(watchlists.keys())
+            
             # 收集所有预设股票（去重但保持原始顺序）
             all_symbols = []
             all_names = {}
+            
+            # 按照分组顺序收集股票
+            for group_name in groups_order:
+                if group_name in watchlists:
+                    group_stocks = watchlists[group_name]
+                    for code, name in group_stocks.items():
+                        if code not in all_names:  # 避免重复
+                            all_symbols.append(code)
+                            all_names[code] = name
+            
+            # 检查是否有遗漏的分组
             for group_name, group_stocks in watchlists.items():
-                for code, name in group_stocks.items():
-                    if code not in all_names:  # 避免重复
-                        all_symbols.append(code)
-                        all_names[code] = name
+                if group_name not in groups_order:
+                    for code, name in group_stocks.items():
+                        if code not in all_names:  # 避免重复
+                            all_symbols.append(code)
+                            all_names[code] = name
             
             symbols = all_symbols
             names = all_names
@@ -1151,31 +1189,31 @@ def shutdown_server():
     """
     global server_running, analysis_progress
     try:
-        # 添加安全检查，防止意外关闭
-        # 检查请求来源
-        referrer = request.headers.get('Referer', '')
-        user_agent = request.headers.get('User-Agent', '')
-        
         # 记录关闭请求的详细信息
-        logger.warning(f"收到关闭服务器请求: Referrer={referrer}, User-Agent={user_agent}")
+        logger.warning(f"收到关闭服务器请求 - 请求方法: {request.method}")
         
-        # 检查是否是浏览器刷新导致的请求
-        is_refresh = 'beforeunload' in request.headers.get('Sec-Fetch-Mode', '')
+        # 获取请求数据
+        data = request.get_data(as_text=True)
+        logger.warning(f"请求数据: {data}")
         
-        # 如果是刷新导致的请求，不关闭服务器
-        if is_refresh:
-            logger.warning("检测到页面刷新导致的关闭请求，忽略此请求")
-            return jsonify({'success': False, 'message': '页面刷新不会关闭服务器'})
+        # 检查是否包含特定的关闭标记
+        if 'real_close=true' not in request.url and 'real_close=true' not in data:
+            logger.warning("请求中不包含真正关闭的标记，忽略此请求")
+            return jsonify({'success': False, 'message': '忽略非真正关闭的请求'})
         
         # 设置服务器停止标志
         if 'server_running' in globals() and server_running is not None:
             server_running.clear()
+            logger.warning("服务器停止标志已设置")
+            
             # 如果正在分析，标记分析为已完成
             if analysis_progress["in_progress"]:
                 analysis_progress["in_progress"] = False
+                logger.warning("分析任务已标记为完成")
                 print("\n浏览器已关闭，但分析任务正在进行。正在安全停止...")
             else:
                 print("\n浏览器已关闭，服务器正在停止...")
+                
         return jsonify({'success': True, 'message': '服务器正在关闭'})
     except Exception as e:
         logger.exception(f"关闭服务器时出错: {str(e)}")
@@ -1692,6 +1730,15 @@ def api_get_watchlists():
                 else:
                     # 否则直接使用整个数据对象
                     new_watchlists = data
+                
+                # 记录接收到的数据结构，帮助调试
+                logger.info(f"接收到的数据结构: {type(data)}, 键: {list(data.keys())}")
+                logger.info(f"提取的watchlists类型: {type(new_watchlists)}, 分组数量: {len(new_watchlists) if isinstance(new_watchlists, dict) else '未知'}")
+                
+                # 确保new_watchlists是字典类型
+                if not isinstance(new_watchlists, dict):
+                    logger.error(f"无效的watchlists数据类型: {type(new_watchlists)}")
+                    return jsonify({'success': False, 'error': '无效的watchlists数据类型'}), 400
                 
                 # 保存用户的自选股列表
                 success = save_user_watchlists(user_id, new_watchlists)
