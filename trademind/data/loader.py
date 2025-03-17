@@ -1084,6 +1084,14 @@ def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
         bool: 是否保存成功
     """
     try:
+        # 记录输入数据类型
+        logger.info(f"保存用户自选股列表，用户ID: {user_id}, 数据类型: {type(watchlists)}")
+        
+        # 验证输入数据
+        if not isinstance(watchlists, dict):
+            logger.error(f"保存用户自选股列表失败: watchlists不是字典类型，而是 {type(watchlists)}")
+            return False
+        
         # 获取项目根目录
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         
@@ -1096,11 +1104,40 @@ def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
         # 自选股文件路径
         watchlists_file = os.path.join(user_config_dir, 'watchlists.json')
         
-        # 保存用户特定的文件，确保保持字典的顺序
-        with open(watchlists_file, 'w', encoding='utf-8') as f:
-            json.dump(watchlists, f, ensure_ascii=False, indent=4)
+        # 创建备份文件
+        if os.path.exists(watchlists_file):
+            backup_file = watchlists_file + '.bak'
+            try:
+                import shutil
+                shutil.copy2(watchlists_file, backup_file)
+                logger.info(f"已创建自选股文件备份: {backup_file}")
+            except Exception as backup_error:
+                logger.warning(f"创建备份文件失败: {str(backup_error)}")
         
-        return True
+        # 保存用户特定的文件，确保保持字典的顺序
+        try:
+            with open(watchlists_file, 'w', encoding='utf-8') as f:
+                json.dump(watchlists, f, ensure_ascii=False, indent=4)
+            
+            logger.info(f"成功保存自选股列表到文件: {watchlists_file}")
+            return True
+        except Exception as write_error:
+            logger.error(f"写入自选股文件失败: {str(write_error)}")
+            
+            # 尝试使用临时文件
+            try:
+                temp_file = watchlists_file + '.temp'
+                with open(temp_file, 'w', encoding='utf-8') as f:
+                    json.dump(watchlists, f, ensure_ascii=False, indent=4)
+                logger.info(f"已写入临时文件: {temp_file}")
+                
+                # 尝试重命名临时文件 - 使用已导入的os模块
+                os.replace(temp_file, watchlists_file)
+                logger.info(f"已将临时文件重命名为正式文件")
+                return True
+            except Exception as temp_error:
+                logger.error(f"使用临时文件保存失败: {str(temp_error)}")
+                return False
     
     except Exception as e:
         logger.error(f"保存用户自选股列表时出错: {str(e)}")
