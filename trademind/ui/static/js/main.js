@@ -2,6 +2,45 @@
  * TradeMind Lite - 主JavaScript文件
  */
 
+// 全局函数，用于刷新观察列表下拉框
+function refreshWatchlistDropdown(watchlists) {
+    console.log('主界面刷新观察列表下拉框', watchlists);
+    
+    try {
+        // 获取下拉菜单元素
+        const watchlistSelect = document.getElementById('watchlist');
+        if (!watchlistSelect) {
+            console.error('找不到观察列表下拉菜单');
+            return;
+        }
+        
+        // 保存当前选中的值
+        const selectedValue = watchlistSelect.value;
+        
+        // 清空下拉菜单，只保留第一个选项
+        while (watchlistSelect.options.length > 1) {
+            watchlistSelect.remove(1);
+        }
+        
+        // 添加新的选项
+        for (const groupName in watchlists) {
+            const option = document.createElement('option');
+            option.value = groupName;
+            option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
+            watchlistSelect.appendChild(option);
+        }
+        
+        // 恢复之前选中的值，如果它仍然存在
+        if (selectedValue && Array.from(watchlistSelect.options).some(opt => opt.value === selectedValue)) {
+            watchlistSelect.value = selectedValue;
+        }
+        
+        console.log('观察列表下拉框已更新');
+    } catch (error) {
+        console.error('刷新观察列表下拉框时出错:', error);
+    }
+}
+
 // 等待DOM加载完成
 document.addEventListener('DOMContentLoaded', function() {
     // 获取DOM元素
