@@ -18,20 +18,10 @@ function refreshWatchlistDropdown(data) {
     }
     
     try {
-        // 如果有分组顺序，保存它，但添加防止循环调用的机制
+        // 如果有分组顺序，只记录它，不调用API
         if (groups_order && Array.isArray(groups_order)) {
-            // 使用静态标志防止循环调用
-            if (!window.isSavingGroupsOrder) {
-                window.isSavingGroupsOrder = true;
-                console.log('保存分组顺序:', groups_order);
-                saveGroupsOrder(groups_order);
-                // 延迟重置标志
-                setTimeout(() => {
-                    window.isSavingGroupsOrder = false;
-                }, 1000);
-            } else {
-                console.log('跳过保存分组顺序，防止循环调用');
-            }
+            console.log('记录分组顺序:', groups_order);
+            // 完全移除saveGroupsOrder调用，防止服务器崩溃
         }
         
         // 获取下拉菜单元素
@@ -97,37 +87,6 @@ function refreshWatchlistDropdown(data) {
     } catch (error) {
         console.error('刷新观察列表下拉菜单时出错:', error);
     }
-}
-
-// 保存分组顺序
-function saveGroupsOrder(groups_order) {
-    if (!groups_order || !Array.isArray(groups_order)) {
-        console.error('无效的分组顺序:', groups_order);
-        return;
-    }
-    
-    console.log('保存分组顺序:', groups_order);
-    
-    // 发送到后端
-    fetch('/api/update_watchlists_order', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ order: groups_order })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('保存分组顺序结果:', data);
-        if (data.success) {
-            console.log('分组顺序保存成功');
-        } else {
-            console.error('保存分组顺序失败:', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('保存分组顺序出错:', error);
-    });
 }
 
 // 加载观察列表
