@@ -38,7 +38,7 @@
 
 .stock-row {
     display: grid;
-    grid-template-columns: 100px 1fr 100px;
+    grid-template-columns: 100px 1fr 120px;
     align-items: center;
     padding: 8px 10px;
     border-bottom: 1px solid #eee;
@@ -76,9 +76,18 @@
     color: #0d6efd;
 }
 
+.move-stock-btn,
 .edit-stock-btn,
 .delete-stock-btn {
     padding: 2px 5px;
+}
+
+.move-stock-btn {
+    color: #198754;
+}
+
+.move-stock-btn:hover {
+    color: #0d6efd;
 }
 
 /* 保存按钮 */

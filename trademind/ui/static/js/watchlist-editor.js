@@ -230,6 +230,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="stock-code">${stockCode}</div>
             <div class="stock-name" data-code="${stockCode}" data-group="${groupName}">${stockName}</div>
             <div class="actions">
+                <button class="btn btn-sm btn-link move-stock-btn" data-code="${stockCode}" data-group="${groupName}" title="移动到其他分组">
+                    <i class="bi bi-arrow-right-square"></i>
+                </button>
                 <button class="btn btn-sm btn-link edit-stock-btn" data-code="${stockCode}" data-group="${groupName}">
                     <i class="bi bi-pencil"></i>
                 </button>
@@ -242,6 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
         stockList.appendChild(stockRow);
         
         // 添加事件监听器
+        const moveStockBtn = stockRow.querySelector(`.move-stock-btn[data-code="${stockCode}"]`);
+        moveStockBtn.addEventListener('click', function() {
+            showMoveStockModal(stockCode, stockName, groupName);
+        });
+        
         const editStockBtn = stockRow.querySelector(`.edit-stock-btn[data-code="${stockCode}"]`);
         editStockBtn.addEventListener('click', function() {
             const stockNameDiv = stockRow.querySelector(`.stock-name[data-code="${stockCode}"]`);
@@ -272,6 +280,107 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+    
+    // 显示移动股票模态框
+    function showMoveStockModal(stockCode, stockName, currentGroup) {
+        // 创建模态框HTML
+        const modalHTML = `
+            <div class="modal fade" id="moveStockModal" tabindex="-1" aria-labelledby="moveStockModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="moveStockModalLabel">移动股票到其他分组</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>将股票 <strong>${stockCode} (${stockName})</strong> 从 <strong>${currentGroup}</strong> 移动到:</p>
+                            <div class="mb-3">
+                                <select class="form-select" id="targetGroupSelect">
+                                    <option value="">-- 选择目标分组 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary" id="confirmMoveBtn">确认移动</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 如果已存在模态框，先移除
+        const existingModal = document.getElementById('moveStockModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // 添加模态框到DOM
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // 获取模态框元素
+        const moveStockModal = new bootstrap.Modal(document.getElementById('moveStockModal'));
+        const targetGroupSelect = document.getElementById('targetGroupSelect');
+        
+        // 填充分组选项
+        for (const groupName in watchlists) {
+            if (groupName !== currentGroup) {
+                const option = document.createElement('option');
+                option.value = groupName;
+                option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
+                targetGroupSelect.appendChild(option);
+            }
+        }
+        
+        // 添加新分组选项
+        const newGroupOption = document.createElement('option');
+        newGroupOption.value = 'new_group';
+        newGroupOption.textContent = '+ 创建新分组';
+        targetGroupSelect.appendChild(newGroupOption);
+        
+        // 确认移动按钮点击事件
+        document.getElementById('confirmMoveBtn').addEventListener('click', function() {
+            const targetGroup = targetGroupSelect.value;
+            
+            if (!targetGroup) {
+                showToast('请选择目标分组', 'error');
+                return;
+            }
+            
+            if (targetGroup === 'new_group') {
+                // 创建新分组
+                const newGroupName = prompt('请输入新分组名称:');
+                if (newGroupName && newGroupName.trim()) {
+                    if (watchlists[newGroupName]) {
+                        showToast(`分组"${newGroupName}"已存在`, 'error');
+                        return;
+                    }
+                    
+                    // 创建新分组并移动股票
+                    watchlists[newGroupName] = {};
+                    watchlists[newGroupName][stockCode] = stockName;
+                    delete watchlists[currentGroup][stockCode];
+                    
+                    moveStockModal.hide();
+                    renderWatchlists();
+                    hasChanges = true;
+                    showToast(`已将股票"${stockCode}"移动到新分组"${newGroupName}"`);
+                }
+            } else {
+                // 移动到现有分组
+                watchlists[targetGroup][stockCode] = stockName;
+                delete watchlists[currentGroup][stockCode];
+                
+                moveStockModal.hide();
+                renderWatchlists();
+                hasChanges = true;
+                showToast(`已将股票"${stockCode}"移动到"${targetGroup}"`);
+            }
+        });
+        
+        // 显示模态框
+        moveStockModal.show();
     }
     
     // 保存股票列表
