@@ -220,8 +220,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.addEventListener('beforeunload', function(e) {
         // 保存临时查询列表
-        saveTempQueryStocks();
+        try {
+            saveTempQueryStocks();
+        } catch (error) {
+            console.error('保存临时查询列表时出错:', error);
+        }
         
+        // 完全禁用自动关闭服务器功能，避免刷新页面时服务器停止
+        // 注释掉以下代码，防止服务器被错误关闭
+        /*
         // 只有在真正关闭页面时才发送关闭服务器的请求
         if (isRealClose) {
             // 发送关闭服务器的请求
@@ -239,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('关闭服务器时出错:', error);
             }
         }
+        */
     });
 
     // 分析表单提交
