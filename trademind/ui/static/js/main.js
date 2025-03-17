@@ -275,6 +275,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // 设置一个标记，表示页面正在刷新
+    let isRefreshing = false;
+    
+    // 监听页面刷新事件 - F5键
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+            console.log('检测到刷新快捷键，标记页面正在刷新');
+            isRefreshing = true;
+        }
+    });
+    
+    // 监听页面刷新按钮点击
     window.addEventListener('beforeunload', function(e) {
         // 保存临时查询列表
         try {
@@ -283,32 +295,45 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('保存临时查询列表时出错:', error);
         }
         
-        // 恢复自动关闭服务器功能，但增加安全检查
-        // 只有在真正关闭页面时才发送关闭服务器的请求
-        if (isRealClose) {
-            // 检查是否是页面刷新
-            const isRefresh = e.currentTarget.performance && e.currentTarget.performance.navigation.type === 1;
-            if (!isRefresh) {
-                console.log('检测到浏览器关闭，尝试关闭服务器');
-                // 发送关闭服务器的请求
-                try {
-                    // 使用sendBeacon API，它专为页面卸载时发送请求设计
-                    if (navigator.sendBeacon) {
-                        navigator.sendBeacon('/api/shutdown', '');
-                        console.log('已使用sendBeacon发送关闭服务器请求');
-                    } else {
-                        // 备用方案：使用同步XMLHttpRequest
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('POST', '/api/shutdown', false); // 同步请求
-                        xhr.send();
-                        console.log('已使用同步XHR发送关闭服务器请求');
-                    }
-                } catch (error) {
-                    console.error('关闭服务器时出错:', error);
-                }
+        // 如果是内部导航，不关闭服务器
+        if (!isRealClose) {
+            console.log('检测到内部导航，不关闭服务器');
+            return;
+        }
+        
+        // 如果是刷新，不关闭服务器
+        if (isRefreshing) {
+            console.log('检测到页面刷新，不关闭服务器');
+            return;
+        }
+        
+        // 如果是通过浏览器刷新按钮刷新，不关闭服务器
+        // 这是一个简单的方法，通过检查document.visibilityState来判断
+        // 刷新时页面仍然可见，而关闭时页面不可见
+        if (document.visibilityState !== 'hidden') {
+            console.log('检测到页面仍然可见，可能是刷新，不关闭服务器');
+            return;
+        }
+        
+        // 到这里，应该是真正的浏览器关闭
+        console.log('检测到浏览器关闭，尝试关闭服务器');
+        
+        // 发送关闭服务器的请求
+        try {
+            // 使用sendBeacon API，它专为页面卸载时发送请求设计
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/shutdown?real_close=true', 'real_close=true');
+                console.log('已使用sendBeacon发送关闭服务器请求');
             } else {
-                console.log('检测到页面刷新，不关闭服务器');
+                // 备用方案：使用同步XMLHttpRequest
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/shutdown?real_close=true', false); // 同步请求
+                xhr.setRequestHeader('Content-Type', 'text/plain');
+                xhr.send('real_close=true');
+                console.log('已使用同步XHR发送关闭服务器请求');
             }
+        } catch (error) {
+            console.error('关闭服务器时出错:', error);
         }
     });
 
@@ -709,4 +734,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 页面加载时加载最近的报告列表
     loadRecentReports();
+    
+    // 添加关闭服务器按钮的点击事件
+    document.getElementById('shutdownServerBtn').addEventListener('click', function() {
+        if (confirm('确定要关闭服务器吗？这将停止所有正在进行的分析任务。')) {
+            // 发送关闭服务器的请求
+            fetch('/api/shutdown?real_close=true', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: 'real_close=true'
+            })
+            .then(() => {
+                alert('服务器正在关闭，此页面将关闭。');
+                window.close();
+                // 如果window.close()不起作用，显示一条消息
+                setTimeout(() => {
+                    document.body.innerHTML = '<div class="container mt-5"><div class="alert alert-success"><h4>服务器已关闭</h4><p>您可以安全地关闭此页面。</p></div></div>';
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('关闭服务器时出错:', error);
+                alert('关闭服务器时出错，请手动关闭终端。');
+            });
+        }
+    });
 }); 
