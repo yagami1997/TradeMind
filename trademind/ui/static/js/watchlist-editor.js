@@ -1269,6 +1269,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (typeof window.opener.loadWatchlists === 'function') {
                             window.opener.loadWatchlists();
                             console.log('已通知主界面重新加载观察列表数据');
+                            
+                            // 确保主页面保存分组顺序
+                            if (typeof window.opener.saveGroupsOrder === 'function') {
+                                window.opener.saveGroupsOrder(groupOrder);
+                                console.log('已通知主界面保存分组顺序');
+                            }
                         } 
                         // 如果loadWatchlists不存在，则使用refreshWatchlistDropdown
                         else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
@@ -1287,15 +1293,31 @@ document.addEventListener('DOMContentLoaded', function() {
                                 console.log('已通知主界面保存分组顺序');
                             }
                         }
+                        
+                        // 尝试直接刷新主页面的观察列表下拉框
+                        try {
+                            const mainWatchlistSelect = window.opener.document.getElementById('watchlist');
+                            if (mainWatchlistSelect) {
+                                console.log('尝试直接刷新主页面的观察列表下拉框');
+                                // 延迟执行，确保数据已保存到服务器
+                                setTimeout(() => {
+                                    // 使用强制刷新参数
+                                    window.opener.loadWatchlists(true);
+                                    console.log('已延迟强制刷新主页面的观察列表下拉框');
+                                }, 300);
+                            }
+                        } catch (refreshError) {
+                            console.error('直接刷新主页面下拉框出错:', refreshError);
+                        }
                     }
                 } catch (error) {
                     console.error('通知主界面刷新下拉框时出错:', error);
                 }
                 
-                // 延迟关闭窗口，让用户看到保存成功的提示
+                // 延迟关闭窗口，让用户看到保存成功的提示，并确保主页面有足够时间加载数据
                 setTimeout(() => {
                     window.close();
-                }, 500);
+                }, 1000); // 增加延迟时间到1秒
             } else {
                 throw new Error(data.error || '保存失败');
             }
