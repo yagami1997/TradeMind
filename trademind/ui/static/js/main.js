@@ -18,9 +18,11 @@ function refreshWatchlistDropdown(data) {
     }
     
     try {
-        // 如果有分组顺序，保存它
+        // 如果有分组顺序，记录它但不调用API
         if (groups_order && Array.isArray(groups_order)) {
-            saveGroupsOrder(groups_order);
+            console.log('记录分组顺序:', groups_order);
+            // 不再调用saveGroupsOrder，避免额外的API请求
+            // saveGroupsOrder(groups_order);
         }
         
         // 获取下拉菜单元素
@@ -121,13 +123,11 @@ function saveGroupsOrder(groups_order) {
 
 // 加载观察列表
 function loadWatchlists(forceRefresh = false) {
-    console.log('加载观察列表...' + (forceRefresh ? '(强制刷新)' : ''));
+    console.log('加载观察列表...');
     
     // 添加时间戳参数，防止缓存
     const timestamp = new Date().getTime();
-    const url = forceRefresh ? 
-        `/api/watchlists?t=${timestamp}&force=true` : 
-        `/api/watchlists?t=${timestamp}`;
+    const url = `/api/watchlists?t=${timestamp}`;
     
     fetch(url)
         .then(response => response.json())
@@ -143,11 +143,6 @@ function loadWatchlists(forceRefresh = false) {
                 
                 // 使用refreshWatchlistDropdown函数更新下拉菜单
                 refreshWatchlistDropdown(watchlistData);
-                
-                // 如果是强制刷新，记录日志
-                if (forceRefresh) {
-                    console.log('观察列表已强制刷新');
-                }
             } else {
                 console.error('获取观察列表失败:', data);
             }

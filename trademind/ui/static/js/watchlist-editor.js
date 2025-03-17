@@ -1260,64 +1260,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 showToast('股票列表已保存', 'success');
                 
-                // 通知主界面刷新下拉框
+                // 通知主界面刷新下拉框 - 简化这部分代码
                 try {
                     if (window.opener && !window.opener.closed) {
                         console.log('尝试通知主界面刷新下拉框');
                         
-                        // 首先尝试调用主页面的loadWatchlists函数（如果存在）
-                        if (typeof window.opener.loadWatchlists === 'function') {
-                            window.opener.loadWatchlists();
-                            console.log('已通知主界面重新加载观察列表数据');
-                            
-                            // 确保主页面保存分组顺序
-                            if (typeof window.opener.saveGroupsOrder === 'function') {
-                                window.opener.saveGroupsOrder(groupOrder);
-                                console.log('已通知主界面保存分组顺序');
-                            }
-                        } 
-                        // 如果loadWatchlists不存在，则使用refreshWatchlistDropdown
-                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
-                            // 如果主界面有刷新函数，则调用它
-                            // 创建一个包含分组顺序的对象传递给主页面
-                            const dataWithOrder = {
-                                watchlists: watchlistData,
-                                groups_order: groupOrder
-                            };
+                        // 创建一个包含分组顺序的对象传递给主页面
+                        const dataWithOrder = {
+                            watchlists: watchlistData,
+                            groups_order: groupOrder
+                        };
+                        
+                        // 只调用一次刷新函数，避免多次调用
+                        if (typeof window.opener.refreshWatchlistDropdown === 'function') {
                             window.opener.refreshWatchlistDropdown(dataWithOrder);
                             console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                            
-                            // 确保主页面保存分组顺序
-                            if (typeof window.opener.saveGroupsOrder === 'function') {
-                                window.opener.saveGroupsOrder(groupOrder);
-                                console.log('已通知主界面保存分组顺序');
-                            }
-                        }
-                        
-                        // 尝试直接刷新主页面的观察列表下拉框
-                        try {
-                            const mainWatchlistSelect = window.opener.document.getElementById('watchlist');
-                            if (mainWatchlistSelect) {
-                                console.log('尝试直接刷新主页面的观察列表下拉框');
-                                // 延迟执行，确保数据已保存到服务器
-                                setTimeout(() => {
-                                    // 使用强制刷新参数
-                                    window.opener.loadWatchlists(true);
-                                    console.log('已延迟强制刷新主页面的观察列表下拉框');
-                                }, 300);
-                            }
-                        } catch (refreshError) {
-                            console.error('直接刷新主页面下拉框出错:', refreshError);
                         }
                     }
                 } catch (error) {
                     console.error('通知主界面刷新下拉框时出错:', error);
                 }
                 
-                // 延迟关闭窗口，让用户看到保存成功的提示，并确保主页面有足够时间加载数据
+                // 延迟关闭窗口，让用户看到保存成功的提示
                 setTimeout(() => {
                     window.close();
-                }, 1000); // 增加延迟时间到1秒
+                }, 800);
             } else {
                 throw new Error(data.error || '保存失败');
             }
