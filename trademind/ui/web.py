@@ -1558,6 +1558,73 @@ def get_temp_query():
         logger.exception(f"获取临时查询股票列表时出错: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/watchlist-editor')
+def watchlist_editor():
+    """股票列表编辑器页面"""
+    try:
+        # 获取当前用户ID
+        user_id = session.get('user_id', 'default')
+        
+        return render_template('watchlist_editor.html', 
+                              version=__version__,
+                              user_id=user_id)
+    except Exception as e:
+        logger.exception(f"访问股票列表编辑器页面时出错: {str(e)}")
+        return render_template('error.html', error=str(e))
+
+@app.route('/api/watchlists', methods=['GET'])
+def api_get_watchlists():
+    """获取用户的自选股列表 - API接口"""
+    try:
+        # 获取当前用户ID
+        user_id = session.get('user_id', 'default')
+        
+        # 使用get_user_watchlists函数获取用户的自选股列表
+        user_watchlists = get_user_watchlists(user_id)
+        
+        return jsonify({
+            'success': True,
+            'watchlists': user_watchlists
+        })
+    except Exception as e:
+        logger.exception(f"获取自选股列表API时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/save-watchlists', methods=['POST'])
+def api_save_watchlists():
+    """保存用户的自选股列表 - API接口"""
+    try:
+        # 获取当前用户ID
+        user_id = session.get('user_id', 'default')
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': '未收到有效的请求数据'}), 400
+            
+        new_watchlists = data.get('watchlists', {})
+        
+        # 保存用户的自选股列表
+        success = save_user_watchlists(user_id, new_watchlists)
+        
+        if success:
+            # 更新全局变量
+            global watchlists
+            watchlists = new_watchlists
+            
+            return jsonify({
+                'success': True,
+                'message': '自选股列表已保存'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '保存自选股列表失败'
+            }), 500
+    except Exception as e:
+        logger.exception(f"保存自选股列表API时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == "__main__":
     try:
         run_web_server(port=3336)

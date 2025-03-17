@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票列表编辑器 - TradeMind Lite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/watchlist-editor.css') }}">
+    <!-- 主题CSS将由JavaScript动态加载 -->
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">TradeMind Lite</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/watchlist-editor">股票列表编辑器</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="cleanReportsBtn">清理报告</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="themeDropdownBtn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            主题风格
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" id="theme-dropdown" aria-labelledby="themeDropdownBtn">
+                            <!-- 主题选项将由JavaScript动态生成 -->
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button id="theme-toggle" class="btn btn-outline-light" title="切换主题">
+                            <i id="theme-icon" class="bi bi-tree-fill"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-3">股票列表编辑器</h2>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i> 您可以在这里直接编辑股票列表，所有修改将自动保存到 <code>watchlists.json</code> 文件。
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button class="btn btn-primary" id="addGroupBtn">
+                                <i class="bi bi-plus-circle"></i> 添加分组
+                            </button>
+                            <button class="btn btn-outline-secondary ms-2" id="refreshBtn">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 股票列表容器 -->
+                <div id="watchlistContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载股票列表...</p>
+                    </div>
+                </div>
+                
+                <!-- 保存按钮 -->
+                <div class="save-all-btn-container mt-4 mb-5">
+                    <button class="btn btn-success save-all-btn" id="saveAllBtn">
+                        <i class="bi bi-save"></i> 保存所有修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加分组模态框 -->
+    <div class="modal fade" id="addGroupModal" tabindex="-1" aria-labelledby="addGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addGroupModalLabel">添加新分组</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label">分组名称</label>
+                        <input type="text" class="form-control" id="groupName" placeholder="例如：科技股、金融股等">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveGroupBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">TradeMind Lite v{{ version }} - 美股技术面分析工具</span>
+        </div>
+    </footer>
+
+    <!-- JavaScript 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/theme-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/watchlist-editor.js') }}"></script>
+</body>
+</html> 
