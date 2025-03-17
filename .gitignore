@@ -17,6 +17,7 @@ scripts/.venv/
 *.csv
 *.xlsx
 *.json
+!config/**/*.json
 *.pkl
 *.h5
 *.model
