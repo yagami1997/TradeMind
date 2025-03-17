@@ -16,7 +16,7 @@
 
 ## 任务描述
 
-在Web界面上实现优雅的自选股导入功能，允许用户通过界面导入和管理自选股清单，替代当前手动预置的自选股清单方式。需要特别注意Yahoo Finance接口的限制，确保导入的股票代码有效且符合格式要求。
+在Web界面上实现优雅的自选股导入功能，允许用户通过界面导入和管理自选股清单，替代当前手动预置的自选股清单方式。需要特别注意Yahoo Finance接口的限制，确保导入的股票代码有效且符合格式要求。同时，优化自选股编辑器的批量操作功能，提升用户体验。
 
 ## 任务目标
 
@@ -27,6 +27,9 @@
 5. 确保指数基金的格式符合现有JSON结构要求
 6. 实现导入后自动优化并保存watchlists.json文件
 7. 提供友好的用户交互和错误反馈机制
+8. 优化自选股编辑器的批量操作功能，提升用户体验
+9. 实现批量操作菜单的智能位置跟随和滚动固定功能
+10. 添加股票选择的视觉反馈和动画效果
 
 ## 格式差异分析
 
@@ -92,6 +95,23 @@
    - 美股指数: `.DJI` → `^DJI`, `.SPX` → `^GSPC` 等
    - 港股: `00700` → `0700.HK` 等
 
+### 自选股编辑器批量操作功能优化
+
+1. **批量操作菜单位置优化**:
+   - 重新设计批量操作菜单的位置逻辑，使其智能跟随用户选择的股票位置
+   - 实现批量操作菜单的滚动跟随功能，确保在任何滚动位置都能看到操作菜单
+   - 优化批量操作菜单的样式，增加固定显示和突出效果
+
+2. **股票选择视觉反馈**:
+   - 添加选中股票的视觉高亮效果
+   - 实现选中和取消选中的过渡动画
+   - 优化选中状态的显示样式
+
+3. **用户体验改进**:
+   - 实现批量操作菜单的响应式设计，适应不同屏幕尺寸
+   - 优化批量操作的用户体验流程，减少操作步骤和等待时间
+   - 添加操作成功的视觉反馈
+
 ### 代码转换算法
 
 ```javascript
@@ -136,6 +156,76 @@ function convertStockCode(code, market) {
 }
 ```
 
+### 批量操作菜单位置优化代码
+
+```javascript
+// 渲染多选操作栏
+function renderMultiSelectActions() {
+    // 移除现有的多选操作栏
+    const existingActions = document.querySelector('.multi-select-actions');
+    if (existingActions) {
+        existingActions.remove();
+    }
+    
+    // 如果有选中的股票，显示多选操作栏
+    if (selectedStocks.length > 0) {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'multi-select-actions';
+        
+        const selectedCount = document.createElement('span');
+        selectedCount.textContent = `已选择 ${selectedStocks.length} 个股票`;
+        
+        const moveSelectedBtn = document.createElement('button');
+        moveSelectedBtn.innerHTML = '<i class="bi bi-arrows-move"></i> 批量移动';
+        moveSelectedBtn.onclick = moveSelectedStocks;
+        
+        const deleteSelectedBtn = document.createElement('button');
+        deleteSelectedBtn.innerHTML = '<i class="bi bi-trash"></i> 批量删除';
+        deleteSelectedBtn.onclick = deleteSelectedStocks;
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.innerHTML = '<i class="bi bi-x-circle"></i> 取消选择';
+        cancelBtn.onclick = clearSelection;
+        
+        actionsDiv.appendChild(selectedCount);
+        actionsDiv.appendChild(moveSelectedBtn);
+        actionsDiv.appendChild(deleteSelectedBtn);
+        actionsDiv.appendChild(cancelBtn);
+        
+        // 查找所有选中的股票行
+        const selectedRows = [];
+        selectedStocks.forEach(stock => {
+            const row = document.querySelector(`.stock-row[data-group="${stock.group}"][data-code="${stock.code}"]`);
+            if (row) selectedRows.push(row);
+        });
+        
+        if (selectedRows.length > 0) {
+            // 找到最后一个选中的行
+            const lastSelectedRow = selectedRows[selectedRows.length - 1];
+            
+            // 找到该行所在的分组
+            const groupDiv = lastSelectedRow.closest('.watchlist-group');
+            if (groupDiv) {
+                // 将操作栏插入到分组的顶部
+                groupDiv.insertBefore(actionsDiv, groupDiv.firstChild);
+                
+                // 滚动到操作栏位置
+                setTimeout(() => {
+                    actionsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+                return;
+            }
+        }
+        
+        // 如果没有找到选中的行或分组，则插入到容器顶部
+        watchlistContainer.insertBefore(actionsDiv, watchlistContainer.firstChild);
+    }
+    
+    // 更新选中状态
+    updateSelectionUI();
+}
+```
+
 ### 容错与交互方案
 
 1. **输入验证**：
@@ -170,6 +260,9 @@ function convertStockCode(code, market) {
 4. 确保watchlists.json文件的格式和结构保持一致
 5. 实现适当的错误日志记录，便于问题排查
 6. 开发代码格式转换库，处理不同市场和数据源的格式差异
+7. 使用CSS动画和过渡效果提升用户体验
+8. 实现滚动监听功能，确保批量操作菜单在滚动时保持可见
+9. 优化DOM操作，提高页面响应速度
 
 ## 验收标准
 
@@ -181,12 +274,17 @@ function convertStockCode(code, market) {
 6. 代码符合项目的编码规范和最佳实践
 7. 正确处理美股指数格式转换（`.DJI` → `^DJI` 等）
 8. 正确处理港股代码格式（添加`.HK`后缀）
+9. 批量操作菜单能够智能跟随用户选择的股票位置
+10. 批量操作菜单在滚动时保持可见
+11. 选中股票有明显的视觉反馈和动画效果
 
 ## 依赖关系
 
 - 需要Yahoo Finance API访问权限
 - 依赖现有的Web界面框架
 - 需要文件系统写入权限（用于更新watchlists.json）
+- 依赖Bootstrap图标库（用于批量操作菜单图标）
+- 依赖现有的CSS变量系统（用于主题颜色）
 
 ## 风险与缓解措施
 
@@ -202,10 +300,15 @@ function convertStockCode(code, market) {
 4. **风险**：格式转换错误导致无效代码
    **缓解**：实现转换前后的验证机制，确保转换结果有效
 
+5. **风险**：批量操作菜单在某些浏览器中显示异常
+   **缓解**：使用标准CSS属性，避免使用实验性功能
+
 ## 备注
 
 - 考虑未来扩展支持其他市场（如A股）的可能性
 - 可能需要更新用户文档，说明新功能的使用方法
-- 当前仅支持美股和指数基金的导入，港股支持将在未来版本中考虑 
+- 当前仅支持美股和指数基金的导入，港股支持将在未来版本中考虑
+- 批量操作功能的优化显著提升了用户体验，特别是在处理大量股票时
+- 视觉反馈和动画效果使操作更加直观，减少了用户的认知负担
 
-*最后更新: 2025-03-16 08:00:01 PDT* 
+*最后更新: 2025-03-16 21:58:33 PDT* 

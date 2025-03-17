@@ -504,53 +504,59 @@ def validate_stock():
 def validate_stocks():
     """批量验证股票代码"""
     try:
+        app.logger.info("收到批量验证股票代码请求")
+        
         data = request.get_json()
         if not data:
-            logger.error("验证股票代码时未收到有效的JSON数据")
+            app.logger.error("验证股票代码时未收到有效的JSON数据")
             return jsonify({'error': '未收到有效的请求数据'}), 400
             
         codes = data.get('codes', [])
-        market = data.get('market', 'US')
         translate = data.get('translate', True)  # 默认启用翻译
         
-        logger.info(f"收到验证请求: {len(codes)} 个股票代码, 市场: {market}, 翻译: {translate}")
+        app.logger.info(f"收到验证请求: {len(codes)} 个股票代码, 翻译: {translate}")
+        app.logger.debug(f"股票代码: {codes}")
         
         if not codes:
-            logger.warning("验证请求中股票代码列表为空")
+            app.logger.warning("验证请求中股票代码列表为空")
             return jsonify({'error': '股票代码列表不能为空'}), 400
             
         # 限制一次验证的数量
         if len(codes) > 100:
-            logger.warning(f"验证请求超过限制: {len(codes)} > 100")
+            app.logger.warning(f"验证请求超过限制: {len(codes)} > 100")
             return jsonify({'error': '一次最多验证100个股票代码'}), 400
         
         # 记录请求的代码
-        logger.debug(f"验证的股票代码: {codes}")
+        app.logger.debug(f"验证的股票代码: {codes}")
         
         try:
             # 批量验证股票代码
-            results = batch_validate_stock_codes(codes, market, translate=translate)
+            app.logger.info(f"开始批量验证 {len(codes)} 个股票代码")
+            results = batch_validate_stock_codes(codes, translate=translate)
             
             # 统计验证结果
             valid_count = sum(1 for r in results if r.get('valid', False))
             invalid_count = len(results) - valid_count
             
-            logger.info(f"验证完成: 总计 {len(results)}, 有效 {valid_count}, 无效 {invalid_count}")
+            app.logger.info(f"验证完成: 总计 {len(results)}, 有效 {valid_count}, 无效 {invalid_count}")
             
-            return jsonify({
+            response_data = {
                 'results': results,
                 'summary': {
                     'total': len(results),
                     'valid': valid_count,
                     'invalid': invalid_count
                 }
-            })
+            }
+            
+            app.logger.debug(f"返回验证结果: {response_data}")
+            return jsonify(response_data)
         except Exception as inner_e:
-            logger.exception(f"执行批量验证时发生错误: {str(inner_e)}")
+            app.logger.exception(f"执行批量验证时发生错误: {str(inner_e)}")
             return jsonify({'error': f'验证过程出错: {str(inner_e)}'}), 500
             
     except Exception as e:
-        logger.exception(f"批量验证股票代码时发生错误: {str(e)}")
+        app.logger.exception(f"批量验证股票代码时发生错误: {str(e)}")
         return jsonify({'error': f'请求处理失败: {str(e)}'}), 500
 
 @app.route('/api/import-watchlist', methods=['POST'])
@@ -1572,57 +1578,53 @@ def watchlist_editor():
         logger.exception(f"访问股票列表编辑器页面时出错: {str(e)}")
         return render_template('error.html', error=str(e))
 
-@app.route('/api/watchlists', methods=['GET'])
+@app.route('/api/watchlists', methods=['GET', 'POST'])
 def api_get_watchlists():
-    """获取用户的自选股列表 - API接口"""
+    """获取或保存用户的自选股列表 - API接口"""
     try:
         # 获取当前用户ID
         user_id = session.get('user_id', 'default')
         
-        # 使用get_user_watchlists函数获取用户的自选股列表
-        user_watchlists = get_user_watchlists(user_id)
-        
-        return jsonify({
-            'success': True,
-            'watchlists': user_watchlists
-        })
-    except Exception as e:
-        logger.exception(f"获取自选股列表API时出错: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/save-watchlists', methods=['POST'])
-def api_save_watchlists():
-    """保存用户的自选股列表 - API接口"""
-    try:
-        # 获取当前用户ID
-        user_id = session.get('user_id', 'default')
-        
-        # 获取请求数据
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': '未收到有效的请求数据'}), 400
-            
-        new_watchlists = data.get('watchlists', {})
-        
-        # 保存用户的自选股列表
-        success = save_user_watchlists(user_id, new_watchlists)
-        
-        if success:
-            # 更新全局变量
-            global watchlists
-            watchlists = new_watchlists
+        if request.method == 'GET':
+            # 使用get_user_watchlists函数获取用户的自选股列表
+            user_watchlists = get_user_watchlists(user_id)
             
             return jsonify({
                 'success': True,
-                'message': '自选股列表已保存'
+                'watchlists': user_watchlists
             })
-        else:
-            return jsonify({
-                'success': False,
-                'error': '保存自选股列表失败'
-            }), 500
+        elif request.method == 'POST':
+            # 获取请求数据
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': '未收到有效的请求数据'}), 400
+                
+            # 如果数据包含在 watchlists 字段中，提取它
+            if 'watchlists' in data:
+                new_watchlists = data['watchlists']
+            else:
+                # 否则直接使用整个数据对象
+                new_watchlists = data
+            
+            # 保存用户的自选股列表
+            success = save_user_watchlists(user_id, new_watchlists)
+            
+            if success:
+                # 更新全局变量
+                global watchlists
+                watchlists = new_watchlists
+                
+                return jsonify({
+                    'success': True,
+                    'message': '自选股列表已保存'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': '保存自选股列表失败'
+                }), 500
     except Exception as e:
-        logger.exception(f"保存自选股列表API时出错: {str(e)}")
+        logger.exception(f"操作自选股列表API时出错: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == "__main__":
