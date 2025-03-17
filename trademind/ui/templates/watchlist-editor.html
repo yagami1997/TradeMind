@@ -38,18 +38,16 @@
         <div class="row">
             <div class="col-12">
                 <h2 class="mb-3 text-primary">股票列表编辑器</h2>
+                
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle-fill"></i> <strong>股票列表编辑器使用说明</strong>
-                    <hr>
-                    <p>您可以在这里直接编辑自选股列表，所有修改将自动保存到 <code>watchlists.json</code> 文件。</p>
-                    <p><strong>为什么要使用这个功能？</strong></p>
-                    <ul>
-                        <li>自定义分组：根据您的投资策略创建不同的股票分组（如科技股、金融股、长期持有等）</li>
-                        <li>灵活管理：添加、删除、移动股票，重命名分组，一目了然</li>
+                    <ul class="mb-0 mt-2">
+                        <li>点击"添加分组"按钮创建新的股票分组</li>
+                        <li>点击"添加股票"按钮向分组中添加股票</li>
+                        <li>点击股票行可以选中/取消选中该股票</li>
                         <li>批量操作：支持多选股票进行批量移动或删除</li>
-                        <li>直观编辑：比手动编辑JSON文件更简单、更安全</li>
+                        <li>所有修改完成后，点击"保存所有修改"按钮保存</li>
                     </ul>
-                    <p><strong>使用提示：</strong> 点击"添加分组"创建新分组，点击"添加股票"向分组中添加股票。您也可以通过"导入股票"功能批量添加股票。</p>
                 </div>
                 
                 <div class="mb-3">
@@ -76,9 +74,11 @@
                     </div>
                 </div>
                 
-                <!-- 保存按钮 -->
-                <div class="save-all-btn-container mt-4 mb-5">
-                    <button class="save-all-btn" id="saveAllBtn">
+                <div class="mt-4 d-flex justify-content-between">
+                    <button class="btn btn-outline-danger" id="cleanReportsBtn">
+                        <i class="bi bi-trash"></i> 清理报告文件
+                    </button>
+                    <button class="btn btn-success" id="saveAllBtn">
                         <i class="bi bi-save"></i> 保存所有修改
                     </button>
                 </div>

@@ -24,7 +24,7 @@
                         <a class="nav-link active" href="#">首页</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/watchlist-editor">股票列表编辑器</a>
+                        <a class="nav-link" href="/watchlist-editor" target="_blank">股票列表编辑器</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="cleanReportsBtn">清理报告</a>
@@ -341,8 +341,9 @@
                                     <label for="marketSelect" class="form-label">市场</label>
                                     <select class="form-select" id="marketSelect">
                                         <option value="US" selected>美股</option>
-                                        <option value="HK">港股</option>
+                                        <!-- 港股选项已被移除，系统当前仅支持美股 -->
                                     </select>
+                                    <div class="form-text">目前仅支持美股市场</div>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -413,6 +414,9 @@
                                     <button type="button" class="btn btn-primary" id="validateStocksBtn">
                                         验证股票代码
                                         <span class="spinner-border spinner-border-sm d-none" id="validateSpinner" role="status" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary mt-2" id="testValidateBtn" onclick="testValidate()">
+                                        测试验证功能
                                     </button>
                                 </div>
                             </form>
@@ -534,6 +538,65 @@
     <script src="{{ url_for('static', filename='js/watchlist-importer.js') }}"></script>
 
     <script>
+        // 测试验证功能
+        function testValidate() {
+            console.log('测试验证功能被调用');
+            
+            // 设置测试数据
+            document.getElementById('stockInput').value = 'AAPL\nMSFT\nGOOG';
+            document.getElementById('autoCategories').checked = true;
+            
+            // 直接调用API
+            const testDirectAPI = true;
+            
+            if (testDirectAPI) {
+                console.log('直接调用API测试');
+                
+                // 显示加载中
+                const validateBtn = document.getElementById('testValidateBtn');
+                validateBtn.disabled = true;
+                validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 测试中...';
+                
+                // 直接调用API
+                fetch('/api/validate-stocks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        codes: ['AAPL', 'MSFT', 'GOOG'],
+                        translate: true
+                    })
+                })
+                .then(response => {
+                    console.log('API响应状态:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API响应数据:', data);
+                    alert('API测试成功，请查看控制台日志');
+                })
+                .catch(error => {
+                    console.error('API测试出错:', error);
+                    alert('API测试出错: ' + error.message);
+                })
+                .finally(() => {
+                    // 恢复按钮状态
+                    validateBtn.disabled = false;
+                    validateBtn.innerHTML = '测试验证功能';
+                });
+            } else {
+                // 直接调用验证函数
+                try {
+                    console.log('直接调用validateStocksHandler函数');
+                    validateStocksHandler();
+                } catch (error) {
+                    console.error('测试验证出错:', error);
+                    alert('测试验证出错: ' + error.message);
+                }
+            }
+        }
+        
         // 更新时间显示
         function updateTime() {
             const now = new Date();
@@ -569,6 +632,15 @@
 
         // 自选股导入功能
         document.addEventListener('DOMContentLoaded', function() {
+            // 检查 URL 参数是否需要自动打开导入模态框
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'import') {
+                const importModal = new bootstrap.Modal(document.getElementById('importWatchlistModal'));
+                importModal.show();
+                // 清除 URL 参数
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
             // 导入自选股按钮点击事件
             document.getElementById('importWatchlistBtn').addEventListener('click', function() {
                 const importModal = new bootstrap.Modal(document.getElementById('importWatchlistModal'));

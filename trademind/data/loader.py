@@ -350,6 +350,21 @@ def validate_stock_code(code: str, translate: bool = True) -> dict:
                 "valid": False,
                 "error": f"不支持{contract_type}合约，请输入普通股票代码"
             }
+            
+        # 检查是否为港股代码格式（纯数字或数字.HK）
+        if code.isdigit() and len(code) <= 5:
+            return {
+                "code": code,
+                "valid": False,
+                "error": "不支持的市场代码，请输入美股代码"
+            }
+            
+        if code.endswith('.HK'):
+            return {
+                "code": code,
+                "valid": False,
+                "error": "不支持的市场代码，请输入美股代码"
+            }
         
         # 转换指数代码
         yf_code = convert_index_code(code)
@@ -705,7 +720,7 @@ def batch_validate_stock_codes(codes: List[str], market: str = "US", translate: 
     
     参数:
         codes: 股票代码列表
-        market: 市场类型，US或HK
+        market: 市场类型，仅支持US
         translate: 是否翻译股票名称为中文
         
     返回:
@@ -715,7 +730,7 @@ def batch_validate_stock_codes(codes: List[str], market: str = "US", translate: 
         logger.warning("批量验证股票代码时收到空列表")
         return []
     
-    logger.info(f"开始批量验证 {len(codes)} 个股票代码，市场: {market}, 翻译: {translate}")
+    logger.info(f"开始批量验证 {len(codes)} 个股票代码，市场: US, 翻译: {translate}")
     results = []
     
     for code in codes:
