@@ -4,24 +4,30 @@
 
 // 全局函数，用于刷新观察列表下拉框
 function refreshWatchlistDropdown(data) {
+    // 防御性检查输入数据
+    if (!data) {
+        console.error('刷新观察列表下拉框失败: 数据为空');
+        return;
+    }
+    
     // 处理不同格式的输入数据
     let watchlists = data;
     let groups_order = null;
     
-    // 如果传入的是包含watchlists和groups_order的对象
-    if (data && typeof data === 'object' && data.watchlists) {
-        watchlists = data.watchlists;
-        groups_order = data.groups_order;
-        console.log('主界面刷新观察列表下拉框，包含分组顺序:', groups_order);
-    } else {
-        console.log('主界面刷新观察列表下拉框，无分组顺序');
-    }
-    
     try {
-        // 如果有分组顺序，只记录它，不调用API
-        if (groups_order && Array.isArray(groups_order)) {
-            console.log('记录分组顺序:', groups_order);
-            // 完全移除saveGroupsOrder调用，防止服务器崩溃
+        // 如果传入的是包含watchlists和groups_order的对象
+        if (data && typeof data === 'object' && data.watchlists) {
+            watchlists = data.watchlists;
+            groups_order = data.groups_order;
+            console.log('主界面刷新观察列表下拉框，包含分组顺序');
+        } else {
+            console.log('主界面刷新观察列表下拉框，无分组顺序');
+        }
+        
+        // 防御性检查watchlists
+        if (!watchlists || typeof watchlists !== 'object' || Array.isArray(watchlists)) {
+            console.error('刷新观察列表下拉框失败: watchlists格式不正确');
+            return;
         }
         
         // 获取下拉菜单元素
@@ -44,7 +50,7 @@ function refreshWatchlistDropdown(data) {
         
         // 如果提供了分组顺序，使用它
         if (groups_order && Array.isArray(groups_order) && groups_order.length > 0) {
-            console.log('使用提供的分组顺序:', groups_order);
+            console.log('使用提供的分组顺序');
             
             // 创建一个新的数组，按照指定的顺序排列分组
             const orderedGroups = [];
@@ -65,25 +71,41 @@ function refreshWatchlistDropdown(data) {
             
             // 使用排序后的分组名称
             groupNames = orderedGroups;
-            console.log('最终使用的分组顺序:', groupNames);
+            console.log('最终使用的分组顺序长度:', groupNames.length);
         }
         
         // 添加新的选项
         groupNames.forEach(groupName => {
-            const option = document.createElement('option');
-            option.value = groupName;
-            option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
-            watchlistSelect.appendChild(option);
+            try {
+                const option = document.createElement('option');
+                option.value = groupName;
+                
+                // 防御性检查watchlists[groupName]
+                if (watchlists[groupName] && typeof watchlists[groupName] === 'object') {
+                    option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
+                } else {
+                    option.textContent = `${groupName} (0个股票)`;
+                }
+                
+                watchlistSelect.appendChild(option);
+            } catch (optionError) {
+                console.error(`添加选项 ${groupName} 时出错:`, optionError);
+                // 继续处理其他选项，不中断执行
+            }
         });
         
         // 恢复之前选中的值，如果它仍然存在
-        if (selectedValue && Array.from(watchlistSelect.options).some(option => option.value === selectedValue)) {
-            watchlistSelect.value = selectedValue;
+        try {
+            if (selectedValue && Array.from(watchlistSelect.options).some(option => option.value === selectedValue)) {
+                watchlistSelect.value = selectedValue;
+            }
+            
+            // 触发change事件，更新股票列表
+            const event = new Event('change');
+            watchlistSelect.dispatchEvent(event);
+        } catch (selectError) {
+            console.error('设置选中值或触发事件时出错:', selectError);
         }
-        
-        // 触发change事件，更新股票列表
-        const event = new Event('change');
-        watchlistSelect.dispatchEvent(event);
     } catch (error) {
         console.error('刷新观察列表下拉菜单时出错:', error);
     }
@@ -104,33 +126,60 @@ function loadWatchlists(forceRefresh = false) {
     const timestamp = new Date().getTime();
     const url = `/api/watchlists?t=${timestamp}`;
     
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.watchlists) {
-                console.log('成功获取观察列表数据:', data);
-                
-                // 创建一个包含watchlists和groups_order的对象
-                const watchlistData = {
-                    watchlists: data.watchlists,
-                    groups_order: data.groups_order || Object.keys(data.watchlists)
-                };
-                
+    // 添加超时处理
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+    
+    fetch(url, { 
+        signal: controller.signal,
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    })
+    .then(response => {
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+            throw new Error(`服务器返回错误: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.watchlists) {
+            console.log('成功获取观察列表数据');
+            
+            // 创建一个包含watchlists和groups_order的对象
+            const watchlistData = {
+                watchlists: data.watchlists,
+                groups_order: data.groups_order || Object.keys(data.watchlists)
+            };
+            
+            try {
                 // 使用refreshWatchlistDropdown函数更新下拉菜单
                 refreshWatchlistDropdown(watchlistData);
-            } else {
-                console.error('获取观察列表失败:', data);
+            } catch (refreshError) {
+                console.error('刷新下拉菜单时出错:', refreshError);
+                // 出错时不抛出异常，避免中断执行
             }
-        })
-        .catch(error => {
+        } else {
+            console.error('获取观察列表失败:', data);
+        }
+    })
+    .catch(error => {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            console.error('获取观察列表超时');
+        } else {
             console.error('获取观察列表时出错:', error);
-        })
-        .finally(() => {
-            // 延迟重置标志，防止短时间内多次调用
-            setTimeout(() => {
-                window.isLoadingWatchlists = false;
-            }, 1000);
-        });
+        }
+    })
+    .finally(() => {
+        // 延迟重置标志，防止短时间内多次调用
+        setTimeout(() => {
+            window.isLoadingWatchlists = false;
+        }, 1000);
+    });
 }
 
 // 等待DOM加载完成
