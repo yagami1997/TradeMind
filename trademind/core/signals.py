@@ -458,5 +458,6 @@ def generate_trading_advice(indicators: Dict, current_price: float,
         "signals": signals,
         "color": color,
         "system_scores": system_scores,
-        "total_score": total_score
+        "total_score": total_score,
+        "explanation": f"{advice}信号 (置信度: {round(confidence, 1)}%)"
     } 

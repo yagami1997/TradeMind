@@ -852,7 +852,7 @@ def update_watchlists_file(stocks: List[Dict], group_name: str = None) -> bool:
         logger.error(f"更新watchlists.json文件时出错: {str(e)}")
         return False
 
-def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str = "", auto_categories: bool = False, clear_existing: bool = False) -> Dict:
+def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str = "", auto_categories: bool = False, clear_existing: bool = False, translate: bool = False) -> Dict:
     """
     导入股票到自选股列表
     
@@ -862,6 +862,7 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
         group_name: 分组名称，如果不指定则使用默认分组
         auto_categories: 是否自动分类
         clear_existing: 是否清空现有列表
+        translate: 是否翻译股票名称
         
     返回:
         Dict: 导入结果
@@ -895,6 +896,20 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
                 
                 # 使用简单字符串格式保存股票名称
                 stock_name = stock.get('name', '')
+                
+                # 如果需要翻译，并且名称是英文，尝试翻译
+                if translate and stock_name and is_english_name(stock_name):
+                    # 获取股票代码（确保是Yahoo Finance格式）
+                    yf_code = stock.get('yf_code', stock_code)
+                    
+                    # 尝试获取中文名称
+                    try:
+                        # 使用validate_stock_code函数获取中文名称
+                        validation_result = validate_stock_code(yf_code, translate=True)
+                        if validation_result.get('valid') and validation_result.get('name'):
+                            stock_name = validation_result.get('name')
+                    except Exception as e:
+                        logger.warning(f"翻译股票名称失败: {stock_code} - {e}")
                 
                 # 获取股票类型
                 market_type = stock.get('market_type', 'equity').lower()
@@ -958,6 +973,20 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
                 
                 # 使用简单字符串格式保存股票名称
                 stock_name = stock.get('name', '')
+                
+                # 如果需要翻译，并且名称是英文，尝试翻译
+                if translate and stock_name and is_english_name(stock_name):
+                    # 获取股票代码（确保是Yahoo Finance格式）
+                    yf_code = stock.get('yf_code', stock_code)
+                    
+                    # 尝试获取中文名称
+                    try:
+                        # 使用validate_stock_code函数获取中文名称
+                        validation_result = validate_stock_code(yf_code, translate=True)
+                        if validation_result.get('valid') and validation_result.get('name'):
+                            stock_name = validation_result.get('name')
+                    except Exception as e:
+                        logger.warning(f"翻译股票名称失败: {stock_code} - {e}")
                 
                 # 获取股票类型
                 market_type = stock.get('market_type', 'equity').lower()
@@ -1058,4 +1087,25 @@ def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
     
     except Exception as e:
         logger.error(f"保存用户自选股列表时出错: {str(e)}")
-        return False 
+        return False
+
+def is_english_name(name: str) -> bool:
+    """
+    判断股票名称是否为英文
+    
+    参数:
+        name: 股票名称
+        
+    返回:
+        bool: 是否为英文名称
+    """
+    if not name:
+        return False
+    
+    # 检查是否包含中文字符
+    for char in name:
+        if '\u4e00' <= char <= '\u9fff':
+            return False
+    
+    # 如果不包含中文字符，且包含英文字母，则认为是英文名称
+    return any(c.isalpha() for c in name) 

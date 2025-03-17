@@ -807,7 +807,7 @@ def generate_stock_card_html(result: Dict) -> str:
                     elif any(keyword in pattern_name for keyword in ["十字星", "平头", "震荡"]):
                         bg_color = "#DEB887"
                     
-                    pattern_html += f'<div style="display: inline-block; margin: 2px; padding: 5px 10px; background-color: {bg_color} !important; color: #333; border-radius: 4px; font-size: 13px;">{pattern_name} ({pattern_confidence}%)</div>'
+                    pattern_html += '<div style="display: inline-block; margin: 2px; padding: 5px 10px; background-color: ' + bg_color + ' !important; color: #333; border-radius: 4px; font-size: 13px;">' + pattern_name + ' (' + str(pattern_confidence) + '%)</div>'
         
         if not has_valid_patterns:
             pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #FFE4E1 !important; padding: 8px; border-radius: 4px; border: 1px dashed #E8D4D1;">无明显K线形态</div>'
@@ -817,9 +817,9 @@ def generate_stock_card_html(result: Dict) -> str:
     # 获取信号 - 严格筛选技术指标信号
     signals = []
     if result.get('signals'):
-        signals = result['signals']
+        signals = result.get('signals', [])
     elif result.get('advice', {}).get('signals'):
-        signals = result['advice']['signals']
+        signals = result.get('advice', {}).get('signals', [])
     else:
         signals = []  # 如果没有信号，使用空列表作为默认值
     
@@ -844,7 +844,7 @@ def generate_stock_card_html(result: Dict) -> str:
                 signal_color = "#616161"  # 深灰色文字
                 signal_border = "#E0E0E0"  # 浅灰色边框
             
-            signals_html += f'<span style="display: inline-block; margin: 2px; padding: 3px 8px; background-color: {signal_bg}; color: {signal_color}; border: 1px solid {signal_border}; border-radius: 4px; font-size: 12px;">{signal}</span>'
+            signals_html += '<span style="display: inline-block; margin: 2px; padding: 3px 8px; background-color: ' + signal_bg + '; color: ' + signal_color + '; border: 1px solid ' + signal_border + '; border-radius: 4px; font-size: 12px;">' + signal + '</span>'
     
     # 获取回测结果
     backtest = result.get('backtest', {})
@@ -898,7 +898,7 @@ def generate_stock_card_html(result: Dict) -> str:
                         置信度: {confidence}%
                     </div>
                 </div>
-                {f'<p>{explanation}</p>' if explanation else ''}
+                {'<p>' + explanation + '</p>' if explanation else ''}
             </div>
             
             <div class="backtest-results" style="background-color: #fff8e1; padding: 12px; border-radius: 5px;">

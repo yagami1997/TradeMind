@@ -1071,6 +1071,9 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmImportBtn.disabled = true;
         importSpinner.classList.remove('d-none');
         
+        // 获取翻译选项
+        const shouldTranslate = translateNames && translateNames.checked;
+        
         // 发送请求导入自选股
         fetch('/api/import-watchlist', {
             method: 'POST',
@@ -1081,7 +1084,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 stocks: validStocks,
                 groupName: isAutoCategories ? '' : groupNameValue,
                 autoCategories: isAutoCategories,
-                clearExisting: clearExisting
+                clearExisting: clearExisting,
+                translate: shouldTranslate  // 添加翻译选项
             })
         })
         .then(response => response.json())
@@ -1105,6 +1109,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (successModal) {
                     const successModalInstance = new bootstrap.Modal(successModal);
                     successModalInstance.show();
+                    
+                    // 添加事件监听器，确保在关闭成功模态框时不会触发页面刷新
+                    successModal.addEventListener('hidden.bs.modal', function (event) {
+                        // 防止事件冒泡
+                        event.stopPropagation();
+                    }, { once: true });
                 }
                 
                 // 重置表单
@@ -1173,18 +1183,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function refreshWatchlistDropdown(watchlists) {
         console.log('刷新观察列表下拉菜单', watchlists);
         
-        // 刷新模态框内的下拉菜单（如果有的话）
-        const modalWatchlistSelect = document.querySelector('#importWatchlistModal select[id="watchlist"]');
-        if (modalWatchlistSelect) {
-            updateSelectOptions(modalWatchlistSelect, watchlists);
-        }
-        
-        // 刷新主页面的下拉菜单
-        const mainWatchlistSelect = document.getElementById('watchlist');
-        if (mainWatchlistSelect) {
-            updateSelectOptions(mainWatchlistSelect, watchlists);
-        } else {
-            console.error('找不到主页面观察列表下拉菜单');
+        try {
+            // 刷新模态框内的下拉菜单（如果有的话）
+            const modalWatchlistSelect = document.querySelector('#importWatchlistModal select[id="watchlist"]');
+            if (modalWatchlistSelect) {
+                updateSelectOptions(modalWatchlistSelect, watchlists);
+            }
+            
+            // 刷新主页面的下拉菜单
+            const mainWatchlistSelect = document.getElementById('watchlist');
+            if (mainWatchlistSelect) {
+                // 暂时移除change事件监听器，避免触发不必要的事件
+                const oldWatchlistSelect = mainWatchlistSelect.cloneNode(true);
+                const parent = mainWatchlistSelect.parentNode;
+                
+                // 更新选项
+                updateSelectOptions(mainWatchlistSelect, watchlists);
+                
+                // 如果需要，可以在这里重新添加事件监听器
+            } else {
+                console.error('找不到主页面观察列表下拉菜单');
+            }
+        } catch (error) {
+            console.error('刷新观察列表下拉菜单时出错:', error);
         }
     }
     
