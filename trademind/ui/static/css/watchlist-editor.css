@@ -395,18 +395,19 @@ body {
 /* 分组排序样式 */
 .sortable-list {
     position: relative;
-    padding: 5px 0;
-    margin-bottom: 20px;
-    min-height: 200px;
+    padding: 4px 0;
+    margin-bottom: 16px;
+    min-height: 160px;
 }
 
 .sortable-list li {
     cursor: default;
     transition: background-color 0.3s, transform 0.3s;
     border-left: 3px solid transparent;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     padding-left: 0;
+    font-size: 0.95rem;
 }
 
 .sortable-list li:hover {
@@ -417,12 +418,12 @@ body {
 
 .sortable-list li.dragging {
     background-color: #f0f8ff;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     border-left-color: var(--primary-color);
-    border-left-width: 5px;
+    border-left-width: 4px;
     opacity: 0.95;
-    transform: scale(1.02);
+    transform: scale(1.01);
     transition: box-shadow 0.3s ease, border-left-color 0.3s ease;
     pointer-events: none;
     animation: pulse-subtle 2s infinite alternate;
@@ -431,17 +432,17 @@ body {
 }
 
 @keyframes pulse-subtle {
-    from { box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); }
-    to { box-shadow: 0 8px 16px rgba(0, 140, 141, 0.2); }
+    from { box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
+    to { box-shadow: 0 6px 12px rgba(0, 140, 141, 0.2); }
 }
 
 .sortable-list .placeholder {
     border: 2px dashed var(--primary-color);
     background-color: rgba(0, 140, 141, 0.05);
-    margin: 8px 0;
+    margin: 6px 0;
     transition: all 0.3s ease-out;
     border-radius: 4px;
-    height: 50px;
+    height: 40px;
     position: relative;
     overflow: hidden;
 }
@@ -463,12 +464,10 @@ body {
 }
 
 .drag-handle {
-    cursor: grab;
-    padding: 8px 12px;
-    color: #6c757d;
+    cursor: move;
+    padding: 4px 8px;
     border-radius: 4px;
-    transition: all 0.2s ease;
-    margin-right: 0;
+    margin-left: 8px;
 }
 
 .drag-handle:hover {
@@ -492,31 +491,36 @@ body {
 }
 
 .group-name {
-    font-weight: 500;
-    flex-grow: 1;
-    padding: 10px 15px;
-    color: var(--text-color);
+    flex: 1;
+    font-size: 0.95rem;
+    padding: 4px 0;
 }
 
 /* 模态框样式优化 */
-#sortGroupsModal .modal-dialog {
-    max-width: 600px;
+#sortGroupsModal .modal-dialog,
+#groupSortModal .modal-dialog {
+    max-width: 500px;
 }
 
-#sortGroupsModal .modal-body {
-    padding: 20px 25px;
+#sortGroupsModal .modal-body,
+#groupSortModal .modal-body {
+    padding: 15px 20px;
     overflow: hidden;
 }
 
-#sortGroupsModal .list-group-item {
+#sortGroupsModal .list-group-item,
+#groupSortModal .list-group-item {
     padding: 0;
     overflow: hidden;
     position: relative;
 }
 
-#sortGroupsModal .alert-info {
-    margin-bottom: 20px;
+#sortGroupsModal .alert-info,
+#groupSortModal .alert-info {
+    margin-bottom: 15px;
     border-left: 4px solid var(--primary-color);
+    padding: 10px 15px;
+    font-size: 0.9rem;
 }
 
 /* 保存指示器样式 */
@@ -546,4 +550,10 @@ body {
 
 .save-indicator i {
     font-size: 16px;
+}
+
+.group-item {
+    padding: 8px 12px !important;
+    height: auto !important;
+    min-height: 40px;
 } 

@@ -1072,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetImportForm();
                 
                 // 刷新观察列表下拉菜单
-                refreshWatchlistDropdown(data.watchlists);
+                refreshWatchlistDropdown(data);
             } else {
                 // 显示友好的错误消息
                 const errorMsg = data.error || '未知错误';
@@ -1131,14 +1131,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 刷新观察列表下拉菜单
-    function refreshWatchlistDropdown(watchlists) {
-        console.log('刷新观察列表下拉菜单', watchlists);
+    function refreshWatchlistDropdown(data) {
+        // 处理不同格式的输入数据
+        let watchlists = data;
+        let groups_order = null;
+        
+        // 如果传入的是包含watchlists和groups_order的对象
+        if (data && typeof data === 'object' && data.watchlists) {
+            watchlists = data.watchlists;
+            groups_order = data.groups_order;
+            console.log('刷新观察列表下拉菜单，包含分组顺序:', groups_order);
+        } else {
+            console.log('刷新观察列表下拉菜单，无分组顺序');
+        }
         
         try {
+            // 如果有分组顺序，保存它
+            if (groups_order && Array.isArray(groups_order)) {
+                saveGroupsOrder(groups_order);
+            }
+            
             // 刷新模态框内的下拉菜单（如果有的话）
             const modalWatchlistSelect = document.querySelector('#importWatchlistModal select[id="watchlist"]');
             if (modalWatchlistSelect) {
-                updateSelectOptions(modalWatchlistSelect, watchlists);
+                updateSelectOptions(modalWatchlistSelect, watchlists, groups_order);
             }
             
             // 刷新主页面的下拉菜单
@@ -1149,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const parent = mainWatchlistSelect.parentNode;
                 
                 // 更新选项
-                updateSelectOptions(mainWatchlistSelect, watchlists);
+                updateSelectOptions(mainWatchlistSelect, watchlists, groups_order);
                 
                 // 如果需要，可以在这里重新添加事件监听器
             } else {
@@ -1160,8 +1176,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // 保存分组顺序
+    function saveGroupsOrder(groups_order) {
+        if (!groups_order || !Array.isArray(groups_order)) {
+            console.error('无效的分组顺序:', groups_order);
+            return;
+        }
+        
+        console.log('保存分组顺序:', groups_order);
+        
+        // 发送到后端
+        fetch('/api/update_watchlists_order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ order: groups_order })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('保存分组顺序结果:', data);
+            if (data.success) {
+                console.log('分组顺序保存成功');
+            } else {
+                console.error('保存分组顺序失败:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('保存分组顺序出错:', error);
+        });
+    }
+    
     // 更新下拉菜单选项
-    function updateSelectOptions(selectElement, watchlists) {
+    function updateSelectOptions(selectElement, watchlists, groups_order) {
         if (!selectElement) return;
         
         // 保存当前选中的值
@@ -1172,16 +1219,45 @@ document.addEventListener('DOMContentLoaded', function() {
             selectElement.remove(1);
         }
         
+        // 确定分组顺序
+        let groupNames = Object.keys(watchlists);
+        
+        // 如果提供了分组顺序，使用它
+        if (groups_order && Array.isArray(groups_order) && groups_order.length > 0) {
+            console.log('使用提供的分组顺序:', groups_order);
+            
+            // 创建一个新的数组，按照指定的顺序排列分组
+            const orderedGroups = [];
+            
+            // 首先添加按顺序排列的分组
+            groups_order.forEach(groupName => {
+                if (watchlists[groupName]) {
+                    orderedGroups.push(groupName);
+                }
+            });
+            
+            // 然后添加未在顺序中指定的分组
+            groupNames.forEach(groupName => {
+                if (!orderedGroups.includes(groupName)) {
+                    orderedGroups.push(groupName);
+                }
+            });
+            
+            // 使用排序后的分组名称
+            groupNames = orderedGroups;
+            console.log('最终使用的分组顺序:', groupNames);
+        }
+        
         // 添加新的选项
-        for (const groupName in watchlists) {
+        groupNames.forEach(groupName => {
             const option = document.createElement('option');
             option.value = groupName;
             option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
             selectElement.appendChild(option);
-        }
+        });
         
         // 恢复之前选中的值，如果它仍然存在
-        if (selectedValue && Array.from(selectElement.options).some(opt => opt.value === selectedValue)) {
+        if (selectedValue && Array.from(selectElement.options).some(option => option.value === selectedValue)) {
             selectElement.value = selectedValue;
         }
     }
@@ -1269,100 +1345,166 @@ document.addEventListener('DOMContentLoaded', function() {
         resetImportForm();
     });
 
+    // 获取手动编辑状态并更新手气不错按钮
+    function updateLuckyButtonState() {
+        fetch('/api/watchlists')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const hasBeenManuallyEdited = data.hasBeenManuallyEdited;
+                    const luckyButton = document.getElementById('luckyButton');
+                    
+                    if (hasBeenManuallyEdited) {
+                        // 已手动编辑，禁用按钮
+                        luckyButton.disabled = true;
+                        luckyButton.classList.remove('btn-info');
+                        luckyButton.classList.add('btn-secondary');
+                        luckyButton.innerHTML = '<i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表';
+                        
+                        // 添加提示信息
+                        const infoText = document.getElementById('luckyButtonInfo');
+                        if (infoText) {
+                            infoText.innerHTML = '<i class="bi bi-info-circle"></i> 您已手动编辑过此列表，无法使用手气不错功能';
+                            infoText.classList.remove('text-muted');
+                            infoText.classList.add('text-warning');
+                        }
+                    } else {
+                        // 未手动编辑，启用按钮
+                        luckyButton.disabled = false;
+                        luckyButton.classList.remove('btn-secondary');
+                        luckyButton.classList.add('btn-info');
+                        
+                        // 添加提示信息
+                        const infoText = document.getElementById('luckyButtonInfo');
+                        if (infoText) {
+                            infoText.innerHTML = '<i class="bi bi-info-circle"></i> 点击使用手气不错功能整理您的自选股列表';
+                            infoText.classList.remove('text-warning');
+                            infoText.classList.add('text-muted');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('获取手动编辑状态失败:', error);
+            });
+    }
+
+    // 页面加载时更新手气不错按钮状态
+    updateLuckyButtonState();
+
     // "手气不错"功能 - 自动整理自选股列表
     luckyButton.addEventListener('click', function() {
-        // 显示加载状态
-        luckyButton.disabled = true;
-        luckyButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在整理...';
-        
-        // 显示进度区域
-        const progressContainer = document.getElementById('luckyProgressContainer');
-        const progressBar = document.getElementById('luckyProgressBar');
-        const statusText = document.getElementById('luckyStatusText');
-        progressContainer.classList.remove('d-none');
-        
-        // 设置初始进度
-        updateLuckyProgress(5, '正在读取自选股列表...');
-        
-        // 设置进度轮询
-        let progressInterval = setInterval(function() {
-            fetch('/api/auto-organize-progress')
+        // 先检查是否已手动编辑
+        fetch('/api/watchlists')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.hasBeenManuallyEdited) {
+                    // 已手动编辑，显示提示并阻止操作
+                    showToast('您已手动编辑过此列表，无法使用手气不错功能', 'warning');
+                    return;
+                }
+                
+                // 未手动编辑，继续执行手气不错功能
+                // 显示加载状态
+                luckyButton.disabled = true;
+                luckyButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在整理...';
+                
+                // 显示进度区域
+                const progressContainer = document.getElementById('luckyProgressContainer');
+                const progressBar = document.getElementById('luckyProgressBar');
+                const statusText = document.getElementById('luckyStatusText');
+                progressContainer.classList.remove('d-none');
+                
+                // 设置初始进度
+                updateLuckyProgress(5, '正在读取自选股列表...');
+                
+                // 设置进度轮询
+                let progressInterval = setInterval(function() {
+                    fetch('/api/auto-organize-progress')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.in_progress) {
+                                updateLuckyProgress(data.percent, data.status);
+                            } else if (data.completed) {
+                                // 停止轮询
+                                clearInterval(progressInterval);
+                                
+                                // 设置为100%
+                                updateLuckyProgress(100, '整理完成！');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取进度失败:', error);
+                        });
+                }, 1000);
+                
+                // 发送请求到后端
+                fetch('/api/auto-organize-watchlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.in_progress) {
-                        updateLuckyProgress(data.percent, data.status);
-                    } else if (data.completed) {
-                        // 停止轮询
-                        clearInterval(progressInterval);
+                    // 停止进度轮询
+                    clearInterval(progressInterval);
+                    
+                    // 恢复按钮状态
+                    luckyButton.disabled = false;
+                    luckyButton.innerHTML = '<i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表';
+                    
+                    // 隐藏进度区域
+                    progressContainer.classList.add('d-none');
+                    
+                    if (data.success) {
+                        // 关闭导入模态框
+                        const importModalInstance = bootstrap.Modal.getInstance(importModal);
+                        importModalInstance.hide();
                         
-                        // 设置为100%
-                        updateLuckyProgress(100, '整理完成！');
+                        // 显示成功消息
+                        importSuccessMessage.innerHTML = `
+                            <p>${data.message}</p>
+                            <div class="alert alert-success">
+                                <ul>
+                                    <li>整理分组: ${data.stats.groups}个</li>
+                                    <li>验证股票: ${data.stats.stocks}个</li>
+                                    <li>翻译名称: ${data.stats.translated}个</li>
+                                    <li>修复无效: ${data.stats.fixed}个</li>
+                                </ul>
+                            </div>
+                        `;
+                        
+                        // 显示成功模态框
+                        const successModalInstance = new bootstrap.Modal(successModal);
+                        successModalInstance.show();
+                        
+                        // 刷新观察列表下拉菜单
+                        refreshWatchlistDropdown(data.watchlists);
+                        
+                        // 更新手气不错按钮状态
+                        updateLuckyButtonState();
+                    } else {
+                        alert('自动整理自选股列表失败: ' + data.error);
                     }
                 })
                 .catch(error => {
-                    console.error('获取进度失败:', error);
+                    // 停止进度轮询
+                    clearInterval(progressInterval);
+                    
+                    // 隐藏进度区域
+                    progressContainer.classList.add('d-none');
+                    
+                    console.error('自动整理自选股列表出错:', error);
+                    alert('自动整理自选股列表出错: ' + error.message);
+                    luckyButton.disabled = false;
+                    luckyButton.innerHTML = '<i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表';
                 });
-        }, 1000);
-        
-        // 发送请求到后端
-        fetch('/api/auto-organize-watchlist', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // 停止进度轮询
-            clearInterval(progressInterval);
-            
-            // 恢复按钮状态
-            luckyButton.disabled = false;
-            luckyButton.innerHTML = '<i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表';
-            
-            // 隐藏进度区域
-            progressContainer.classList.add('d-none');
-            
-            if (data.success) {
-                // 关闭导入模态框
-                const importModalInstance = bootstrap.Modal.getInstance(importModal);
-                importModalInstance.hide();
-                
-                // 显示成功消息
-                importSuccessMessage.innerHTML = `
-                    <p>${data.message}</p>
-                    <div class="alert alert-success">
-                        <ul>
-                            <li>整理分组: ${data.stats.groups}个</li>
-                            <li>验证股票: ${data.stats.stocks}个</li>
-                            <li>翻译名称: ${data.stats.translated}个</li>
-                            <li>修复无效: ${data.stats.fixed}个</li>
-                        </ul>
-                    </div>
-                `;
-                
-                // 显示成功模态框
-                const successModalInstance = new bootstrap.Modal(successModal);
-                successModalInstance.show();
-                
-                // 刷新观察列表下拉菜单
-                refreshWatchlistDropdown(data.watchlists);
-            } else {
-                alert('自动整理自选股列表失败: ' + data.error);
-            }
-        })
-        .catch(error => {
-            // 停止进度轮询
-            clearInterval(progressInterval);
-            
-            // 隐藏进度区域
-            progressContainer.classList.add('d-none');
-            
-            console.error('自动整理自选股列表出错:', error);
-            alert('自动整理自选股列表出错: ' + error.message);
-            luckyButton.disabled = false;
-            luckyButton.innerHTML = '<i class="bi bi-magic"></i> 手气不错 - 自动整理自选股列表';
-        });
+            })
+            .catch(error => {
+                console.error('检查手动编辑状态失败:', error);
+                showToast('检查手动编辑状态失败', 'danger');
+            });
     });
     
     // 更新"手气不错"进度条

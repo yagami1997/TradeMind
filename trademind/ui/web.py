@@ -563,57 +563,41 @@ def validate_stocks():
 def import_watchlist():
     """导入自选股列表"""
     try:
+        # 获取请求数据
         data = request.get_json()
-        stocks = data.get('stocks', [])
-        group_name = data.get('groupName', '')
-        auto_categories = data.get('autoCategories', False)
-        clear_existing = data.get('clearExisting', False)
-        translate = data.get('translate', False)  # 添加翻译选项
+        if not data:
+            return jsonify({'success': False, 'error': '未收到有效的请求数据'}), 400
         
-        if not stocks:
-            return jsonify({'success': False, 'error': '没有有效的股票可导入'}), 400
-            
-        # 验证分组信息
-        if not auto_categories and not group_name:
-            return jsonify({'success': False, 'error': '请选择自动分类或者指定分组名称'}), 400
-            
-        # 获取当前用户
+        # 获取用户ID
         user_id = session.get('user_id', 'default')
-        if not user_id:
-            return jsonify({'success': False, 'error': '用户未登录'}), 401
-            
-        # 导入股票
+        
+        # 获取参数
+        stocks = data.get('stocks', [])
+        group_name = data.get('group', "")
+        auto_categories = data.get('auto_categories', False)
+        clear_existing = data.get('clear_existing', False)
+        
+        # 导入股票到自选股列表
         result = import_stocks_to_watchlist(
             user_id=user_id,
             stocks=stocks,
             group_name=group_name,
             auto_categories=auto_categories,
             clear_existing=clear_existing,
-            translate=translate  # 添加翻译选项
+            translate=True
         )
         
-        if result['success']:
-            # 获取更新后的自选股列表
-            user_watchlists = get_user_watchlists(user_id)
-            
-            # 更新全局变量
-            global watchlists
-            watchlists = user_watchlists
-            
-            return jsonify({
-                'success': True,
-                'message': f'成功导入 {result["imported"]} 个股票到自选股列表',
-                'watchlists': user_watchlists
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result['error']
-            }), 400
-            
+        # 导入成功后，重置手动编辑标志
+        if result.get('success'):
+            save_user_watchlist_edit_status(user_id, False)
+        
+        return jsonify(result)
     except Exception as e:
-        logger.exception(f"导入自选股列表时发生错误: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        app.logger.error(f"导入自选股列表出错: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f"导入自选股列表出错: {str(e)}"
+        }), 500
 
 @app.route('/api/parse-stock-text', methods=['POST'])
 def parse_stock_text():
@@ -1611,19 +1595,68 @@ def api_get_watchlists():
             for i, group in enumerate(user_watchlists.keys()):
                 logger.info(f"分组 {i+1}: {group}")
             
-            # 明确指定分组顺序
-            groups_order = list(user_watchlists.keys())
+            # 尝试读取保存的分组顺序
+            try:
+                # 获取项目根目录
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                
+                # 获取用户配置目录
+                user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+                
+                # 构建文件路径
+                file_path = os.path.join(user_config_dir, 'groups_order.json')
+                
+                # 如果文件存在，读取保存的顺序
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        saved_data = json.load(f)
+                        saved_groups_order = saved_data.get('groups_order', [])
+                        
+                        # 验证保存的顺序是否有效
+                        if saved_groups_order and all(group in user_watchlists for group in saved_groups_order):
+                            # 使用保存的顺序
+                            groups_order = saved_groups_order
+                            logger.info(f"使用保存的分组顺序: {groups_order}")
+                            
+                            # 添加可能缺失的分组（新添加的分组）
+                            for group in user_watchlists.keys():
+                                if group not in groups_order:
+                                    groups_order.append(group)
+                                    logger.info(f"添加缺失的分组到顺序中: {group}")
+                        else:
+                            # 如果保存的顺序无效，使用默认顺序
+                            groups_order = list(user_watchlists.keys())
+                            logger.info(f"保存的分组顺序无效，使用默认顺序: {groups_order}")
+                    
+                else:
+                    # 如果文件不存在，使用默认顺序
+                    groups_order = list(user_watchlists.keys())
+                    logger.info(f"未找到保存的分组顺序，使用默认顺序: {groups_order}")
+            except Exception as e:
+                # 如果出错，使用默认顺序
+                groups_order = list(user_watchlists.keys())
+                logger.error(f"读取保存的分组顺序出错: {str(e)}，使用默认顺序")
+            
+            # 获取手动编辑标志
+            has_been_manually_edited = get_user_watchlist_edit_status(user_id)
             
             return jsonify({
                 'success': True,
                 'watchlists': user_watchlists,
-                'groups_order': groups_order  # 添加分组顺序字段
+                'groups_order': groups_order,  # 添加分组顺序字段
+                'hasBeenManuallyEdited': has_been_manually_edited  # 添加手动编辑标志
             })
         elif request.method == 'POST':
             # 获取请求数据
             data = request.get_json()
             if not data:
                 return jsonify({'success': False, 'error': '未收到有效的请求数据'}), 400
+            
+            # 提取手动编辑标志
+            has_been_manually_edited = data.get('hasBeenManuallyEdited', False)
+            
+            # 提取分组顺序（如果有）
+            groups_order = data.get('groups_order', [])
                 
             # 如果数据包含在 watchlists 字段中，提取它
             if 'watchlists' in data:
@@ -1634,6 +1667,15 @@ def api_get_watchlists():
             
             # 保存用户的自选股列表
             success = save_user_watchlists(user_id, new_watchlists)
+            
+            # 保存手动编辑标志
+            if success:
+                save_user_watchlist_edit_status(user_id, has_been_manually_edited)
+                
+                # 如果提供了分组顺序，保存它
+                if groups_order:
+                    save_groups_order(user_id, groups_order)
+                    logger.info(f"保存用户分组顺序: {groups_order}")
             
             if success:
                 # 更新全局变量
@@ -1648,10 +1690,13 @@ def api_get_watchlists():
                 return jsonify({
                     'success': False,
                     'error': '保存自选股列表失败'
-                }), 500
+                })
     except Exception as e:
-        logger.exception(f"获取或保存用户自选股列表时出错: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        app.logger.error(f"获取或保存自选股列表出错: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f"获取或保存自选股列表出错: {str(e)}"
+        }), 500
 
 @app.route('/api/watchlists/order', methods=['POST'])
 def api_update_watchlists_order():
@@ -1740,6 +1785,9 @@ def api_update_watchlists_order_new():
         # 保存更新后的自选股列表
         success = save_user_watchlists(user_id, ordered_watchlists)
         
+        # 保存分组顺序到专门的文件
+        order_saved = save_groups_order(user_id, new_order)
+        
         if success:
             # 更新全局变量
             global watchlists
@@ -1747,6 +1795,10 @@ def api_update_watchlists_order_new():
             
             # 获取最终的分组顺序
             groups_order = list(ordered_watchlists.keys())
+            
+            # 记录日志
+            logger.info(f"更新自选股分组排序成功，用户: {user_id}, 分组顺序: {groups_order}")
+            logger.info(f"分组顺序保存状态: {order_saved}")
             
             return jsonify({
                 'success': True,
@@ -1762,6 +1814,79 @@ def api_update_watchlists_order_new():
     except Exception as e:
         logger.exception(f"更新自选股分组排序时出错: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+def get_user_watchlist_edit_status(user_id):
+    """获取用户自选股列表的手动编辑状态"""
+    try:
+        # 获取项目根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # 获取用户配置目录
+        user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+        
+        # 构建文件路径
+        file_path = os.path.join(user_config_dir, 'watchlist_edited.json')
+        
+        # 如果文件不存在，返回默认值False
+        if not os.path.exists(file_path):
+            return False
+        
+        # 读取文件内容
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get('hasBeenManuallyEdited', False)
+    except Exception as e:
+        app.logger.error(f"获取用户自选股列表编辑状态出错: {str(e)}")
+        return False
+
+def save_user_watchlist_edit_status(user_id, has_been_manually_edited):
+    """保存用户自选股列表的手动编辑状态"""
+    try:
+        # 获取项目根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # 获取用户配置目录
+        user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+        
+        # 构建文件路径
+        file_path = os.path.join(user_config_dir, 'watchlist_edited.json')
+        
+        # 确保目录存在
+        os.makedirs(user_config_dir, exist_ok=True)
+        
+        # 保存状态到文件
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump({'hasBeenManuallyEdited': has_been_manually_edited}, f, ensure_ascii=False, indent=4)
+        
+        return True
+    except Exception as e:
+        app.logger.error(f"保存用户自选股列表编辑状态出错: {str(e)}")
+        return False
+
+# 保存分组顺序
+def save_groups_order(user_id, groups_order):
+    """保存用户自选股分组顺序"""
+    try:
+        # 获取项目根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # 获取用户配置目录
+        user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+        
+        # 构建文件路径
+        file_path = os.path.join(user_config_dir, 'groups_order.json')
+        
+        # 确保目录存在
+        os.makedirs(user_config_dir, exist_ok=True)
+        
+        # 保存顺序到文件
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump({'groups_order': groups_order}, f, ensure_ascii=False, indent=4)
+        
+        return True
+    except Exception as e:
+        app.logger.error(f"保存用户自选股分组顺序出错: {str(e)}")
+        return False
 
 if __name__ == "__main__":
     try:
