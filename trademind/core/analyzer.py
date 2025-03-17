@@ -898,7 +898,8 @@ class StockAnalyzer:
             'confidence': confidence,
             'signals': signals,
             'color': color,
-            'system_scores': system_scores
+            'system_scores': system_scores,
+            'explanation': f"{advice}信号 (置信度: {confidence}%)"
         }
             
     def backtest_strategy(self, data: pd.DataFrame) -> Dict:

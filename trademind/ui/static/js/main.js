@@ -22,23 +22,39 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTempQueryStocks();
 
     // 添加浏览器关闭事件监听器
+    let isRealClose = true; // 添加标志变量，控制是否真的关闭服务器
+    
+    // 在页面内部导航时设置标志
+    document.addEventListener('click', function(e) {
+        // 如果点击的是导航链接或表单提交按钮，设置标志为false
+        if (e.target.tagName === 'A' || 
+            (e.target.tagName === 'BUTTON' && e.target.type === 'submit')) {
+            isRealClose = false;
+            // 2秒后重置标志，以防导航被取消
+            setTimeout(() => { isRealClose = true; }, 2000);
+        }
+    });
+    
     window.addEventListener('beforeunload', function(e) {
         // 保存临时查询列表
         saveTempQueryStocks();
         
-        // 发送关闭服务器的请求
-        try {
-            // 使用同步请求确保在页面关闭前发送完成
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon('/api/shutdown', '');
-            } else {
-                // 备用方案：使用同步XMLHttpRequest
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/api/shutdown', false); // 同步请求
-                xhr.send();
+        // 只有在真正关闭页面时才发送关闭服务器的请求
+        if (isRealClose) {
+            // 发送关闭服务器的请求
+            try {
+                // 使用同步请求确保在页面关闭前发送完成
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon('/api/shutdown', '');
+                } else {
+                    // 备用方案：使用同步XMLHttpRequest
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/shutdown', false); // 同步请求
+                    xhr.send();
+                }
+            } catch (error) {
+                console.error('关闭服务器时出错:', error);
             }
-        } catch (error) {
-            console.error('关闭服务器时出错:', error);
         }
     });
 

@@ -40,7 +40,7 @@ from trademind.backtest import run_backtest
 from trademind.core.patterns import identify_candlestick_patterns
 from trademind.core.analyzer import StockAnalyzer
 from trademind.reports.generator import generate_html_report as generate_report
-from trademind.data.loader import get_stock_data, get_stock_info, validate_stock_code, batch_validate_stock_codes, update_watchlists_file, get_user_watchlists, save_user_watchlists, import_stocks_to_watchlist, STOCK_CATEGORIES
+from trademind.data.loader import get_stock_data, get_stock_info, validate_stock_code, batch_validate_stock_codes, update_watchlists_file, get_user_watchlists, save_user_watchlists, import_stocks_to_watchlist, STOCK_CATEGORIES, is_english_name
 from trademind import compat
 from trademind import __version__
 
@@ -156,6 +156,9 @@ def analyze_stocks():
                     # 检查服务器是否已停止
                     if not server_running.is_set():
                         print("\n检测到服务器停止信号，正在安全终止分析...")
+                        # 确保设置分析状态为完成
+                        analysis_progress["in_progress"] = False
+                        analysis_progress["percent"] = 1.0
                         break
                         
                     try:
@@ -286,6 +289,7 @@ def analyze_stocks():
             except Exception as e:
                 logger.exception(f"分析过程中发生错误: {str(e)}")
                 analysis_progress["in_progress"] = False
+                analysis_progress["percent"] = 1.0  # 确保进度条显示为完成
         
         # 启动分析线程
         threading.Thread(target=run_analysis).start()
@@ -300,6 +304,7 @@ def analyze_stocks():
     except Exception as e:
         logger.exception(f"启动分析过程中发生错误: {str(e)}")
         analysis_progress["in_progress"] = False
+        analysis_progress["percent"] = 1.0  # 确保进度条显示为完成
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/progress')
@@ -557,6 +562,7 @@ def import_watchlist():
         group_name = data.get('groupName', '')
         auto_categories = data.get('autoCategories', False)
         clear_existing = data.get('clearExisting', False)
+        translate = data.get('translate', False)  # 添加翻译选项
         
         if not stocks:
             return jsonify({'success': False, 'error': '没有有效的股票可导入'}), 400
@@ -576,7 +582,8 @@ def import_watchlist():
             stocks=stocks,
             group_name=group_name,
             auto_categories=auto_categories,
-            clear_existing=clear_existing
+            clear_existing=clear_existing,
+            translate=translate  # 添加翻译选项
         )
         
         if result['success']:
@@ -821,8 +828,19 @@ def auto_organize_watchlist():
                             }
                             
                             # 检查是否有中文名称
-                            if validated_stock['name'] != stock.get('name', ''):
+                            if result.get('name') and is_english_name(stock.get('name', '')):
+                                # 如果原名是英文，新名是中文，则计数为翻译
                                 stats['translated'] += 1
+                            # 强制翻译所有英文名称的股票
+                            elif is_english_name(validated_stock['name']):
+                                try:
+                                    # 再次尝试翻译
+                                    retry_result = validate_stock_code(converted_code, translate=True)
+                                    if retry_result.get('valid') and retry_result.get('name') and not is_english_name(retry_result.get('name')):
+                                        validated_stock['name'] = retry_result.get('name')
+                                        stats['translated'] += 1
+                                except Exception as translate_error:
+                                    app.logger.warning(f"二次翻译股票名称失败: {converted_code} - {translate_error}")
                             
                             validated_stocks.append(validated_stock)
                         else:
@@ -942,6 +960,17 @@ def auto_organize_watchlist():
                     
                     # 添加到分组
                     updated_watchlists[category][symbol] = stock_name
+                    
+                    # 如果股票名称仍然是英文，再次尝试翻译
+                    if is_english_name(stock_name):
+                        try:
+                            # 再次尝试翻译
+                            retry_result = validate_stock_code(symbol, translate=True)
+                            if retry_result.get('valid') and retry_result.get('name') and not is_english_name(retry_result.get('name')):
+                                updated_watchlists[category][symbol] = retry_result.get('name')
+                                stats['translated'] += 1
+                        except Exception as translate_error:
+                            app.logger.warning(f"分类阶段翻译股票名称失败: {symbol} - {translate_error}")
                 
                 # 每处理10个股票，更新一次进度
                 if i % 10 == 0 and total_valid > 0:
