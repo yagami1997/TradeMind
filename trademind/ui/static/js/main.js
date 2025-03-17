@@ -203,6 +203,63 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载观察列表
     loadWatchlists();
+    
+    // 添加隐藏的标记元素，用于检测是否需要重新加载
+    const reloadFlag = document.createElement('div');
+    reloadFlag.id = 'watchlistReloadFlag';
+    reloadFlag.style.display = 'none';
+    document.body.appendChild(reloadFlag);
+    
+    // 监听自定义事件，用于在编辑器保存后刷新观察列表
+    document.addEventListener('watchlistUpdated', function(e) {
+        console.log('收到watchlistUpdated事件:', e.detail);
+        // 重新加载观察列表
+        loadWatchlists();
+    });
+    
+    // 监听编辑器关闭事件
+    document.addEventListener('watchlistEditorClosed', function(e) {
+        console.log('收到watchlistEditorClosed事件:', e.detail);
+        // 强制重新加载观察列表
+        loadWatchlists(true);
+    });
+    
+    // 检查localStorage，看是否需要刷新观察列表
+    const editorSaved = localStorage.getItem('watchlistEditorSaved');
+    const editorSavedTime = localStorage.getItem('watchlistEditorSavedTime');
+    const editorClosed = localStorage.getItem('watchlistEditorClosed');
+    const editorClosedTime = localStorage.getItem('watchlistEditorClosedTime');
+    
+    if (editorSaved === 'true' && editorSavedTime) {
+        const savedTime = parseInt(editorSavedTime);
+        const currentTime = new Date().getTime();
+        const timeDiff = currentTime - savedTime;
+        
+        // 如果保存时间在5秒内，刷新观察列表
+        if (timeDiff < 5000) {
+            console.log('检测到编辑器最近保存了数据，刷新观察列表');
+            loadWatchlists();
+            // 清除标记
+            localStorage.removeItem('watchlistEditorSaved');
+            localStorage.removeItem('watchlistEditorSavedTime');
+        }
+    }
+    
+    // 检查编辑器是否最近关闭
+    if (editorClosed === 'true' && editorClosedTime) {
+        const closedTime = parseInt(editorClosedTime);
+        const currentTime = new Date().getTime();
+        const timeDiff = currentTime - closedTime;
+        
+        // 如果关闭时间在5秒内，刷新观察列表
+        if (timeDiff < 5000) {
+            console.log('检测到编辑器最近关闭，刷新观察列表');
+            loadWatchlists(true);
+            // 清除标记
+            localStorage.removeItem('watchlistEditorClosed');
+            localStorage.removeItem('watchlistEditorClosedTime');
+        }
+    }
 
     // 添加浏览器关闭事件监听器
     let isRealClose = true; // 添加标志变量，控制是否真的关闭服务器
@@ -226,27 +283,33 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('保存临时查询列表时出错:', error);
         }
         
-        // 完全禁用自动关闭服务器功能，避免刷新页面时服务器停止
-        // 注释掉以下代码，防止服务器被错误关闭
-        /*
+        // 恢复自动关闭服务器功能，但增加安全检查
         // 只有在真正关闭页面时才发送关闭服务器的请求
         if (isRealClose) {
-            // 发送关闭服务器的请求
-            try {
-                // 使用同步请求确保在页面关闭前发送完成
-                if (navigator.sendBeacon) {
-                    navigator.sendBeacon('/api/shutdown', '');
-                } else {
-                    // 备用方案：使用同步XMLHttpRequest
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/api/shutdown', false); // 同步请求
-                    xhr.send();
+            // 检查是否是页面刷新
+            const isRefresh = e.currentTarget.performance && e.currentTarget.performance.navigation.type === 1;
+            if (!isRefresh) {
+                console.log('检测到浏览器关闭，尝试关闭服务器');
+                // 发送关闭服务器的请求
+                try {
+                    // 使用sendBeacon API，它专为页面卸载时发送请求设计
+                    if (navigator.sendBeacon) {
+                        navigator.sendBeacon('/api/shutdown', '');
+                        console.log('已使用sendBeacon发送关闭服务器请求');
+                    } else {
+                        // 备用方案：使用同步XMLHttpRequest
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/api/shutdown', false); // 同步请求
+                        xhr.send();
+                        console.log('已使用同步XHR发送关闭服务器请求');
+                    }
+                } catch (error) {
+                    console.error('关闭服务器时出错:', error);
                 }
-            } catch (error) {
-                console.error('关闭服务器时出错:', error);
+            } else {
+                console.log('检测到页面刷新，不关闭服务器');
             }
         }
-        */
     });
 
     // 分析表单提交

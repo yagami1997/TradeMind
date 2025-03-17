@@ -758,32 +758,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('股票列表已保存', 'success');
                 hasUnsavedChanges = false;
                 
-                // 通知主界面刷新下拉框 - 简化这部分代码
+                // 通知主界面刷新下拉框 - 使用更可靠的方法
                 try {
                     if (window.opener && !window.opener.closed) {
                         console.log('尝试通知主界面刷新下拉框');
                         
-                        // 创建一个包含分组顺序的对象传递给主页面
-                        const dataWithOrder = {
-                            watchlists: watchlistData,
-                            groups_order: groupOrder
-                        };
-                        
-                        // 只调用一次刷新函数，避免多次调用
-                        if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                        // 方法1: 尝试调用主页面的loadWatchlists函数
+                        if (typeof window.opener.loadWatchlists === 'function') {
+                            window.opener.loadWatchlists();
+                            console.log('已通知主界面重新加载观察列表数据');
+                        }
+                        // 方法2: 尝试使用refreshWatchlistDropdown函数
+                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                            // 创建一个包含分组顺序的对象传递给主页面
+                            const dataWithOrder = {
+                                watchlists: watchlistData,
+                                groups_order: groupOrder
+                            };
                             window.opener.refreshWatchlistDropdown(dataWithOrder);
                             console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                        } else {
-                            // 如果主页面没有刷新函数，尝试重新加载主页面
-                            console.log('主页面没有刷新函数，尝试重新加载');
-                            try {
-                                // 使用setTimeout避免阻塞当前窗口关闭
-                                setTimeout(() => {
-                                    window.opener.location.reload();
-                                }, 100);
-                            } catch (reloadError) {
-                                console.error('重新加载主页面出错:', reloadError);
-                            }
+                        }
+                        
+                        // 方法3: 尝试直接刷新主页面的观察列表下拉框
+                        try {
+                            // 设置一个标记，表示编辑器已保存数据
+                            window.opener.localStorage.setItem('watchlistEditorSaved', 'true');
+                            window.opener.localStorage.setItem('watchlistEditorSavedTime', new Date().getTime().toString());
+                            
+                            // 尝试触发主页面的自定义事件
+                            const event = new CustomEvent('watchlistUpdated', { 
+                                detail: { 
+                                    time: new Date().getTime(),
+                                    groups: groupOrder
+                                } 
+                            });
+                            window.opener.document.dispatchEvent(event);
+                            console.log('已触发主页面的watchlistUpdated事件');
+                            
+                            // 如果以上方法都不起作用，尝试重新加载主页面
+                            setTimeout(() => {
+                                if (window.opener && !window.opener.closed) {
+                                    // 检查是否需要重新加载
+                                    const needsReload = !window.opener.document.getElementById('watchlistReloadFlag');
+                                    if (needsReload) {
+                                        console.log('尝试重新加载主页面');
+                                        window.opener.location.reload();
+                                    }
+                                }
+                            }, 500);
+                        } catch (refreshError) {
+                            console.error('刷新主页面出错:', refreshError);
                         }
                     }
                 } catch (error) {
@@ -1187,32 +1211,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 重新渲染观察列表
                 renderWatchlist();
                 
-                // 通知主界面刷新下拉框 - 简化这部分代码
+                // 通知主界面刷新下拉框 - 使用更可靠的方法
                 try {
                     if (window.opener && !window.opener.closed) {
                         console.log('尝试通知主界面刷新下拉框');
                         
-                        // 创建一个包含分组顺序的对象传递给主页面
-                        const dataWithOrder = {
-                            watchlists: watchlistData,
-                            groups_order: groupOrder
-                        };
-                        
-                        // 只调用一次刷新函数，避免多次调用
-                        if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                        // 方法1: 尝试调用主页面的loadWatchlists函数
+                        if (typeof window.opener.loadWatchlists === 'function') {
+                            window.opener.loadWatchlists();
+                            console.log('已通知主界面重新加载观察列表数据');
+                        }
+                        // 方法2: 尝试使用refreshWatchlistDropdown函数
+                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                            // 创建一个包含分组顺序的对象传递给主页面
+                            const dataWithOrder = {
+                                watchlists: watchlistData,
+                                groups_order: groupOrder
+                            };
                             window.opener.refreshWatchlistDropdown(dataWithOrder);
                             console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                        } else {
-                            // 如果主页面没有刷新函数，尝试重新加载主页面
-                            console.log('主页面没有刷新函数，尝试重新加载');
-                            try {
-                                // 使用setTimeout避免阻塞当前窗口关闭
-                                setTimeout(() => {
-                                    window.opener.location.reload();
-                                }, 100);
-                            } catch (reloadError) {
-                                console.error('重新加载主页面出错:', reloadError);
-                            }
+                        }
+                        
+                        // 方法3: 尝试直接刷新主页面的观察列表下拉框
+                        try {
+                            // 设置一个标记，表示编辑器已保存数据
+                            window.opener.localStorage.setItem('watchlistEditorSaved', 'true');
+                            window.opener.localStorage.setItem('watchlistEditorSavedTime', new Date().getTime().toString());
+                            
+                            // 尝试触发主页面的自定义事件
+                            const event = new CustomEvent('watchlistUpdated', { 
+                                detail: { 
+                                    time: new Date().getTime(),
+                                    groups: groupOrder
+                                } 
+                            });
+                            window.opener.document.dispatchEvent(event);
+                            console.log('已触发主页面的watchlistUpdated事件');
+                            
+                            // 如果以上方法都不起作用，尝试重新加载主页面
+                            setTimeout(() => {
+                                if (window.opener && !window.opener.closed) {
+                                    // 检查是否需要重新加载
+                                    const needsReload = !window.opener.document.getElementById('watchlistReloadFlag');
+                                    if (needsReload) {
+                                        console.log('尝试重新加载主页面');
+                                        window.opener.location.reload();
+                                    }
+                                }
+                            }, 500);
+                        } catch (refreshError) {
+                            console.error('刷新主页面出错:', refreshError);
                         }
                     }
                 } catch (error) {
@@ -1240,11 +1288,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveAndClose();
             } else {
                 // 不保存直接关闭
+                // 在关闭前尝试通知主界面刷新
+                notifyMainPageBeforeClose();
                 window.close();
             }
         } else {
             // 没有更改，直接关闭
+            // 在关闭前尝试通知主界面刷新
+            notifyMainPageBeforeClose();
             window.close();
+        }
+    }
+    
+    // 通知主界面刷新下拉框
+    function notifyMainPageBeforeClose() {
+        try {
+            if (window.opener && !window.opener.closed) {
+                console.log('关闭前尝试通知主界面刷新下拉框');
+                
+                // 设置一个标记，表示编辑器已关闭
+                window.opener.localStorage.setItem('watchlistEditorClosed', 'true');
+                window.opener.localStorage.setItem('watchlistEditorClosedTime', new Date().getTime().toString());
+                
+                // 尝试触发主页面的自定义事件
+                const event = new CustomEvent('watchlistEditorClosed', { 
+                    detail: { 
+                        time: new Date().getTime(),
+                        groups: groupOrder
+                    } 
+                });
+                window.opener.document.dispatchEvent(event);
+                console.log('已触发主页面的watchlistEditorClosed事件');
+                
+                // 尝试直接调用主页面的loadWatchlists函数
+                if (typeof window.opener.loadWatchlists === 'function') {
+                    window.opener.loadWatchlists(true);
+                    console.log('已直接调用主页面的loadWatchlists函数');
+                }
+            }
+        } catch (error) {
+            console.error('通知主界面刷新下拉框时出错:', error);
         }
     }
     
@@ -1288,32 +1371,56 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 showToast('股票列表已保存', 'success');
                 
-                // 通知主界面刷新下拉框 - 简化这部分代码
+                // 通知主界面刷新下拉框 - 使用更可靠的方法
                 try {
                     if (window.opener && !window.opener.closed) {
                         console.log('尝试通知主界面刷新下拉框');
                         
-                        // 创建一个包含分组顺序的对象传递给主页面
-                        const dataWithOrder = {
-                            watchlists: watchlistData,
-                            groups_order: groupOrder
-                        };
-                        
-                        // 只调用一次刷新函数，避免多次调用
-                        if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                        // 方法1: 尝试调用主页面的loadWatchlists函数
+                        if (typeof window.opener.loadWatchlists === 'function') {
+                            window.opener.loadWatchlists();
+                            console.log('已通知主界面重新加载观察列表数据');
+                        }
+                        // 方法2: 尝试使用refreshWatchlistDropdown函数
+                        else if (typeof window.opener.refreshWatchlistDropdown === 'function') {
+                            // 创建一个包含分组顺序的对象传递给主页面
+                            const dataWithOrder = {
+                                watchlists: watchlistData,
+                                groups_order: groupOrder
+                            };
                             window.opener.refreshWatchlistDropdown(dataWithOrder);
                             console.log('已通知主界面刷新下拉框，并传递分组顺序:', groupOrder);
-                        } else {
-                            // 如果主页面没有刷新函数，尝试重新加载主页面
-                            console.log('主页面没有刷新函数，尝试重新加载');
-                            try {
-                                // 使用setTimeout避免阻塞当前窗口关闭
-                                setTimeout(() => {
-                                    window.opener.location.reload();
-                                }, 100);
-                            } catch (reloadError) {
-                                console.error('重新加载主页面出错:', reloadError);
-                            }
+                        }
+                        
+                        // 方法3: 尝试直接刷新主页面的观察列表下拉框
+                        try {
+                            // 设置一个标记，表示编辑器已保存数据
+                            window.opener.localStorage.setItem('watchlistEditorSaved', 'true');
+                            window.opener.localStorage.setItem('watchlistEditorSavedTime', new Date().getTime().toString());
+                            
+                            // 尝试触发主页面的自定义事件
+                            const event = new CustomEvent('watchlistUpdated', { 
+                                detail: { 
+                                    time: new Date().getTime(),
+                                    groups: groupOrder
+                                } 
+                            });
+                            window.opener.document.dispatchEvent(event);
+                            console.log('已触发主页面的watchlistUpdated事件');
+                            
+                            // 如果以上方法都不起作用，尝试重新加载主页面
+                            setTimeout(() => {
+                                if (window.opener && !window.opener.closed) {
+                                    // 检查是否需要重新加载
+                                    const needsReload = !window.opener.document.getElementById('watchlistReloadFlag');
+                                    if (needsReload) {
+                                        console.log('尝试重新加载主页面');
+                                        window.opener.location.reload();
+                                    }
+                                }
+                            }, 500);
+                        } catch (refreshError) {
+                            console.error('刷新主页面出错:', refreshError);
                         }
                     }
                 } catch (error) {
