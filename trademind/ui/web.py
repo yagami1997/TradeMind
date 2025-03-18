@@ -2110,6 +2110,111 @@ def save_user_watchlists(user_id, watchlists_data):
         logger.exception(f"保存用户自选股列表出错: {str(e)}")
         return False
 
+@app.route('/api/get-stock-order', methods=['GET'])
+def get_stock_order():
+    """
+    获取特定分组中股票的顺序
+    """
+    try:
+        # 获取分组名称
+        group_name = request.args.get('group')
+        if not group_name:
+            return jsonify({'success': False, 'error': '未提供分组名称'}), 400
+        
+        # 获取用户ID
+        user_id = session.get('user_id', 'default')
+        
+        # 获取项目根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        
+        # 获取用户配置目录
+        user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
+        
+        # 确保目录存在
+        os.makedirs(user_config_dir, exist_ok=True)
+        
+        # 构建股票顺序文件路径
+        stock_order_file_path = os.path.join(user_config_dir, 'stock_order.json')
+        
+        # 首先尝试从自定义的股票顺序文件获取顺序
+        if os.path.exists(stock_order_file_path):
+            try:
+                # 读取股票顺序文件
+                with open(stock_order_file_path, 'r', encoding='utf-8') as f:
+                    stock_order_data = json.load(f)
+                
+                # 获取特定分组的股票顺序
+                if group_name in stock_order_data:
+                    stock_order = stock_order_data[group_name]
+                    logger.info(f"从自定义文件获取到分组 {group_name} 的股票顺序，共 {len(stock_order)} 个股票")
+                    return jsonify({
+                        'success': True,
+                        'stock_order': stock_order
+                    })
+            except Exception as e:
+                logger.error(f"读取股票顺序文件时出错: {str(e)}")
+                # 继续尝试从原始 watchlists.json 读取
+        
+        # 如果没有找到自定义顺序，从原始的 watchlists.json 文件获取顺序
+        watchlists_file = os.path.join(user_config_dir, 'watchlists.json')
+        if not os.path.exists(watchlists_file):
+            # 如果用户特定的文件不存在，使用全局配置文件
+            watchlists_file = os.path.join(project_root, 'config', 'users', 'default', 'watchlists.json')
+            if not os.path.exists(watchlists_file):
+                watchlists_file = os.path.join(project_root, 'config', 'watchlists.json')
+        
+        if os.path.exists(watchlists_file):
+            try:
+                # 打开文件并读取内容
+                with open(watchlists_file, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+                
+                # 使用正则表达式从 JSON 文件中提取指定分组的键顺序
+                # 这种方法保留了原始 JSON 文件中的键顺序
+                import re
+                pattern = rf'"{re.escape(group_name)}"\s*:\s*\{{(.*?)\}}'
+                match = re.search(pattern, file_content, re.DOTALL)
+                
+                if match:
+                    group_content = match.group(1)
+                    # 提取所有股票代码
+                    stock_pattern = r'"([^"]+)"\s*:'
+                    stocks = re.findall(stock_pattern, group_content)
+                    
+                    if stocks:
+                        logger.info(f"从原始 JSON 文件提取到分组 {group_name} 的股票顺序，共 {len(stocks)} 个股票")
+                        return jsonify({
+                            'success': True,
+                            'stock_order': stocks
+                        })
+                
+                # 如果正则匹配失败，尝试正常解析 JSON
+                watchlists_data = json.loads(file_content)
+                if group_name in watchlists_data:
+                    # 这种方式可能会丢失原始顺序，但作为备用方案
+                    stocks = list(watchlists_data[group_name].keys())
+                    logger.info(f"从解析的 JSON 对象获取分组 {group_name} 的股票顺序，共 {len(stocks)} 个股票")
+                    return jsonify({
+                        'success': True,
+                        'stock_order': stocks
+                    })
+                else:
+                    logger.info(f"在 JSON 文件中未找到分组 {group_name}")
+            except Exception as e:
+                logger.error(f"读取 watchlists.json 文件时出错: {str(e)}")
+        
+        # 如果无法获取顺序，返回错误
+        return jsonify({
+            'success': False,
+            'error': f"无法获取分组 {group_name} 的股票顺序"
+        })
+    except Exception as e:
+        logger.error(f"获取股票顺序时出错: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f"获取股票顺序时出错: {str(e)}"
+        }), 500
+
 if __name__ == "__main__":
     try:
         run_web_server(port=3336)

@@ -373,14 +373,68 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success && data.watchlists && data.watchlists[selectedGroup]) {
                         const stocks = data.watchlists[selectedGroup];
-                        for (const symbol in stocks) {
-                            symbols.push(symbol);
-                            names[symbol] = stocks[symbol];
+                        
+                        // 获取分组顺序数组（如果存在）
+                        let groupOrder = data.groups_order || Object.keys(data.watchlists);
+                        
+                        // 添加防御性检查
+                        if (!Array.isArray(groupOrder)) {
+                            console.warn('分组顺序不是数组，使用默认顺序');
+                            groupOrder = Object.keys(data.watchlists);
                         }
                         
-                        // 发送分析请求
-                        const title = document.getElementById('title').value || '美股技术面分析报告';
-                        sendAnalysisRequest(symbols, names, title, false);
+                        // 获取stock_order.json中的顺序（如果存在）
+                        fetch(`/api/get-stock-order?group=${encodeURIComponent(selectedGroup)}`)
+                            .then(res => res.json())
+                            .then(orderData => {
+                                // 使用有序数组存储股票代码
+                                let orderedSymbols = [];
+                                
+                                // 如果API返回了有序的股票列表
+                                if (orderData.success && Array.isArray(orderData.stock_order) && orderData.stock_order.length > 0) {
+                                    console.log(`使用保存的股票顺序，共${orderData.stock_order.length}个股票`);
+                                    
+                                    // 首先添加按顺序的股票
+                                    for (const symbol of orderData.stock_order) {
+                                        if (stocks[symbol]) {
+                                            orderedSymbols.push(symbol);
+                                        }
+                                    }
+                                    
+                                    // 然后添加可能遗漏的股票（不在保存顺序中但在分类列表中的股票）
+                                    for (const symbol in stocks) {
+                                        if (!orderedSymbols.includes(symbol)) {
+                                            orderedSymbols.push(symbol);
+                                        }
+                                    }
+                                } else {
+                                    // 如果没有保存的顺序，使用JSON文件中的原始顺序（基于Object.keys的顺序）
+                                    console.log('未找到保存的股票顺序，使用默认顺序');
+                                    orderedSymbols = Object.keys(stocks);
+                                }
+                                
+                                // 使用有序数组构建symbols和names
+                                for (const symbol of orderedSymbols) {
+                                    symbols.push(symbol);
+                                    names[symbol] = stocks[symbol];
+                                }
+                                
+                                // 发送分析请求
+                                const title = document.getElementById('title').value || '美股技术面分析报告';
+                                sendAnalysisRequest(symbols, names, title, false);
+                            })
+                            .catch(error => {
+                                console.error('获取股票顺序时出错，使用默认顺序:', error);
+                                // 出错时使用默认顺序
+                                for (const symbol in stocks) {
+                                    symbols.push(symbol);
+                                    names[symbol] = stocks[symbol];
+                                }
+                                
+                                // 发送分析请求
+                                const title = document.getElementById('title').value || '美股技术面分析报告';
+                                sendAnalysisRequest(symbols, names, title, false);
+                            });
                     } else {
                         alert('获取观察列表失败');
                         analyzeBtn.disabled = false;
