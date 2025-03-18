@@ -199,143 +199,183 @@ document.addEventListener('DOMContentLoaded', function() {
         watchlistContainer.innerHTML = '';
         
         // 使用保存的分组顺序
-        groupOrder.forEach(groupName => {
-            // 确保分组存在
-            if (!watchlistData[groupName]) return;
-            
-            const groupStocks = watchlistData[groupName];
-            
-            // 创建分组容器
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'watchlist-group mb-4';
-            
-            // 创建分组标题
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'group-header';
-            
-            const groupTitle = document.createElement('h5');
-            groupTitle.textContent = groupName;
-            
-            const editGroupNameBtn = document.createElement('button');
-            editGroupNameBtn.className = 'btn btn-sm btn-outline-primary';
-            editGroupNameBtn.innerHTML = '<i class="bi bi-pencil"></i> 编辑分组名';
-            editGroupNameBtn.onclick = () => editGroupName(groupName);
-            
-            const deleteGroupBtn = document.createElement('button');
-            deleteGroupBtn.className = 'btn btn-sm btn-outline-danger ms-2';
-            deleteGroupBtn.innerHTML = '<i class="bi bi-trash"></i> 删除分组';
-            deleteGroupBtn.onclick = () => deleteGroup(groupName);
-            
-            headerDiv.appendChild(groupTitle);
-            headerDiv.appendChild(editGroupNameBtn);
-            headerDiv.appendChild(deleteGroupBtn);
-            groupDiv.appendChild(headerDiv);
-            
-            // 创建股票列表
-            const stockListDiv = document.createElement('div');
-            stockListDiv.className = 'stock-list';
-            
-            // 添加股票行
-            Object.keys(groupStocks).forEach(stockCode => {
-                const stockName = groupStocks[stockCode];
+        const renderGroups = async () => {
+            for (const groupName of groupOrder) {
+                // 确保分组存在
+                if (!watchlistData[groupName]) continue;
                 
-                const stockRow = document.createElement('div');
-                stockRow.className = 'stock-row';
-                stockRow.dataset.group = groupName;
-                stockRow.dataset.code = stockCode;
+                const groupStocks = watchlistData[groupName];
                 
-                // 添加复选框
-                const checkboxDiv = document.createElement('div');
-                checkboxDiv.className = 'stock-checkbox';
+                // 创建分组容器
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'watchlist-group mb-4';
                 
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleStockSelection(e, groupName, stockCode);
-                };
+                // 创建分组标题
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'group-header';
                 
-                checkboxDiv.appendChild(checkbox);
-                stockRow.appendChild(checkboxDiv);
+                const groupTitle = document.createElement('h5');
+                groupTitle.textContent = groupName;
                 
-                // 添加股票代码
-                const codeDiv = document.createElement('div');
-                codeDiv.className = 'stock-code';
-                codeDiv.textContent = stockCode;
-                stockRow.appendChild(codeDiv);
+                const editGroupNameBtn = document.createElement('button');
+                editGroupNameBtn.className = 'btn btn-sm btn-outline-primary';
+                editGroupNameBtn.innerHTML = '<i class="bi bi-pencil"></i> 编辑分组名';
+                editGroupNameBtn.onclick = () => editGroupName(groupName);
                 
-                // 添加股票名称
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'stock-name';
-                nameDiv.textContent = stockName || '未知';
-                stockRow.appendChild(nameDiv);
+                const deleteGroupBtn = document.createElement('button');
+                deleteGroupBtn.className = 'btn btn-sm btn-outline-danger ms-2';
+                deleteGroupBtn.innerHTML = '<i class="bi bi-trash"></i> 删除分组';
+                deleteGroupBtn.onclick = () => deleteGroup(groupName);
                 
-                // 添加操作按钮
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'actions';
+                headerDiv.appendChild(groupTitle);
+                headerDiv.appendChild(editGroupNameBtn);
+                headerDiv.appendChild(deleteGroupBtn);
+                groupDiv.appendChild(headerDiv);
                 
-                // 编辑按钮
-                const editBtn = document.createElement('button');
-                editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
-                editBtn.title = '编辑';
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    editStock(groupName, stockCode, stockName);
-                };
+                // 创建股票列表
+                const stockListDiv = document.createElement('div');
+                stockListDiv.className = 'stock-list';
                 
-                // 移动按钮
-                const moveBtn = document.createElement('button');
-                moveBtn.innerHTML = '<i class="bi bi-arrows-move"></i>';
-                moveBtn.title = '移动到其他分组';
-                moveBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    moveStock(groupName, stockCode);
-                };
+                // 获取股票顺序
+                let stockOrder = [];
                 
-                // 删除按钮
-                const deleteBtn = document.createElement('button');
-                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
-                deleteBtn.title = '删除';
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    deleteStock(groupName, stockCode);
-                };
+                try {
+                    // 从API获取正确的股票顺序
+                    const response = await fetch(`/api/get-stock-order?group=${encodeURIComponent(groupName)}`);
+                    const data = await response.json();
+                    
+                    if (data.success && Array.isArray(data.stock_order) && data.stock_order.length > 0) {
+                        console.log(`使用API返回的股票顺序，分组: ${groupName}, 股票数量: ${data.stock_order.length}`);
+                        
+                        // 首先按API返回的顺序添加股票
+                        stockOrder = [...data.stock_order];
+                        
+                        // 然后添加可能遗漏的股票（不在API返回顺序中，但在watchlistData中的股票）
+                        Object.keys(groupStocks).forEach(code => {
+                            if (!stockOrder.includes(code)) {
+                                stockOrder.push(code);
+                            }
+                        });
+                    } else {
+                        console.log(`未能从API获取到股票顺序，使用Object.keys()，分组: ${groupName}`);
+                        stockOrder = Object.keys(groupStocks);
+                    }
+                } catch (error) {
+                    console.error(`获取分组 ${groupName} 的股票顺序时出错:`, error);
+                    stockOrder = Object.keys(groupStocks);
+                }
                 
-                actionsDiv.appendChild(editBtn);
-                actionsDiv.appendChild(moveBtn);
-                actionsDiv.appendChild(deleteBtn);
-                stockRow.appendChild(actionsDiv);
+                // 添加股票行
+                stockOrder.forEach(stockCode => {
+                    // 确保股票代码在当前分组中存在
+                    if (!groupStocks[stockCode]) return;
+                    
+                    const stockName = groupStocks[stockCode];
+                    
+                    const stockRow = document.createElement('div');
+                    stockRow.className = 'stock-row';
+                    stockRow.dataset.group = groupName;
+                    stockRow.dataset.code = stockCode;
+                    
+                    // 添加复选框
+                    const checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'stock-checkbox';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleStockSelection(e, groupName, stockCode);
+                    };
+                    
+                    checkboxDiv.appendChild(checkbox);
+                    stockRow.appendChild(checkboxDiv);
+                    
+                    // 添加股票代码
+                    const codeDiv = document.createElement('div');
+                    codeDiv.className = 'stock-code';
+                    codeDiv.textContent = stockCode;
+                    stockRow.appendChild(codeDiv);
+                    
+                    // 添加股票名称
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'stock-name';
+                    nameDiv.textContent = stockName || '未知';
+                    stockRow.appendChild(nameDiv);
+                    
+                    // 添加操作按钮
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'actions';
+                    
+                    // 编辑按钮
+                    const editBtn = document.createElement('button');
+                    editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+                    editBtn.title = '编辑';
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        editStock(groupName, stockCode, stockName);
+                    };
+                    
+                    // 移动按钮
+                    const moveBtn = document.createElement('button');
+                    moveBtn.innerHTML = '<i class="bi bi-arrows-move"></i>';
+                    moveBtn.title = '移动到其他分组';
+                    moveBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        moveStock(groupName, stockCode);
+                    };
+                    
+                    // 删除按钮
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    deleteBtn.title = '删除';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteStock(groupName, stockCode);
+                    };
+                    
+                    actionsDiv.appendChild(editBtn);
+                    actionsDiv.appendChild(moveBtn);
+                    actionsDiv.appendChild(deleteBtn);
+                    stockRow.appendChild(actionsDiv);
+                    
+                    // 点击行选择
+                    stockRow.onclick = (e) => {
+                        toggleStockSelection(e, groupName, stockCode);
+                    };
+                    
+                    stockListDiv.appendChild(stockRow);
+                });
                 
-                // 点击行选择
-                stockRow.onclick = (e) => {
-                    toggleStockSelection(e, groupName, stockCode);
-                };
+                // 添加"添加股票"按钮
+                const addStockRow = document.createElement('div');
+                addStockRow.className = 'stock-row add-stock-row';
                 
-                stockListDiv.appendChild(stockRow);
-            });
+                const addStockBtn = document.createElement('button');
+                addStockBtn.className = 'btn btn-sm btn-outline-primary w-100';
+                addStockBtn.innerHTML = '<i class="bi bi-plus-circle"></i> 添加股票';
+                addStockBtn.onclick = () => addStock(groupName);
+                
+                addStockRow.appendChild(document.createElement('div')); // 空的复选框位置
+                addStockRow.appendChild(document.createElement('div')); // 空的代码位置
+                addStockRow.appendChild(addStockBtn);
+                addStockRow.appendChild(document.createElement('div')); // 空的操作位置
+                
+                stockListDiv.appendChild(addStockRow);
+                groupDiv.appendChild(stockListDiv);
+                
+                watchlistContainer.appendChild(groupDiv);
+            }
             
-            // 添加"添加股票"按钮
-            const addStockRow = document.createElement('div');
-            addStockRow.className = 'stock-row add-stock-row';
-            
-            const addStockBtn = document.createElement('button');
-            addStockBtn.className = 'btn btn-sm btn-outline-primary w-100';
-            addStockBtn.innerHTML = '<i class="bi bi-plus-circle"></i> 添加股票';
-            addStockBtn.onclick = () => addStock(groupName);
-            
-            addStockRow.appendChild(document.createElement('div')); // 空的复选框位置
-            addStockRow.appendChild(document.createElement('div')); // 空的代码位置
-            addStockRow.appendChild(addStockBtn);
-            addStockRow.appendChild(document.createElement('div')); // 空的操作位置
-            
-            stockListDiv.appendChild(addStockRow);
-            groupDiv.appendChild(stockListDiv);
-            
-            watchlistContainer.appendChild(groupDiv);
-        });
+            // 添加多选操作栏
+            renderMultiSelectActions();
+        };
         
-        // 添加多选操作栏
-        renderMultiSelectActions();
+        // 执行异步渲染
+        renderGroups().catch(error => {
+            console.error('渲染自选股列表时出错:', error);
+            showToast('渲染列表时出错，请刷新页面重试', 'error');
+        });
     }
     
     // 渲染多选操作栏
