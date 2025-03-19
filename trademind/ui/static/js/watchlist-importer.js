@@ -1185,26 +1185,55 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('保存分组顺序:', groups_order);
         
-        // 发送到后端
-        fetch('/api/update_watchlists_order', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ order: groups_order })
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('保存分组顺序结果:', data);
-            if (data.success) {
-                console.log('分组顺序保存成功');
-            } else {
-                console.error('保存分组顺序失败:', data.error);
-            }
-        })
-        .catch(error => {
-            console.error('保存分组顺序出错:', error);
-        });
+        // 获取当前的 watchlists 数据
+        fetch('/api/watchlists')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success || !data.watchlists) {
+                    throw new Error('获取自选股列表失败');
+                }
+                
+                // 创建一个新的有序字典
+                const orderedWatchlists = {};
+                
+                // 按照新的顺序重建字典
+                groups_order.forEach(groupName => {
+                    if (data.watchlists[groupName]) {
+                        orderedWatchlists[groupName] = data.watchlists[groupName];
+                    }
+                });
+                
+                // 添加可能遗漏的分组（不在新顺序中的分组）
+                Object.keys(data.watchlists).forEach(groupName => {
+                    if (!orderedWatchlists[groupName]) {
+                        orderedWatchlists[groupName] = data.watchlists[groupName];
+                    }
+                });
+                
+                // 保存新的顺序
+                return fetch('/api/watchlists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        watchlists: orderedWatchlists,
+                        hasBeenManuallyEdited: true
+                    })
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('保存分组顺序结果:', data);
+                if (data.success) {
+                    console.log('分组顺序保存成功');
+                } else {
+                    console.error('保存分组顺序失败:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('保存分组顺序出错:', error);
+            });
     }
     
     // 更新下拉菜单选项

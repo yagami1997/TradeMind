@@ -13,99 +13,10 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Optional, List, Tuple, Any, Union
 import re
-from collections import OrderedDict
+from collections import OrderedDict as CollectionsOrderedDict
 
 # 设置日志
 logger = logging.getLogger(__name__)
-
-# 股票分类规则
-STOCK_CATEGORIES = {
-    # 指数与ETF
-    "指数与ETF": [
-        # 指数
-        r"^\^",  # 所有以^开头的代码（Yahoo Finance格式的指数）
-        r"SPY$", r"VOO$", r"IVV$",  # 标普500 ETF
-        r"QQQ[A-Z]?$",  # 纳指ETF
-        r"^XL[PKYFVIEU]$",  # SPDR行业ETF
-        r"^KXI$", r"^PBJ$", r"^DBC$", r"^GLD$", r"^UYG$",  # 其他常见ETF
-        r"^FENY$", r"^FTEC$", r"^IBIT$", r"^ONEQ$", r"^XAR$",  # 其他ETF
-        r"^TLT$", r"^SHY$",  # 债券ETF
-    ],
-    
-    # 科技巨头
-    "科技巨头": [
-        r"^AAPL$", r"^MSFT$", r"^NVDA$", r"^GOOG$", r"^GOOGL$", 
-        r"^AMZN$", r"^META$", r"^TSLA$", r"^CRM$", r"^ADBE$", 
-        r"^ORCL$", r"^IBM$"
-    ],
-    
-    # 半导体与硬件
-    "半导体与硬件": [
-        r"^TSM$", r"^ASML$", r"^AVGO$", r"^QCOM$", r"^AMD$", 
-        r"^INTC$", r"^AMAT$", r"^MU$", r"^ARM$", r"^SNPS$", 
-        r"^DELL$", r"^WDC$", r"^SONY$", r"^HPQ$", r"^LRCX$",
-        r"^KLAC$", r"^TXN$", r"^NVDA$"  # NVDA也可能在科技巨头分类中
-    ],
-    
-    # 互联网与软件
-    "互联网与软件": [
-        r"^PANW$", r"^NET$", r"^SPOT$", r"^BILI$", r"^NFLX$", 
-        r"^COIN$", r"^CSCO$", r"^PLTR$", r"^EBAY$", r"^NNOX$", 
-        r"^TEM$", r"^ZM$", r"^DASH$", r"^UBER$", r"^LYFT$",
-        r"^SHOP$", r"^SNAP$", r"^PINS$", r"^TWTR$", r"^RBLX$"
-    ],
-    
-    # 金融与支付
-    "金融与支付": [
-        r"^GS$", r"^MS$", r"^JPM$", r"^BLK$", r"^C$", 
-        r"^BAC$", r"^WFC$", r"^V$", r"^AXP$", r"^PYPL$", 
-        r"^SCHW$", r"^COF$", r"^UBS$", r"^HSBC$", r"^KKR$", 
-        r"^SMFG$", r"^MCO$", r"^MET$", r"^MA$", r"^BX$"
-    ],
-    
-    # 中概股
-    "中概股": [
-        r"^PDD$", r"^BABA$", r"^JD$", r"^NIO$", r"^LI$", 
-        r"^TME$", r"^ZH$", r"^BIDU$", r"^TCOM$", r"^NTES$",
-        r"^BILI$", r"^IQ$", r"^XPEV$"
-    ],
-    
-    # 能源与工业
-    "能源与工业": [
-        r"^XOM$", r"^CVX$", r"^OXY$", r"^CAT$", r"^BA$", 
-        r"^LMT$", r"^NOC$", r"^RTX$", r"^GE$", r"^MMM$", 
-        r"^GD$", r"^F$", r"^BAESY$", r"^HII$", r"^LHX$",
-        r"^GM$", r"^HAL$", r"^SLB$", r"^COP$", r"^EOG$"
-    ],
-    
-    # 医疗健康
-    "医疗健康": [
-        r"^JNJ$", r"^LLY$", r"^PFE$", r"^MRK$", r"^ABT$", 
-        r"^GILD$", r"^NVO$", r"^MDT$", r"^AZN$", r"^GSK$",
-        r"^MRNA$", r"^BIIB$", r"^REGN$", r"^VRTX$", r"^AMGN$"
-    ],
-    
-    # 消费与服务
-    "消费与服务": [
-        r"^WMT$", r"^COST$", r"^BBY$", r"^MCD$", r"^PG$", 
-        r"^UL$", r"^NKE$", r"^UAA$", r"^ADDYY$", r"^KO$", 
-        r"^DIS$", r"^SBUX$", r"^KHC$", r"^KMB$", r"^TGT$",
-        r"^HD$", r"^LOW$", r"^YUM$", r"^DKNG$", r"^ABNB$"
-    ],
-    
-    # 交通与物流
-    "交通与物流": [
-        r"^DAL$", r"^ALK$", r"^UAL$", r"^AAL$", r"^DLAKY$", 
-        r"^BKNG$", r"^MAR$", r"^ABNB$", r"^UBER$", r"^FDX$", 
-        r"^UPS$", r"^JBHT$", r"^CHRW$", r"^EXPD$", r"^ODFL$"
-    ],
-    
-    # 电信与通讯
-    "电信与通讯": [
-        r"^TMUS$", r"^T$", r"^KDDIY$", r"^VZ$", r"^LUMN$",
-        r"^CMCSA$", r"^CHTR$", r"^DISH$", r"^ATUS$", r"^CCOI$"
-    ]
-}
 
 def get_stock_data(symbol: str, period: str = "1y", interval: str = "1d") -> pd.DataFrame:
     """
@@ -405,7 +316,7 @@ def validate_stock_code(code: str, translate: bool = True) -> dict:
             # 获取中文名称（如果需要）
             chinese_name = ""
             if translate and english_name:
-                chinese_name = get_chinese_name(yf_code, english_name)
+                chinese_name = get_chinese_name(code, english_name)
             
             # 构建结果
             result = {
@@ -452,210 +363,15 @@ def validate_stock_code(code: str, translate: bool = True) -> dict:
 
 def get_chinese_name(symbol: str, english_name: str) -> str:
     """
-    获取股票的中文名称
+    获取股票的中文名称，但不再使用硬编码的映射表
     
     参数:
         symbol: 股票代码
         english_name: 英文名称
         
     返回:
-        str: 中文名称，如果没有则返回空字符串
+        str: 中文名称，如果没有则返回英文名称
     """
-    # 常见股票的中文名称映射
-    chinese_names = {
-        # 科技巨头
-        "AAPL": "苹果公司",
-        "MSFT": "微软公司",
-        "GOOG": "谷歌",
-        "GOOGL": "谷歌",
-        "AMZN": "亚马逊",
-        "META": "元宇宙平台",
-        "TSLA": "特斯拉",
-        "NVDA": "英伟达",
-        "CRM": "赛富时",
-        "ADBE": "奥多比",
-        "ORCL": "甲骨文",
-        "IBM": "国际商业机器",
-        
-        # 半导体与硬件
-        "TSM": "台积电",
-        "ASML": "阿斯麦",
-        "AVGO": "博通",
-        "QCOM": "高通",
-        "AMD": "超威半导体",
-        "INTC": "英特尔",
-        "AMAT": "应用材料",
-        "MU": "美光科技",
-        "ARM": "ARM控股",
-        "SNPS": "新思科技",
-        "DELL": "戴尔科技",
-        "WDC": "西部数据",
-        "SONY": "索尼集团",
-        "HPQ": "惠普",
-        "LRCX": "泛林集团",
-        "KLAC": "科磊",
-        "TXN": "德州仪器",
-        
-        # 互联网与软件
-        "PANW": "派拓网络",
-        "NET": "云闪",
-        "SPOT": "声田",
-        "BILI": "哔哩哔哩",
-        "NFLX": "奈飞",
-        "COIN": "币安",
-        "CSCO": "思科",
-        "PLTR": "帕兰提尔",
-        "EBAY": "易贝",
-        "UBER": "优步",
-        "SHOP": "Shopify",
-        "NNOX": "纳诺克斯影像",
-        "TEM": "Tempus AI",
-        
-        # 金融与支付
-        "GS": "高盛集团",
-        "MS": "摩根士丹利",
-        "JPM": "摩根大通",
-        "BLK": "贝莱德",
-        "C": "花旗集团",
-        "BAC": "美国银行",
-        "WFC": "富国银行",
-        "V": "维萨",
-        "AXP": "美国运通",
-        "PYPL": "贝宝",
-        "SCHW": "嘉信理财",
-        "COF": "第一资本金融",
-        "UBS": "瑞银集团",
-        "HSBC": "汇丰控股",
-        "KKR": "KKR集团",
-        "SMFG": "三井住友金融集团",
-        "MCO": "穆迪公司",
-        "MET": "大都会人寿",
-        
-        # 中概股
-        "PDD": "拼多多",
-        "BABA": "阿里巴巴",
-        "JD": "京东",
-        "NIO": "蔚来",
-        "LI": "理想汽车",
-        "TME": "腾讯音乐",
-        "ZH": "知乎",
-        
-        # 能源与工业
-        "XOM": "埃克森美孚",
-        "CVX": "雪佛龙",
-        "OXY": "西方石油",
-        "CAT": "卡特彼勒",
-        "BA": "波音",
-        "LMT": "洛克希德马丁",
-        "NOC": "诺斯罗普格鲁曼",
-        "RTX": "雷神技术",
-        "GE": "通用电气",
-        "MMM": "3M公司",
-        "GD": "通用动力",
-        "F": "福特汽车",
-        "BAESY": "BAE系统",
-        "HII": "亨廷顿英格尔斯工业",
-        "LHX": "L3哈里斯技术",
-        
-        # 医疗健康
-        "JNJ": "强生",
-        "LLY": "礼来",
-        "PFE": "辉瑞",
-        "MRK": "默克",
-        "ABT": "雅培",
-        "GILD": "吉利德科学",
-        "NVO": "诺和诺德",
-        "MDT": "美敦力",
-        "AZN": "阿斯利康",
-        "GSK": "葛兰素史克",
-        "BSX": "波士顿科学",
-        
-        # 消费与服务
-        "WMT": "沃尔玛",
-        "COST": "好市多",
-        "BBY": "百思买",
-        "MCD": "麦当劳",
-        "PG": "宝洁",
-        "UL": "联合利华",
-        "NKE": "耐克",
-        "UAA": "安德玛",
-        "ADDYY": "阿迪达斯",
-        "KO": "可口可乐",
-        "DIS": "迪士尼",
-        "SBUX": "星巴克",
-        "KHC": "卡夫亨氏",
-        "KMB": "金佰利",
-        "ABNB": "爱彼迎",
-        "WMG": "华纳音乐集团",
-        
-        # 交通与物流
-        "DAL": "达美航空",
-        "ALK": "阿拉斯加航空",
-        "UAL": "联合航空",
-        "AAL": "美国航空",
-        "DLAKY": "德国汉莎航空",
-        "BKNG": "缤客控股",
-        "MAR": "万豪国际",
-        "FDX": "联邦快递",
-        "UPS": "联合包裹服务",
-        
-        # 电信与通讯
-        "TMUS": "T-Mobile美国",
-        "T": "AT&T",
-        "KDDIY": "KDDI公司",
-        
-        # 指数
-        "^DJI": "道琼斯工业平均指数",
-        "^IXIC": "纳斯达克综合指数",
-        "^GSPC": "标普500指数",
-        "^VIX": "芝加哥期权交易所波动率指数",
-        "^NDX": "纳斯达克100指数",
-        "^RUT": "罗素2000指数",
-        "^TNX": "10年期美国国债收益率",
-        "^TYX": "30年期美国国债收益率",
-        "^FTSE": "富时100指数",
-        "^N225": "日经225指数",
-        "^HSI": "恒生指数",
-        
-        # ETF
-        "SPY": "SPDR标普500ETF",
-        "VOO": "先锋标普500ETF",
-        "IVV": "iShares核心标普500ETF",
-        "QQQ": "纳指100ETF",
-        "QQQM": "Invesco纳斯达克100ETF",
-        "QQQA": "ProShares纳斯达克100多策略ETF",
-        "XLK": "SPDR科技行业ETF",
-        "XLP": "SPDR必需消费品ETF",
-        "XLY": "SPDR非必需消费品ETF",
-        "KXI": "iShares全球必需消费品ETF",
-        "PBJ": "Invesco食品饮料ETF",
-        "GLD": "SPDR黄金信托",
-        "UYG": "ProShares金融业2倍做多ETF",
-        "FENY": "Fidelity能源行业ETF",
-        "FTEC": "Fidelity信息技术ETF",
-        "IBIT": "iShares比特币信托ETF",
-        "XAR": "SPDR航空航天与国防ETF",
-        "TLT": "iShares 20+年期国债ETF",
-        "DBC": "Invesco商品指数追踪ETF",
-        "ONEQ": "Fidelity纳斯达克综合指数ETF",
-        "SHY": "iShares 1-3年期国债ETF",
-        "SPLV": "Invesco标普500低波动ETF",
-        
-        # 其他
-        "BRK.A": "伯克希尔哈撒韦A类",
-        "BRK.B": "伯克希尔哈撒韦B类",
-        "MSCI": "MSCI公司",
-        "SFTBY": "软银集团"
-    }
-    
-    # 检查是否有预定义的中文名称
-    if symbol in chinese_names:
-        return chinese_names[symbol]
-    
-    # 如果是中概股但没有预定义名称，尝试从英文名称推断
-    if "China" in english_name or "Chinese" in english_name:
-        return english_name
-    
     # 尝试根据股票类型和名称特征进行翻译
     if symbol.startswith('^'):  # 指数
         if "Composite" in english_name:
@@ -688,32 +404,8 @@ def get_chinese_name(symbol: str, english_name: str) -> str:
             else:
                 return "消费品" + ("ETF" if "ETF" in english_name else "基金")
     
-    # 没有找到中文名称
-    return ""
-
-def categorize_stock(symbol: str, stock_type: str = "stock") -> str:
-    """
-    根据股票代码确定其分类
-    
-    参数:
-        symbol: 股票代码
-        stock_type: 股票类型（index或stock）
-        
-    返回:
-        str: 股票分类
-    """
-    # 指数自动归类到"指数与ETF"
-    if stock_type == "index" or symbol.startswith('^'):
-        return "指数与ETF"
-    
-    # 遍历分类规则
-    for category, patterns in STOCK_CATEGORIES.items():
-        for pattern in patterns:
-            if re.search(pattern, symbol):
-                return category
-    
-    # 默认分类
-    return "其他股票"
+    # 不再使用硬编码的中文名称映射，直接返回英文名称
+    return english_name
 
 def batch_validate_stock_codes(codes: List[str], market: str = "US", translate: bool = False) -> List[Dict]:
     """
@@ -800,11 +492,11 @@ def parse_stock_text(text: str) -> List[str]:
 
 def update_watchlists_file(stocks: List[Dict], group_name: str = None) -> bool:
     """
-    更新watchlists.json文件，支持自动分类
+    更新watchlists.json文件，支持用户指定分类
     
     参数:
-        stocks: 股票列表，每个股票为一个字典，包含symbol, name, category等信息
-        group_name: 分组名称，如果提供则所有股票放入该分组，否则按category自动分类
+        stocks: 股票列表，每个股票为一个字典，包含symbol, name等信息
+        group_name: 分组名称，如果提供则所有股票放入该分组，否则放入默认分组
         
     返回:
         bool: 是否成功更新
@@ -813,55 +505,37 @@ def update_watchlists_file(stocks: List[Dict], group_name: str = None) -> bool:
         # 读取现有的watchlists.json
         config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'watchlists.json')
         
-        with open(config_path, 'r', encoding='utf-8') as f:
-            watchlists = json.load(f)
+        # 确保使用OrderedDict保持顺序
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                watchlists = json.load(f, object_pairs_hook=CollectionsOrderedDict)
+        else:
+            watchlists = CollectionsOrderedDict()
         
         # 备份原文件
-        backup_path = config_path + '.bak'
-        with open(backup_path, 'w', encoding='utf-8') as f:
-            json.dump(watchlists, f, ensure_ascii=False, indent=4)
+        if os.path.exists(config_path):
+            backup_path = config_path + '.bak'
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(watchlists, f, ensure_ascii=False, indent=4, sort_keys=False)
         
-        # 如果指定了分组名称，则所有股票放入该分组
-        if group_name:
-            # 创建新分组或清空现有分组
-            watchlists[group_name] = {}
-            
-            # 添加股票到分组
-            for stock in stocks:
-                if stock.get('valid', False):
-                    symbol = stock.get('converted', stock.get('symbol', ''))
-                    name = stock.get('name', symbol)
-                    if symbol:
-                        watchlists[group_name][symbol] = name
-        else:
-            # 按category自动分类
-            # 创建分类映射
-            categorized_stocks = {}
-            
-            # 将股票按分类分组
-            for stock in stocks:
-                if stock.get('valid', False):
-                    symbol = stock.get('converted', stock.get('symbol', ''))
-                    name = stock.get('name', symbol)
-                    category = stock.get('category', '其他股票')
-                    
-                    if symbol:
-                        if category not in categorized_stocks:
-                            categorized_stocks[category] = {}
-                        categorized_stocks[category][symbol] = name
-            
-            # 更新watchlists
-            for category, stocks_dict in categorized_stocks.items():
-                if category in watchlists:
-                    # 合并到现有分类
-                    watchlists[category].update(stocks_dict)
-                else:
-                    # 创建新分类
-                    watchlists[category] = stocks_dict
+        # 使用指定的分组名称
+        target_group = group_name or "自选股"
+        
+        # 确保分组存在
+        if target_group not in watchlists:
+            watchlists[target_group] = CollectionsOrderedDict()
+        
+        # 添加股票到分组
+        for stock in stocks:
+            if stock.get('valid', False):
+                symbol = stock.get('converted', stock.get('symbol', ''))
+                name = stock.get('name', symbol)
+                if symbol:
+                    watchlists[target_group][symbol] = name
         
         # 写入更新后的文件
         with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(watchlists, f, ensure_ascii=False, indent=4)
+            json.dump(watchlists, f, ensure_ascii=False, indent=4, sort_keys=False)
             
         return True
     except Exception as e:
@@ -876,7 +550,7 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
         user_id: 用户ID
         stocks: 股票列表，每个股票是一个字典，包含code和name
         group_name: 分组名称，如果不指定则使用默认分组
-        auto_categories: 是否自动分类
+        auto_categories: 是否自动分类(此参数已不再使用自动分类逻辑，仅为保持API兼容)
         clear_existing: 是否清空现有列表
         translate: 是否翻译股票名称
         
@@ -885,12 +559,14 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
     """
     try:
         # 获取现有的自选股列表
-        user_watchlists = get_user_watchlists(user_id) if not clear_existing else {}
+        user_watchlists = get_user_watchlists(user_id) if not clear_existing else CollectionsOrderedDict()
         
-        # 如果指定了分组名称且不是自动分类，确保分组存在
-        if group_name and not auto_categories:
-            if group_name not in user_watchlists:
-                user_watchlists[group_name] = {}
+        # 使用指定的分组名称
+        target_group = group_name or "自选股"
+        
+        # 确保分组存在
+        if target_group not in user_watchlists:
+            user_watchlists[target_group] = CollectionsOrderedDict()
         
         # 统计导入结果
         imported_count = 0
@@ -900,122 +576,41 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
         # 过滤有效的股票
         valid_stocks = [s for s in stocks if s.get('valid', True)]
         
-        # 根据是否自动分类处理
-        if auto_categories:
-            # 自动分类股票
-            categorized_stocks = {}
+        # 添加股票到分组
+        for stock in valid_stocks:
+            stock_code = stock.get('code', '')
+            if not stock_code:
+                continue
             
-            for stock in valid_stocks:
-                stock_code = stock.get('code', '')
-                if not stock_code:
-                    continue
-                
-                # 使用简单字符串格式保存股票名称
-                stock_name = stock.get('name', '')
-                
-                # 如果需要翻译，并且名称是英文，尝试翻译
-                if translate and stock_name and is_english_name(stock_name):
-                    # 获取股票代码（确保是Yahoo Finance格式）
-                    yf_code = stock.get('yf_code', stock_code)
-                    
-                    # 尝试获取中文名称
-                    try:
-                        # 使用validate_stock_code函数获取中文名称
-                        validation_result = validate_stock_code(yf_code, translate=True)
-                        if validation_result.get('valid') and validation_result.get('name'):
-                            stock_name = validation_result.get('name')
-                    except Exception as e:
-                        logger.warning(f"翻译股票名称失败: {stock_code} - {e}")
-                
-                # 获取股票类型
-                market_type = stock.get('market_type', 'equity').lower()
-                
-                # 确保指数代码使用正确的格式
-                if stock_code.startswith('.') or (market_type == 'index' and not stock_code.startswith('^')):
-                    # 使用convert_index_code函数转换指数代码
-                    stock_code = convert_index_code(stock_code)
-                
-                # 使用智能分类逻辑
-                if market_type == 'index' or stock_code.startswith('^'):
-                    # 指数自动归类到"指数与ETF"
-                    category = "指数与ETF"
-                elif market_type == 'etf':
-                    # ETF自动归类到"指数与ETF"
-                    category = "指数与ETF"
-                else:
-                    # 使用STOCK_CATEGORIES进行智能行业分类
-                    category = None
-                    for cat_name, patterns in STOCK_CATEGORIES.items():
-                        for pattern in patterns:
-                            if re.search(pattern, stock_code):
-                                category = cat_name
-                                break
-                        if category:
-                            break
-                    
-                    # 如果没有匹配到任何分类，使用默认分类
-                    if not category:
-                        category = '无分类自选股'
-                
-                # 添加到分类中
-                if category not in categorized_stocks:
-                    categorized_stocks[category] = {}
-                
-                # 添加股票到分类
-                categorized_stocks[category][stock_code] = stock_name
-                
-                imported_count += 1
+            # 使用简单字符串格式保存股票名称
+            stock_name = stock.get('name', '')
             
-            # 更新用户自选股列表
-            for category, stocks_dict in categorized_stocks.items():
-                if category not in user_watchlists:
-                    user_watchlists[category] = {}
+            # 如果需要翻译，并且名称是英文，尝试翻译
+            if translate and stock_name and is_english_name(stock_name):
+                # 获取股票代码（确保是Yahoo Finance格式）
+                yf_code = stock.get('yf_code', stock_code)
                 
-                # 合并股票
-                user_watchlists[category].update(stocks_dict)
-        else:
-            # 使用指定的分组名称
-            target_group = group_name or "自选股"
+                # 尝试获取中文名称
+                try:
+                    # 使用validate_stock_code函数获取中文名称
+                    validation_result = validate_stock_code(yf_code, translate=True)
+                    if validation_result.get('valid') and validation_result.get('name'):
+                        stock_name = validation_result.get('name')
+                except Exception as e:
+                    logger.warning(f"翻译股票名称失败: {stock_code} - {e}")
             
-            # 确保分组存在
-            if target_group not in user_watchlists:
-                user_watchlists[target_group] = {}
+            # 获取股票类型
+            market_type = stock.get('market_type', 'equity').lower()
             
-            # 添加股票到分组
-            for stock in valid_stocks:
-                stock_code = stock.get('code', '')
-                if not stock_code:
-                    continue
-                
-                # 使用简单字符串格式保存股票名称
-                stock_name = stock.get('name', '')
-                
-                # 如果需要翻译，并且名称是英文，尝试翻译
-                if translate and stock_name and is_english_name(stock_name):
-                    # 获取股票代码（确保是Yahoo Finance格式）
-                    yf_code = stock.get('yf_code', stock_code)
-                    
-                    # 尝试获取中文名称
-                    try:
-                        # 使用validate_stock_code函数获取中文名称
-                        validation_result = validate_stock_code(yf_code, translate=True)
-                        if validation_result.get('valid') and validation_result.get('name'):
-                            stock_name = validation_result.get('name')
-                    except Exception as e:
-                        logger.warning(f"翻译股票名称失败: {stock_code} - {e}")
-                
-                # 获取股票类型
-                market_type = stock.get('market_type', 'equity').lower()
-                
-                # 确保指数代码使用正确的格式
-                if stock_code.startswith('.') or (market_type == 'index' and not stock_code.startswith('^')):
-                    # 使用convert_index_code函数转换指数代码
-                    stock_code = convert_index_code(stock_code)
-                
-                # 添加到分组
-                user_watchlists[target_group][stock_code] = stock_name
-                
-                imported_count += 1
+            # 确保指数代码使用正确的格式
+            if stock_code.startswith('.') or (market_type == 'index' and not stock_code.startswith('^')):
+                # 使用convert_index_code函数转换指数代码
+                stock_code = convert_index_code(stock_code)
+            
+            # 添加到分组
+            user_watchlists[target_group][stock_code] = stock_name
+            
+            imported_count += 1
         
         # 保存更新后的自选股列表
         save_user_watchlists(user_id, user_watchlists)
@@ -1037,15 +632,7 @@ def import_stocks_to_watchlist(user_id: str, stocks: List[Dict], group_name: str
         }
 
 def get_user_watchlists(user_id: str) -> Dict:
-    """
-    获取用户的自选股列表
-    
-    参数:
-        user_id: 用户ID
-        
-    返回:
-        Dict: 用户的自选股列表
-    """
+    """获取用户的自选股列表"""
     try:
         # 获取项目根目录
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -1061,78 +648,83 @@ def get_user_watchlists(user_id: str) -> Dict:
         
         # 如果用户特定的文件不存在，返回空字典
         if not os.path.exists(watchlists_file):
-            return {}
+            return CollectionsOrderedDict()
         
-        # 读取用户特定的文件，确保保持JSON中的顺序
+        # 直接读取JSON文件，确保严格保持JSON中的顺序
         with open(watchlists_file, 'r', encoding='utf-8') as f:
             # 使用object_pairs_hook=OrderedDict参数确保保持JSON中的顺序
-            return json.load(f, object_pairs_hook=OrderedDict)
+            watchlists_data = json.load(f, object_pairs_hook=CollectionsOrderedDict)
+            
+            # 确保每个分组内的股票也使用OrderedDict并保持原始顺序
+            ordered_data = CollectionsOrderedDict()
+            for group_name, stocks in watchlists_data.items():
+                # 直接使用OrderedDict保持原始顺序，不排序
+                ordered_data[group_name] = CollectionsOrderedDict(stocks)
+            
+            # 记录读取到的顺序，帮助调试
+            logger.debug(f"读取到的分组顺序: {list(ordered_data.keys())}")
+            for group, stocks in ordered_data.items():
+                logger.debug(f"  分组 '{group}' 的股票顺序: {list(stocks.keys())}")
+            
+            return ordered_data
     
     except Exception as e:
-        logger.error(f"获取用户自选股列表时出错: {str(e)}")
-        return {}
+        logger.exception(f"获取用户自选股列表时出错: {str(e)}")
+        return CollectionsOrderedDict()
 
 def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
-    """
-    保存用户的自选股列表
-    
-    参数:
-        user_id: 用户ID
-        watchlists: 自选股列表
-        
-    返回:
-        bool: 是否保存成功
-    """
+    """保存用户的自选股列表"""
     try:
-        # 记录输入数据类型
-        logger.info(f"保存用户自选股列表，用户ID: {user_id}, 数据类型: {type(watchlists)}")
-        
-        # 验证输入数据
-        if not isinstance(watchlists, dict):
-            logger.error(f"保存用户自选股列表失败: watchlists不是字典类型，而是 {type(watchlists)}")
-            return False
-        
         # 获取项目根目录
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         
         # 获取用户配置目录
         user_config_dir = os.path.join(project_root, 'config', 'users', user_id)
         
+        # 构建文件路径
+        file_path = os.path.join(user_config_dir, 'watchlists.json')
+        
         # 确保目录存在
         os.makedirs(user_config_dir, exist_ok=True)
         
-        # 自选股文件路径
-        watchlists_file = os.path.join(user_config_dir, 'watchlists.json')
+        # 使用 OrderedDict 保存数据，确保顺序一致性
+        ordered_watchlists = CollectionsOrderedDict()
         
-        # 创建备份文件
-        if os.path.exists(watchlists_file):
-            backup_file = watchlists_file + '.bak'
-            try:
-                import shutil
-                shutil.copy2(watchlists_file, backup_file)
-                logger.info(f"已创建自选股文件备份: {backup_file}")
-            except Exception as backup_error:
-                logger.warning(f"创建备份文件失败: {str(backup_error)}")
+        # 严格按照传入的顺序添加分组和股票，不做任何排序
+        for group_name, stocks in watchlists.items():
+            # 如果股票不是 OrderedDict 类型，转换为 OrderedDict
+            if not isinstance(stocks, CollectionsOrderedDict):
+                ordered_watchlists[group_name] = CollectionsOrderedDict(stocks)
+            else:
+                ordered_watchlists[group_name] = stocks
         
-        # 保存用户特定的文件，确保保持字典的顺序
+        # 记录将要保存的顺序，帮助调试
+        logger.debug(f"将要保存的分组顺序: {list(ordered_watchlists.keys())}")
+        for group, stocks in ordered_watchlists.items():
+            logger.debug(f"  分组 '{group}' 的股票顺序: {list(stocks.keys())}")
+        
+        # 直接保存文件，使用 OrderedDict 确保顺序
         try:
-            with open(watchlists_file, 'w', encoding='utf-8') as f:
-                json.dump(watchlists, f, ensure_ascii=False, indent=4)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                # 使用 sort_keys=False 确保不会对键进行排序
+                json.dump(ordered_watchlists, f, ensure_ascii=False, indent=4, sort_keys=False)
             
-            logger.info(f"成功保存自选股列表到文件: {watchlists_file}")
+            logger.info(f"成功保存自选股列表到文件: {file_path}")
             return True
+            
         except Exception as write_error:
             logger.error(f"写入自选股文件失败: {str(write_error)}")
             
             # 尝试使用临时文件
             try:
-                temp_file = watchlists_file + '.temp'
+                temp_file = file_path + '.temp'
                 with open(temp_file, 'w', encoding='utf-8') as f:
-                    json.dump(watchlists, f, ensure_ascii=False, indent=4)
+                    # 使用 sort_keys=False 确保不会对键进行排序
+                    json.dump(ordered_watchlists, f, ensure_ascii=False, indent=4, sort_keys=False)
                 logger.info(f"已写入临时文件: {temp_file}")
                 
-                # 尝试重命名临时文件 - 使用已导入的os模块
-                os.replace(temp_file, watchlists_file)
+                # 尝试重命名临时文件
+                os.replace(temp_file, file_path)
                 logger.info(f"已将临时文件重命名为正式文件")
                 return True
             except Exception as temp_error:
@@ -1140,7 +732,7 @@ def save_user_watchlists(user_id: str, watchlists: Dict) -> bool:
                 return False
     
     except Exception as e:
-        logger.error(f"保存用户自选股列表时出错: {str(e)}")
+        logger.exception(f"保存用户自选股列表时出错: {str(e)}")
         return False
 
 def is_english_name(name: str) -> bool:

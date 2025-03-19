@@ -361,98 +361,62 @@ document.addEventListener('DOMContentLoaded', function() {
         // 获取表单数据
         let symbols = [];
         let names = {};
+        // 获取标题，如果为空则使用默认值
+        const title = document.getElementById('title').value || '美股技术面分析报告';
         
         if (symbolsInput.value.trim()) {
             // 从输入框获取股票代码
             symbols = symbolsInput.value.trim().split(/[\n,]+/).map(s => s.trim()).filter(s => s);
-        } else if (watchlistSelect.value) {
+            // 直接发送分析请求
+            sendAnalysisRequest(symbols, names, title, analyzeAll);
+        } else if (watchlistSelect.value && !analyzeAll) {
             // 从观察列表获取股票代码
             const selectedGroup = watchlistSelect.value;
             fetch('/watchlists')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.watchlists && data.watchlists[selectedGroup]) {
+                    if (data.success && data.watchlists) {
                         const stocks = data.watchlists[selectedGroup];
                         
-                        // 获取分组顺序数组（如果存在）
-                        let groupOrder = data.groups_order || Object.keys(data.watchlists);
-                        
-                        // 添加防御性检查
+                        // 使用服务器返回的分组顺序
+                        const groupOrder = data.groups_order;
                         if (!Array.isArray(groupOrder)) {
                             console.warn('分组顺序不是数组，使用默认顺序');
-                            groupOrder = Object.keys(data.watchlists);
                         }
                         
-                        // 获取stock_order.json中的顺序（如果存在）
-                        fetch(`/api/get-stock-order?group=${encodeURIComponent(selectedGroup)}`)
-                            .then(res => res.json())
-                            .then(orderData => {
-                                // 使用有序数组存储股票代码
-                                let orderedSymbols = [];
-                                
-                                // 如果API返回了有序的股票列表
-                                if (orderData.success && Array.isArray(orderData.stock_order) && orderData.stock_order.length > 0) {
-                                    console.log(`使用保存的股票顺序，共${orderData.stock_order.length}个股票`);
-                                    
-                                    // 首先添加按顺序的股票
-                                    for (const symbol of orderData.stock_order) {
-                                        if (stocks[symbol]) {
-                                            orderedSymbols.push(symbol);
-                                        }
-                                    }
-                                    
-                                    // 然后添加可能遗漏的股票（不在保存顺序中但在分类列表中的股票）
-                                    for (const symbol in stocks) {
-                                        if (!orderedSymbols.includes(symbol)) {
-                                            orderedSymbols.push(symbol);
-                                        }
-                                    }
-                                } else {
-                                    // 如果没有保存的顺序，使用JSON文件中的原始顺序（基于Object.keys的顺序）
-                                    console.log('未找到保存的股票顺序，使用默认顺序');
-                                    orderedSymbols = Object.keys(stocks);
-                                }
-                                
-                                // 使用有序数组构建symbols和names
-                                for (const symbol of orderedSymbols) {
-                                    symbols.push(symbol);
-                                    names[symbol] = stocks[symbol];
-                                }
-                                
-                                // 发送分析请求
-                                const title = document.getElementById('title').value || '美股技术面分析报告';
-                                sendAnalysisRequest(symbols, names, title, false);
-                            })
-                            .catch(error => {
-                                console.error('获取股票顺序时出错，使用默认顺序:', error);
-                                // 出错时使用默认顺序
-                                for (const symbol in stocks) {
-                                    symbols.push(symbol);
-                                    names[symbol] = stocks[symbol];
-                                }
-                                
-                                // 发送分析请求
-                                const title = document.getElementById('title').value || '美股技术面分析报告';
-                                sendAnalysisRequest(symbols, names, title, false);
-                            });
+                        // 按照服务器返回的顺序处理股票
+                        if (stocks) {
+                            symbols = Object.keys(stocks);
+                            names = stocks;  // 添加名称
+                            
+                            // 直接发送分析请求
+                            sendAnalysisRequest(symbols, names, title, analyzeAll);
+                        } else {
+                            showError('所选分组中没有股票');
+                            // 启用分析按钮
+                            analyzeBtn.disabled = false;
+                            analyzeSpinner.classList.add('d-none');
+                        }
                     } else {
-                        alert('获取观察列表失败');
+                        console.error('获取观察列表失败:', data);
+                        showError('获取观察列表失败，请重试');
+                        // 启用分析按钮
                         analyzeBtn.disabled = false;
                         analyzeSpinner.classList.add('d-none');
                     }
                 })
                 .catch(error => {
                     console.error('获取观察列表时出错:', error);
-                    alert('获取观察列表时出错');
+                    showError('获取观察列表时出错，请重试');
+                    // 启用分析按钮
                     analyzeBtn.disabled = false;
                     analyzeSpinner.classList.add('d-none');
                 });
             return;
+        } else {
+            // 分析所有股票
+            sendAnalysisRequest(symbols, names, title, analyzeAll);
         }
-        
-        // 发送分析请求
-        const title = document.getElementById('title').value || '美股技术面分析报告';
-        sendAnalysisRequest(symbols, names, title, analyzeAll);
     });
     
     // 加载临时查询股票列表
@@ -460,12 +424,21 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/api/temp-query')
             .then(response => response.json())
             .then(data => {
-                if (data.codes && data.codes.length > 0) {
-                    symbolsInput.value = data.codes.join('\n');
+                if (data.codes) {
+                    // 可能是字典或数组，确保能处理两种情况
+                    if (Array.isArray(data.codes) && data.codes.length > 0) {
+                        // 如果是数组格式
+                        symbolsInput.value = data.codes.join('\n');
+                    } else if (typeof data.codes === 'object' && Object.keys(data.codes).length > 0) {
+                        // 如果是字典格式，取出代码
+                        const codes = Object.keys(data.codes);
+                        symbolsInput.value = codes.join('\n');
+                    }
                 }
             })
             .catch(error => {
-                console.error('加载临时查询股票列表时出错:', error);
+                console.error('加载临时查询股票失败:', error);
+                showToast('加载临时查询股票失败', 'danger');
             });
     }
     
@@ -485,8 +458,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 codes: codes
             })
         })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('股票列表已保存', 'success');
+            } else {
+                showToast(data.error || '保存失败', 'danger');
+            }
+        })
         .catch(error => {
-            console.error('保存临时查询股票列表时出错:', error);
+            console.error('保存临时查询股票失败:', error);
+            showToast('保存临时查询股票失败', 'danger');
         });
     }
     
@@ -537,6 +519,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 设置轮询进度的间隔
         let progressInterval = null;
+        
+        // 显示调试信息
+        if (analyzeAll) {
+            statusText.textContent += "\n正在分析所有预置股票列表中的股票...";
+            console.log("分析所有预置股票列表中的股票");
+        } else {
+            console.log(`分析指定的${symbols.length}个股票`);
+        }
+        
+        // 禁用分析按钮
+        analyzeBtn.disabled = true;
+        analyzeSpinner.classList.remove('d-none');
         
         // 发送AJAX请求
         fetch('/api/analyze', {
@@ -814,4 +808,72 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    function startAnalysis(symbols, analyzeAll = false) {
+        // 清空符号输入框
+        if (analyzeAll) {
+            symbolsInput.value = '';
+        }
+        
+        // 确保有效的符号列表
+        if (!analyzeAll && (!symbols || (Array.isArray(symbols) && symbols.length === 0))) {
+            showToast('请输入至少一个股票代码', 'warning');
+            return;
+        }
+        
+        // 显示分析容器
+        document.getElementById('analysisContainer').style.display = 'block';
+        
+        // 清除之前的分析结果
+        const resultsContainer = document.getElementById('analysisResultsContainer');
+        resultsContainer.innerHTML = '';
+        
+        // 显示加载指示器
+        document.getElementById('analysisProgress').style.display = 'block';
+        document.getElementById('analysisComplete').style.display = 'none';
+        
+        // 准备数据
+        let names = {};
+        let title = '股票技术面分析';
+        
+        // 根据analyzeAll参数决定是否使用所有股票
+        if (!analyzeAll) {
+            // 处理传入的symbols
+            if (typeof symbols === 'string') {
+                // 如果是单个字符串，拆分为数组
+                symbols = symbols.split(/[\n,]+/).map(s => s.trim()).filter(s => s);
+            } else if (!Array.isArray(symbols)) {
+                // 如果是其他非数组格式，转为数组
+                symbols = Object.keys(symbols);
+            }
+            
+            // 为每个符号创建一个名称映射
+            symbols.forEach(symbol => {
+                names[symbol] = symbol; // 默认使用符号作为名称
+            });
+            
+            // 保存临时查询股票
+            if (symbols.length > 0) {
+                saveTempQueryStocks();
+            }
+        }
+        
+        // 发送分析请求
+        sendAnalysisRequest(symbols, names, title, analyzeAll);
+    }
+
+    // 显示错误信息的辅助函数
+    function showError(message) {
+        resultCard.classList.remove('d-none');
+        resultCard.querySelector('.card-header').classList.remove('bg-primary');
+        resultCard.querySelector('.card-header').classList.remove('bg-success');
+        resultCard.querySelector('.card-header').classList.add('bg-danger');
+        resultCard.querySelector('.card-header h5').textContent = '分析失败';
+        resultMessage.innerHTML = '';
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger';
+        errorAlert.textContent = message;
+        resultMessage.appendChild(errorAlert);
+        viewReportBtn.classList.add('d-none');
+    }
 }); 

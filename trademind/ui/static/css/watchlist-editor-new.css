@@ -1,0 +1,334 @@
+/* 自定义颜色变量 */
+:root {
+    --mars-green: #008C8D;
+    --mars-green-light: #33a5a6;
+    --mars-green-dark: #006d6e;
+    --tea-white: #F3F9F1;
+    --tea-white-dark: #e5f0e2;
+    --border-color: #d1e7cc;
+}
+
+/* 编辑器容器 */
+.watchlist-editor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--tea-white);
+    min-height: 100vh;
+}
+
+/* 分组卡片 */
+.group-card {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 分组头部 */
+.group-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bs-tertiary-bg);
+    border-bottom: 1px solid var(--bs-border-color);
+    border-radius: 8px 8px 0 0;
+}
+
+/* 表格样式 */
+.stock-table {
+    width: 100%;
+    margin-bottom: 0;
+    background: var(--bs-body-bg);
+}
+
+.stock-table th {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+    font-weight: 500;
+    padding: 12px;
+    border-bottom: 2px solid var(--bs-border-color);
+}
+
+.stock-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+/* 股票行 */
+.stock-row {
+    transition: background-color 0.2s;
+}
+
+.stock-row:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+.stock-row.selected {
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+/* 拖拽手柄 */
+.drag-handle {
+    cursor: move;
+    color: var(--bs-secondary-color);
+    padding: 0 8px;
+}
+
+/* 按钮组 */
+.btn-group {
+    margin-right: 8px;
+}
+
+.btn-group .btn {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+/* 复选框 */
+.form-check-input {
+    margin-top: 0;
+}
+
+/* 保存按钮容器 */
+.save-button-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--bs-body-bg);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 导入对话框 */
+.import-dialog {
+    max-width: 500px;
+    margin: 1.75rem auto;
+}
+
+/* Toast通知 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+}
+
+.toast {
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .watchlist-editor {
+        padding: 10px;
+    }
+    
+    .group-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .btn-group {
+        margin-bottom: 8px;
+    }
+}
+
+/* 空状态提示 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--bs-secondary-color);
+}
+
+/* 工具栏 */
+.toolbar {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 2px 4px rgba(0, 140, 141, 0.1);
+}
+
+/* 分组标题 */
+.group-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--bs-heading-color);
+    margin: 0;
+}
+
+/* 表格容器 */
+.table-container {
+    overflow-x: auto;
+    border-radius: 0 0 8px 8px;
+}
+
+/* 编辑模式样式 */
+.editing {
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+/* 拖拽时的样式 */
+.dragging {
+    opacity: 0.5;
+}
+
+.drag-over {
+    border-top: 2px solid var(--bs-primary);
+}
+
+/* 分组排序对话框样式 */
+#sortableGroups .list-group-item {
+    cursor: move;
+    user-select: none;
+}
+
+#sortableGroups .bi-grip-vertical {
+    color: #aaa;
+    cursor: grab;
+}
+
+#sortableGroups .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+#sortableGroups .sortable-ghost {
+    opacity: 0.5;
+    background-color: #e9ecef;
+}
+
+/* 按钮样式覆盖 */
+.btn-primary {
+    background-color: var(--mars-green);
+    border-color: var(--mars-green);
+}
+
+.btn-primary:hover {
+    background-color: var(--mars-green-dark);
+    border-color: var(--mars-green-dark);
+}
+
+.btn-outline-primary {
+    color: var(--mars-green);
+    border-color: var(--mars-green);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--mars-green);
+    border-color: var(--mars-green);
+}
+
+/* 分组卡片 */
+.card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 140, 141, 0.05);
+}
+
+/* 分组头部 */
+.card-header {
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 表格样式 */
+.table-stocks {
+    background: white;
+}
+
+.table-stocks thead th {
+    background: var(--tea-white);
+    border-bottom: 2px solid var(--mars-green);
+    color: var(--mars-green);
+}
+
+.table-stocks tbody tr:hover {
+    background-color: var(--tea-white);
+}
+
+.stock-row.selected {
+    background-color: var(--tea-white-dark);
+}
+
+/* 保存按钮容器 */
+.save-button-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 140, 141, 0.1);
+}
+
+/* Toast通知 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+}
+
+.toast {
+    background: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 140, 141, 0.1);
+}
+
+.toast.bg-success {
+    background-color: var(--mars-green) !important;
+}
+
+/* 分组排序对话框样式 */
+#sortableGroups .list-group-item {
+    cursor: move;
+    user-select: none;
+    border-color: var(--border-color);
+}
+
+#sortableGroups .list-group-item:hover {
+    background-color: var(--tea-white);
+}
+
+/* 关闭按钮 */
+.close-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 140, 141, 0.1);
+    transition: all 0.2s;
+}
+
+.close-button:hover {
+    background-color: var(--mars-green);
+    border-color: var(--mars-green);
+    color: white;
+} 

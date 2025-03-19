@@ -3,91 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>股票列表编辑器 - TradeMind Lite</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/watchlist-editor.css') }}">
+    <title>股票编辑器 - TradeMind Lite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/watchlist-editor-new.css') }}" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="/">TradeMind Lite</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">首页</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/watchlist-editor">股票列表编辑器</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="cleanReportsBtn">清理报告</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="https://github.com/yagami1997/TradeMind" target="_blank">GitHub</a>
-                    </li>
-                </ul>
-            </div>
+    <div class="watchlist-editor">
+        <!-- 关闭按钮 -->
+        <div class="close-button" id="closeEditorBtn">
+            <i class="bi bi-x-lg"></i>
         </div>
-    </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="mb-3 text-primary">股票列表编辑器</h2>
-                
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle-fill"></i> <strong>股票列表编辑器使用说明</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>点击"添加分组"按钮创建新的股票分组</li>
-                        <li>点击"添加股票"按钮向分组中添加股票</li>
-                        <li>点击股票行可以选中/取消选中该股票</li>
-                        <li>批量操作：支持多选股票进行批量移动或删除</li>
-                        <li>所有修改完成后，点击"保存所有修改"按钮保存</li>
-                    </ul>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary" id="addGroupBtn">
-                            <i class="bi bi-plus-circle"></i> 添加分组
-                        </button>
-                        <button class="btn btn-outline-primary" id="refreshBtn">
-                            <i class="bi bi-arrow-clockwise"></i> 刷新
-                        </button>
-                        <button class="btn btn-outline-primary" id="importStocksBtn">
-                            <i class="bi bi-file-earmark-arrow-down"></i> 导入股票
-                        </button>
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary" id="addGroupBtn">
+                    <i class="bi bi-folder-plus"></i> 添加分组
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="importStocksBtn">
+                    <i class="bi bi-file-earmark-arrow-up"></i> 导入股票
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="sortGroupsBtn">
+                    <i class="bi bi-sort-alpha-down"></i> 排序分组
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="collapseAllBtn">
+                    <i class="bi bi-chevron-up"></i> 全部折叠
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="expandAllBtn">
+                    <i class="bi bi-chevron-down"></i> 全部展开
+                </button>
+            </div>
+        </div>
+
+        <!-- 分组容器 -->
+        <div id="watchlistContainer"></div>
+
+        <!-- 保存按钮 -->
+        <div class="save-button-container">
+            <button type="button" class="btn btn-primary" id="saveAllBtn">
+                <i class="bi bi-save"></i> 保存更改
+            </button>
+        </div>
+
+        <!-- 导入对话框 -->
+        <div class="modal fade" id="importDialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">导入股票</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                </div>
-                
-                <!-- 股票列表容器 -->
-                <div id="watchlistContainer">
-                    <div class="text-center py-5">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">加载中...</span>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="stockInput" class="form-label">股票代码（每行一个，或用逗号分隔）</label>
+                            <textarea class="form-control" id="stockInput" rows="5"></textarea>
                         </div>
-                        <p class="mt-2">正在加载股票列表...</p>
+                        <div class="mb-3">
+                            <label for="targetGroup" class="form-label">选择分组</label>
+                            <select class="form-select" id="targetGroup"></select>
+                        </div>
+                        <div class="mb-3" id="newGroupNameContainer" style="display: none;">
+                            <label for="newGroupName" class="form-label">新分组名称</label>
+                            <input type="text" class="form-control" id="newGroupName">
+                        </div>
                     </div>
-                </div>
-                
-                <div class="mt-4 d-flex justify-content-between">
-                    <button class="btn btn-outline-danger" id="cleanReportsBtn">
-                        <i class="bi bi-trash"></i> 清理报告文件
-                    </button>
-                    <button class="btn btn-success" id="saveAllBtn">
-                        <i class="bi bi-save"></i> 保存所有修改
-                    </button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="startImportBtn">开始导入</button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Toast通知容器 -->
+        <div class="toast-container"></div>
     </div>
 
-    <!-- JavaScript 库 -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/watchlist-editor.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="{{ url_for('static', filename='js/watchlist-editor-new.js') }}"></script>
 </body>
 </html> 
