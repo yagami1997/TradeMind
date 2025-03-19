@@ -13,13 +13,18 @@ function refreshWatchlistDropdown(data) {
     // 处理不同格式的输入数据
     let watchlists = data;
     let groups_order = null;
+    let stocks_order = null;  // 新增：股票顺序
     
     try {
         // 如果传入的是包含watchlists和groups_order的对象
         if (data && typeof data === 'object' && data.watchlists) {
             watchlists = data.watchlists;
             groups_order = data.groups_order;
+            stocks_order = data.stocks_order;  // 新增：获取股票顺序
             console.log('主界面刷新观察列表下拉框，包含分组顺序');
+            if (stocks_order) {
+                console.log('主界面刷新观察列表下拉框，包含股票顺序');
+            }
         } else {
             console.log('主界面刷新观察列表下拉框，无分组顺序');
         }
@@ -83,6 +88,14 @@ function refreshWatchlistDropdown(data) {
                 // 防御性检查watchlists[groupName]
                 if (watchlists[groupName] && typeof watchlists[groupName] === 'object') {
                     option.textContent = `${groupName} (${Object.keys(watchlists[groupName]).length}个股票)`;
+                    
+                    // 存储股票顺序信息 (新增)
+                    if (stocks_order && stocks_order[groupName]) {
+                        // 使用dataset存储股票顺序
+                        const orderJSON = JSON.stringify(stocks_order[groupName]);
+                        option.dataset.stocksOrder = orderJSON;
+                        console.log(`为分组 ${groupName} 设置了股票顺序`);
+                    }
                 } else {
                     option.textContent = `${groupName} (0个股票)`;
                 }
@@ -106,6 +119,12 @@ function refreshWatchlistDropdown(data) {
         } catch (selectError) {
             console.error('设置选中值或触发事件时出错:', selectError);
         }
+        
+        // 保存stocks_order到全局 (新增)
+        if (window) {
+            window.stocksOrderMap = stocks_order || {};
+        }
+        
     } catch (error) {
         console.error('刷新观察列表下拉菜单时出错:', error);
     }
@@ -152,7 +171,8 @@ function loadWatchlists(forceRefresh = false) {
             // 创建一个包含watchlists和groups_order的对象
             const watchlistData = {
                 watchlists: data.watchlists,
-                groups_order: data.groups_order || Object.keys(data.watchlists)
+                groups_order: data.groups_order || Object.keys(data.watchlists),
+                stocks_order: data.stocks_order || {}
             };
             
             try {
@@ -372,47 +392,123 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (watchlistSelect.value && !analyzeAll) {
             // 从观察列表获取股票代码
             const selectedGroup = watchlistSelect.value;
-            fetch('/watchlists')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.watchlists) {
-                        const stocks = data.watchlists[selectedGroup];
-                        
-                        // 使用服务器返回的分组顺序
-                        const groupOrder = data.groups_order;
-                        if (!Array.isArray(groupOrder)) {
-                            console.warn('分组顺序不是数组，使用默认顺序');
+            
+            // 尝试从下拉列表中获取股票顺序
+            let selectedStockOrder = null;
+            try {
+                const selectedOption = watchlistSelect.options[watchlistSelect.selectedIndex];
+                if (selectedOption && selectedOption.dataset.stocksOrder) {
+                    selectedStockOrder = JSON.parse(selectedOption.dataset.stocksOrder);
+                    console.log(`从下拉框选项获取到股票顺序: ${selectedGroup} - ${selectedStockOrder.slice(0, 5).join(', ')}...`);
+                } else if (window.stocksOrderMap && window.stocksOrderMap[selectedGroup]) {
+                    selectedStockOrder = window.stocksOrderMap[selectedGroup];
+                    console.log(`从全局变量获取到股票顺序: ${selectedGroup} - ${selectedStockOrder.slice(0, 5).join(', ')}...`);
+                }
+            } catch (e) {
+                console.error('获取股票顺序时出错:', e);
+            }
+            
+            // 如果已经有股票顺序，直接发送请求
+            if (selectedStockOrder && selectedStockOrder.length > 0) {
+                // 从watchlist数据获取股票名称
+                const groupWatchlist = {};
+                for (let option of watchlistSelect.options) {
+                    if (option.value === selectedGroup) {
+                        try {
+                            fetch('/watchlists')
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success && data.watchlists && data.watchlists[selectedGroup]) {
+                                        const stocks = data.watchlists[selectedGroup];
+                                        const symbols = selectedStockOrder;
+                                        names = stocks;
+                                        
+                                        console.log(`使用预存股票顺序，分组: ${selectedGroup}，共 ${symbols.length} 个股票`);
+                                        console.log(`分组股票顺序(前5个): ${symbols.slice(0, 5)}`);
+                                        
+                                        // 发送分析请求
+                                        sendAnalysisRequest(symbols, names, title, analyzeAll);
+                                    } else {
+                                        showError('获取分组股票数据失败');
+                                        // 启用分析按钮
+                                        analyzeBtn.disabled = false;
+                                        analyzeSpinner.classList.add('d-none');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('获取分组数据时出错:', error);
+                                    showError('获取分组数据时出错');
+                                    // 启用分析按钮
+                                    analyzeBtn.disabled = false;
+                                    analyzeSpinner.classList.add('d-none');
+                                });
+                            return;
+                        } catch (e) {
+                            console.error('处理股票数据时出错:', e);
                         }
-                        
-                        // 按照服务器返回的顺序处理股票
-                        if (stocks) {
-                            symbols = Object.keys(stocks);
-                            names = stocks;  // 添加名称
+                    }
+                }
+            } else {
+                // 如果没有股票顺序，从服务器获取
+                fetch('/watchlists')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.watchlists) {
+                            const stocks = data.watchlists[selectedGroup];
                             
-                            // 直接发送分析请求
-                            sendAnalysisRequest(symbols, names, title, analyzeAll);
+                            // 使用服务器返回的分组顺序
+                            const groupOrder = data.groups_order;
+                            const stocksOrder = data.stocks_order || {};  // 获取股票顺序
+                            
+                            if (!Array.isArray(groupOrder)) {
+                                console.warn('分组顺序不是数组，使用默认顺序');
+                            }
+                            
+                            // 按照服务器返回的顺序处理股票
+                            if (stocks) {
+                                // 优先使用服务器返回的股票顺序
+                                let symbols = [];
+                                if (stocksOrder && stocksOrder[selectedGroup]) {
+                                    // 使用服务器提供的股票顺序
+                                    symbols = stocksOrder[selectedGroup];
+                                    console.log(`使用服务器提供的股票顺序，分组 "${selectedGroup}" 共 ${symbols.length} 个股票`);
+                                } else {
+                                    // 回退到Object.keys，可能会按字母顺序
+                                    symbols = Object.keys(stocks);
+                                    console.log(`服务器未提供股票顺序，使用默认顺序，分组 "${selectedGroup}" 共 ${symbols.length} 个股票`);
+                                }
+                                
+                                // 记录日志，帮助调试
+                                console.log(`选择分组 "${selectedGroup}" 查询，共 ${symbols.length} 个股票`);
+                                console.log(`分组股票顺序(前5个): ${symbols.slice(0, 5)}`);
+                                
+                                // 构建名称映射
+                                names = stocks;
+                                
+                                // 直接发送分析请求
+                                sendAnalysisRequest(symbols, names, title, analyzeAll);
+                            } else {
+                                showError('所选分组中没有股票');
+                                // 启用分析按钮
+                                analyzeBtn.disabled = false;
+                                analyzeSpinner.classList.add('d-none');
+                            }
                         } else {
-                            showError('所选分组中没有股票');
+                            console.error('获取观察列表失败:', data);
+                            showError('获取观察列表失败，请重试');
                             // 启用分析按钮
                             analyzeBtn.disabled = false;
                             analyzeSpinner.classList.add('d-none');
                         }
-                    } else {
-                        console.error('获取观察列表失败:', data);
-                        showError('获取观察列表失败，请重试');
+                    })
+                    .catch(error => {
+                        console.error('获取观察列表时出错:', error);
+                        showError('获取观察列表时出错，请重试');
                         // 启用分析按钮
                         analyzeBtn.disabled = false;
                         analyzeSpinner.classList.add('d-none');
-                    }
-                })
-                .catch(error => {
-                    console.error('获取观察列表时出错:', error);
-                    showError('获取观察列表时出错，请重试');
-                    // 启用分析按钮
-                    analyzeBtn.disabled = false;
-                    analyzeSpinner.classList.add('d-none');
-                });
-            return;
+                    });
+            }
         } else {
             // 分析所有股票
             sendAnalysisRequest(symbols, names, title, analyzeAll);

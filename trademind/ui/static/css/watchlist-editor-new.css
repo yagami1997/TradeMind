@@ -314,8 +314,8 @@
     top: 20px;
     right: 20px;
     z-index: 1000;
-    background: white;
-    border: 1px solid var(--border-color);
+    background: #28a745;
+    border: 1px solid #28a745;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -325,10 +325,11 @@
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 140, 141, 0.1);
     transition: all 0.2s;
+    color: white;
 }
 
 .close-button:hover {
-    background-color: var(--mars-green);
-    border-color: var(--mars-green);
+    background-color: #fd7e14;
+    border-color: #fd7e14;
     color: white;
 } 
