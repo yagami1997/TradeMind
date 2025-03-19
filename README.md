@@ -28,6 +28,13 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 
 ## 📝 更新日志
 
+### 🆕 2025年3月19日自选股编辑器重构更新 (Beta 0.3.2)
+
+- 将自选股编辑器完全重写，支持行业分类编辑，股票信息编辑等详细功能
+- 解决了系统原本对股票排序采用字母排序，和用户自选股列表的根本冲突
+- 解决多个致命错误，提升了性能
+- 本版本号不变，UX和UI设计告一段落，未来聚焦在指标分析算法和回测模型
+
 ### 🆕 2025年3月16日功能重大优化更新 (Beta 0.3.2)
 
 - Web界面新增自选股导入功能，支持自动分类和智能行业分组
@@ -594,5 +601,5 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Th
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-03-16 21:58:33 PDT</span>
+  <span style="font-size: 14px; color: #888;">2025-03-19 07:38:02 PDT</span>
 </p>
