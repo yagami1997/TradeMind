@@ -13,15 +13,135 @@ class WatchlistEditor {
     }
     
     init() {
+        // 添加自定义样式以确保表格对齐
+        this.addCustomStyles();
         this.loadData();
         this.initDragAndDrop();
         this.bindEvents();
     }
     
+    // 添加自定义样式
+    addCustomStyles() {
+        // 创建样式元素
+        const style = document.createElement('style');
+        style.textContent = `
+            .table-stocks {
+                table-layout: fixed;
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .table-stocks thead {
+                background-color: #f8f9fa;
+                border-bottom: 2px solid #dee2e6;
+            }
+            .table-stocks th {
+                padding: 10px 8px;
+                font-weight: 600;
+                color: #495057;
+            }
+            .table-stocks th:nth-child(1) {
+                width: 40px;
+                text-align: center;
+            }
+            .table-stocks th:nth-child(2) {
+                width: 40px;
+                text-align: center;
+            }
+            .table-stocks th:nth-child(3) {
+                width: 120px;
+                text-align: left;
+                padding-left: 12px;
+            }
+            .table-stocks th:nth-child(4) {
+                text-align: left;
+                padding-left: 12px;
+            }
+            .table-stocks th:nth-child(5) {
+                width: 100px;
+                text-align: center;
+            }
+            .table-stocks td {
+                vertical-align: middle;
+                padding: 8px;
+                border-top: 1px solid #dee2e6;
+            }
+            .table-stocks td:nth-child(1),
+            .table-stocks td:nth-child(2),
+            .table-stocks td:nth-child(5) {
+                text-align: center;
+            }
+            .table-stocks td:nth-child(3),
+            .table-stocks td:nth-child(4) {
+                text-align: left;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                padding-left: 12px;
+            }
+            .table-stocks tr.selected {
+                background-color: rgba(0, 123, 255, 0.1);
+            }
+            .table-stocks tr:hover {
+                background-color: rgba(0, 0, 0, 0.03);
+            }
+            .table-stocks .drag-handle {
+                cursor: move;
+                color: #adb5bd;
+            }
+            .table-stocks .drag-handle:hover {
+                color: #6c757d;
+            }
+            .action-buttons {
+                width: 80px;
+                display: inline-flex;
+                justify-content: center;
+            }
+            .action-buttons .btn {
+                padding: 0.25rem 0.5rem;
+            }
+            /* 修改删除按钮样式 */
+            .delete-stock-btn {
+                background-color: #28a745 !important;
+                color: white !important;
+                border-color: #28a745 !important;
+            }
+            .delete-stock-btn:hover {
+                background-color: #dc3545 !important;
+                border-color: #dc3545 !important;
+            }
+            .delete-group-btn {
+                background-color: #28a745 !important;
+                color: white !important;
+                border-color: #28a745 !important;
+            }
+            .delete-group-btn:hover {
+                background-color: #dc3545 !important;
+                border-color: #dc3545 !important;
+            }
+            .form-check {
+                display: flex;
+                justify-content: center;
+            }
+            .watchlist-group .card-header {
+                background-color: #f8f9fa;
+                padding: 0.75rem 1rem;
+            }
+            .watchlist-group .group-name {
+                font-weight: 600;
+                font-size: 1.1rem;
+            }
+        `;
+        
+        // 添加到文档头部
+        document.head.appendChild(style);
+    }
+    
     // 加载数据
     async loadData() {
         try {
-            const response = await fetch('/api/watchlists');
+            // 添加时间戳以防止缓存
+            const timestamp = new Date().getTime();
+            const response = await fetch(`/api/watchlists?t=${timestamp}`);
             const data = await response.json();
             
             if (!response.ok) throw new Error(data.error || '加载数据失败');
@@ -31,16 +151,46 @@ class WatchlistEditor {
             
             // 使用服务器返回的分组顺序
             this.state.groupOrder = data.groups_order || [];
+            console.log("从服务器加载的分组顺序:", this.state.groupOrder);
+            
+            // 获取服务器返回的股票顺序 (新增)
+            const stocks_order = data.stocks_order || {};
+            console.log("从服务器加载的股票顺序:", stocks_order);
             
             // 按照服务器返回的顺序初始化数据
             this.state.groupOrder.forEach(groupName => {
                 const stocks = data.watchlists[groupName];
                 if (stocks) {
                     const stocksMap = new Map();
-                    // 使用 Object.entries 保持股票顺序
-                    Object.entries(stocks).forEach(([code, name]) => {
-                        stocksMap.set(code, name);
-                    });
+                    
+                    // 新方法：按照服务器提供的股票顺序处理
+                    if (stocks_order[groupName]) {
+                        // 使用服务器返回的顺序
+                        stocks_order[groupName].forEach(code => {
+                            if (code in stocks) {
+                                stocksMap.set(code, stocks[code]);
+                            }
+                        });
+                        
+                        // 检查是否有遗漏的股票（以防万一）
+                        Object.entries(stocks).forEach(([code, name]) => {
+                            if (!stocksMap.has(code)) {
+                                stocksMap.set(code, name);
+                            }
+                        });
+                    } else {
+                        // 没有特定顺序，使用Object.entries（可能会排序）
+                        Object.entries(stocks).forEach(([code, name]) => {
+                            stocksMap.set(code, name);
+                        });
+                    }
+                    
+                    // 记录调试信息
+                    if (groupName === '指数与ETF') {
+                        console.log("加载的'指数与ETF'分组的股票顺序(前5个):", 
+                            Array.from(stocksMap.keys()).slice(0, 5));
+                    }
+                    
                     this.state.watchlists.set(groupName, stocksMap);
                 }
             });
@@ -50,15 +200,35 @@ class WatchlistEditor {
                 if (!this.state.watchlists.has(groupName)) {
                     const stocks = data.watchlists[groupName];
                     const stocksMap = new Map();
-                    Object.entries(stocks).forEach(([code, name]) => {
-                        stocksMap.set(code, name);
-                    });
+                    
+                    // 同样使用服务器返回的顺序
+                    if (stocks_order[groupName]) {
+                        stocks_order[groupName].forEach(code => {
+                            if (code in stocks) {
+                                stocksMap.set(code, stocks[code]);
+                            }
+                        });
+                        
+                        // 检查遗漏的股票
+                        Object.entries(stocks).forEach(([code, name]) => {
+                            if (!stocksMap.has(code)) {
+                                stocksMap.set(code, name);
+                            }
+                        });
+                    } else {
+                        Object.entries(stocks).forEach(([code, name]) => {
+                            stocksMap.set(code, name);
+                        });
+                    }
+                    
                     this.state.watchlists.set(groupName, stocksMap);
                     this.state.groupOrder.push(groupName);
                 }
             });
             
+            console.log("数据加载完成，重新初始化拖拽功能");
             this.render();
+            this.initDragAndDrop();
         } catch (error) {
             console.error('加载数据失败:', error);
             this.showToast('加载数据失败，请刷新页面重试', 'error');
@@ -72,11 +242,14 @@ class WatchlistEditor {
             animation: 150,
             handle: '.group-header',
             draggable: '.watchlist-group',
-            onEnd: (evt) => {
+            onEnd: async (evt) => {
                 const newOrder = Array.from(document.querySelectorAll('.watchlist-group'))
                     .map(group => group.dataset.group);
                 this.state.groupOrder = newOrder;
                 this.state.hasUnsavedChanges = true;
+                
+                // 设置编辑标志
+                await this.setEditFlag();
             }
         });
         
@@ -89,16 +262,16 @@ class WatchlistEditor {
                     handle: '.drag-handle',
                     draggable: 'tr',
                     group: 'stocks',
-                    onEnd: (evt) => {
+                    onEnd: async (evt) => {
                         const fromGroup = evt.from.closest('.watchlist-group').dataset.group;
                         const toGroup = evt.to.closest('.watchlist-group').dataset.group;
                         
                         if (fromGroup !== toGroup) {
                             // 处理跨分组移动
-                            this.handleStockMove(evt.item.dataset.symbol, fromGroup, toGroup);
+                            await this.handleStockMove(evt.item.dataset.symbol, fromGroup, toGroup);
                         } else {
                             // 更新同分组内顺序
-                            this.updateStockOrder(fromGroup);
+                            await this.updateStockOrder(fromGroup);
                         }
                         
                         this.state.hasUnsavedChanges = true;
@@ -127,19 +300,16 @@ class WatchlistEditor {
         // 刷新
         document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
         
-        // 导入股票
-        document.getElementById('importStocksBtn').addEventListener('click', () => this.showImportDialog());
-        
-        // 分组排序
+        // 排序分组按钮
         document.getElementById('sortGroupsBtn').addEventListener('click', () => this.showSortGroupsDialog());
         
-        // 折叠全部
-        document.getElementById('collapseAllBtn').addEventListener('click', () => this.toggleAllGroups(false));
+        // 全部折叠按钮
+        document.getElementById('collapseAllBtn').addEventListener('click', () => this.collapseAllGroups());
         
-        // 展开全部
-        document.getElementById('expandAllBtn').addEventListener('click', () => this.toggleAllGroups(true));
+        // 全部展开按钮
+        document.getElementById('expandAllBtn').addEventListener('click', () => this.expandAllGroups());
         
-        // 保存更改
+        // 保存按钮
         document.getElementById('saveAllBtn').addEventListener('click', () => this.saveChanges());
         
         // 监听页面离开
@@ -177,7 +347,7 @@ class WatchlistEditor {
                                 <button type="button" class="btn btn-sm btn-outline-secondary rename-group-btn">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger delete-group-btn">
+                                <button type="button" class="btn btn-sm delete-group-btn">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -187,15 +357,15 @@ class WatchlistEditor {
                         <table class="table table-hover table-stocks mb-0">
                             <thead>
                                 <tr>
-                                    <th width="40px">
+                                    <th width="40px" style="text-align: center">
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input select-all-stocks" data-group="${groupName}">
                                         </div>
                                     </th>
-                                    <th width="40px"></th>
-                                    <th>代码</th>
-                                    <th>名称</th>
-                                    <th width="100px">操作</th>
+                                    <th width="40px" style="text-align: center"></th>
+                                    <th width="120px" style="text-align: left">代码</th>
+                                    <th style="text-align: left">名称</th>
+                                    <th width="100px" style="text-align: center">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -215,7 +385,12 @@ class WatchlistEditor {
     // 渲染股票列表
     renderStocks(groupName, stocks) {
         let html = '';
-        stocks.forEach((name, code) => {
+        
+        // 使用Array.from获取股票数组，保持原始顺序
+        const stockEntries = Array.from(stocks.entries());
+        
+        // 不进行任何排序，直接使用Map中的顺序
+        stockEntries.forEach(([code, name]) => {
             const isSelected = this.state.selectedStocks.has(`${groupName}:${code}`);
             html += `
                 <tr class="stock-row ${isSelected ? 'selected' : ''}" data-symbol="${code}" data-group="${groupName}">
@@ -231,11 +406,11 @@ class WatchlistEditor {
                     <td>${code}</td>
                     <td>${name}</td>
                     <td>
-                        <div class="btn-group btn-group-sm">
+                        <div class="btn-group btn-group-sm action-buttons">
                             <button type="button" class="btn btn-outline-secondary edit-stock-btn">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-outline-danger delete-stock-btn">
+                            <button type="button" class="btn delete-stock-btn">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -303,6 +478,77 @@ class WatchlistEditor {
         });
     }
     
+    // 添加设置编辑标志的助手函数
+    async setEditFlag() {
+        try {
+            const editFlagResponse = await fetch('/api/set-watchlist-edit-flag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ edited: true })
+            });
+            
+            const editFlagData = await editFlagResponse.json();
+            if (editFlagData.success) {
+                console.log('成功设置手动编辑标志');
+            } else {
+                console.warn('设置手动编辑标志失败:', editFlagData.error);
+            }
+            return editFlagData.success;
+        } catch (flagError) {
+            console.error('设置手动编辑标志时出错:', flagError);
+            return false;
+        }
+    }
+    
+    // 更新股票顺序
+    async updateStockOrder(groupName) {
+        const stocks = this.state.watchlists.get(groupName);
+        if (!stocks) return;
+        
+        const newOrder = new Map();
+        const rows = document.querySelectorAll(`.watchlist-group[data-group="${groupName}"] .stock-row`);
+        
+        // 确保用正确的顺序遍历DOM元素
+        rows.forEach(row => {
+            const code = row.dataset.symbol;
+            if (stocks.has(code)) {
+                newOrder.set(code, stocks.get(code));
+            }
+        });
+        
+        // 使用新的顺序更新Map
+        this.state.watchlists.set(groupName, newOrder);
+        this.state.hasUnsavedChanges = true;
+        
+        // 设置编辑标志
+        await this.setEditFlag();
+        
+        // 记录日志以帮助调试
+        console.log(`已更新分组 "${groupName}" 中的股票顺序`);
+        console.log(`新顺序中的前3个股票: ${Array.from(newOrder.keys()).slice(0, 3).join(', ')}`);
+    }
+    
+    // 处理股票移动
+    async handleStockMove(code, fromGroup, toGroup) {
+        const fromStocks = this.state.watchlists.get(fromGroup);
+        const toStocks = this.state.watchlists.get(toGroup);
+        if (!fromStocks || !toStocks || !fromStocks.has(code)) return;
+        
+        const name = fromStocks.get(code);
+        fromStocks.delete(code);
+        toStocks.set(code, name);
+        
+        // 更新选中状态
+        this.state.selectedStocks.delete(`${fromGroup}:${code}`);
+        
+        this.state.hasUnsavedChanges = true;
+        
+        // 设置编辑标志
+        await this.setEditFlag();
+    }
+    
     // 添加分组
     async addGroup() {
         const groupName = prompt('请输入新分组名称:');
@@ -319,6 +565,10 @@ class WatchlistEditor {
         this.state.watchlists.set(groupName, new Map());
         this.state.groupOrder.push(groupName);
         this.state.hasUnsavedChanges = true;
+        
+        // 设置编辑标志
+        await this.setEditFlag();
+        
         this.render();
         this.showToast(`分组 "${groupName}" 已添加`, 'success');
     }
@@ -343,6 +593,10 @@ class WatchlistEditor {
         }
         
         this.state.hasUnsavedChanges = true;
+        
+        // 设置编辑标志
+        await this.setEditFlag();
+        
         this.render();
         this.showToast(`分组已重命名为 "${newName}"`, 'success');
     }
@@ -365,6 +619,10 @@ class WatchlistEditor {
         }
         
         this.state.hasUnsavedChanges = true;
+        
+        // 设置编辑标志
+        await this.setEditFlag();
+        
         this.render();
         this.showToast(`分组 "${groupName}" 已删除`, 'success');
     }
@@ -387,6 +645,27 @@ class WatchlistEditor {
         stocks.set(code, name || '');
         
         this.state.hasUnsavedChanges = true;
+        
+        // 设置手动编辑标志
+        try {
+            const editFlagResponse = await fetch('/api/set-watchlist-edit-flag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ edited: true })
+            });
+            
+            const editFlagData = await editFlagResponse.json();
+            if (editFlagData.success) {
+                console.log('添加股票：成功设置手动编辑标志');
+            } else {
+                console.warn('添加股票：设置手动编辑标志失败:', editFlagData.error);
+            }
+        } catch (flagError) {
+            console.error('添加股票：设置手动编辑标志时出错:', flagError);
+        }
+        
         this.render();
         this.showToast(`股票 ${code} 已添加到 "${groupName}"`, 'success');
     }
@@ -402,6 +681,27 @@ class WatchlistEditor {
         
         stocks.set(code, newName);
         this.state.hasUnsavedChanges = true;
+        
+        // 设置手动编辑标志
+        try {
+            const editFlagResponse = await fetch('/api/set-watchlist-edit-flag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ edited: true })
+            });
+            
+            const editFlagData = await editFlagResponse.json();
+            if (editFlagData.success) {
+                console.log('编辑股票：成功设置手动编辑标志');
+            } else {
+                console.warn('编辑股票：设置手动编辑标志失败:', editFlagData.error);
+            }
+        } catch (flagError) {
+            console.error('编辑股票：设置手动编辑标志时出错:', flagError);
+        }
+        
         this.render();
         this.showToast(`股票 ${code} 已更新`, 'success');
     }
@@ -417,6 +717,27 @@ class WatchlistEditor {
         this.state.selectedStocks.delete(`${groupName}:${code}`);
         
         this.state.hasUnsavedChanges = true;
+        
+        // 设置手动编辑标志
+        try {
+            const editFlagResponse = await fetch('/api/set-watchlist-edit-flag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ edited: true })
+            });
+            
+            const editFlagData = await editFlagResponse.json();
+            if (editFlagData.success) {
+                console.log('删除股票：成功设置手动编辑标志');
+            } else {
+                console.warn('删除股票：设置手动编辑标志失败:', editFlagData.error);
+            }
+        } catch (flagError) {
+            console.error('删除股票：设置手动编辑标志时出错:', flagError);
+        }
+        
         this.render();
         this.showToast(`股票 ${code} 已删除`, 'success');
     }
@@ -447,137 +768,6 @@ class WatchlistEditor {
         });
         
         this.render();
-    }
-    
-    // 处理股票移动
-    handleStockMove(code, fromGroup, toGroup) {
-        const fromStocks = this.state.watchlists.get(fromGroup);
-        const toStocks = this.state.watchlists.get(toGroup);
-        if (!fromStocks || !toStocks || !fromStocks.has(code)) return;
-        
-        const name = fromStocks.get(code);
-        fromStocks.delete(code);
-        toStocks.set(code, name);
-        
-        // 更新选中状态
-        this.state.selectedStocks.delete(`${fromGroup}:${code}`);
-        
-        this.state.hasUnsavedChanges = true;
-    }
-    
-    // 更新股票顺序
-    updateStockOrder(groupName) {
-        const stocks = this.state.watchlists.get(groupName);
-        if (!stocks) return;
-        
-        const newOrder = new Map();
-        const rows = document.querySelectorAll(`.watchlist-group[data-group="${groupName}"] .stock-row`);
-        rows.forEach(row => {
-            const code = row.dataset.symbol;
-            if (stocks.has(code)) {
-                newOrder.set(code, stocks.get(code));
-            }
-        });
-        
-        this.state.watchlists.set(groupName, newOrder);
-        this.state.hasUnsavedChanges = true;
-    }
-    
-    // 显示导入对话框
-    showImportDialog() {
-        // 获取对话框元素
-        const modal = document.getElementById('importDialog');
-        if (!modal) {
-            console.error('找不到导入对话框元素');
-            return;
-        }
-
-        // 更新分组下拉列表
-        const targetGroup = modal.querySelector('#targetGroup');
-        targetGroup.innerHTML = '<option value="">创建新分组</option>';
-        this.state.groupOrder.forEach(groupName => {
-            targetGroup.innerHTML += `<option value="${groupName}">${groupName}</option>`;
-        });
-
-        // 监听分组选择变化
-        targetGroup.onchange = () => {
-            const newGroupContainer = modal.querySelector('#newGroupNameContainer');
-            newGroupContainer.style.display = targetGroup.value === '' ? 'block' : 'none';
-        };
-
-        // 处理导入按钮点击
-        const startImportBtn = modal.querySelector('#startImportBtn');
-        const stockInput = modal.querySelector('#stockInput');
-        
-        startImportBtn.onclick = async () => {
-            const codes = stockInput.value.trim().split(/[\n,，\s]+/).filter(code => code);
-            if (!codes.length) {
-                this.showToast('请输入股票代码', 'warning');
-                return;
-            }
-
-            const selectedGroup = targetGroup.value;
-            const newGroupName = modal.querySelector('#newGroupName')?.value?.trim();
-
-            if (!selectedGroup && !newGroupName) {
-                this.showToast('请选择分组或输入新分组名称', 'warning');
-                return;
-            }
-
-            const groupName = selectedGroup || newGroupName;
-
-            // 如果是新分组，先创建
-            if (!selectedGroup) {
-                if (this.state.watchlists.has(groupName)) {
-                    this.showToast(`分组 "${groupName}" 已存在`, 'warning');
-                    return;
-                }
-                this.state.watchlists.set(groupName, new Map());
-                this.state.groupOrder.push(groupName);
-            }
-
-            // 获取目标分组的股票列表
-            const stocks = this.state.watchlists.get(groupName);
-
-            // 导入股票
-            let addedCount = 0;
-            let duplicateCount = 0;
-
-            for (const code of codes) {
-                if (stocks.has(code)) {
-                    duplicateCount++;
-                    continue;
-                }
-                stocks.set(code, '');  // 暂时使用空名称，后续可以添加验证和获取名称的功能
-                addedCount++;
-            }
-
-            // 关闭对话框
-            bootstrap.Modal.getInstance(modal).hide();
-
-            // 清空输入
-            stockInput.value = '';
-            targetGroup.value = '';
-            if (newGroupName) {
-                modal.querySelector('#newGroupName').value = '';
-            }
-
-            // 标记有未保存的更改
-            this.state.hasUnsavedChanges = true;
-
-            // 重新渲染
-            this.render();
-
-            // 显示结果
-            this.showToast(
-                `成功导入 ${addedCount} 个股票${duplicateCount ? `，${duplicateCount} 个重复已跳过` : ''}`,
-                'success'
-            );
-        };
-
-        // 显示对话框
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
     }
     
     // 显示分组排序对话框
@@ -665,18 +855,56 @@ class WatchlistEditor {
             this.state.groupOrder.forEach(groupName => {
                 const stocks = this.state.watchlists.get(groupName);
                 if (stocks) {
-                    // 使用 Object.fromEntries 保持股票顺序
-                    watchlists[groupName] = Object.fromEntries(Array.from(stocks.entries()));
+                    // 使用从Map中获取的顺序来构建对象，确保顺序保留
+                    const orderedStocks = {};
+                    Array.from(stocks.entries()).forEach(([code, name]) => {
+                        orderedStocks[code] = name;
+                    });
+                    
+                    watchlists[groupName] = orderedStocks;
+                    
+                    // 调试日志
+                    if (groupName === '指数与ETF') {
+                        console.log("保存前'指数与ETF'分组的股票顺序(前5个):", 
+                            Array.from(stocks.keys()).slice(0, 5));
+                    }
                 }
             });
             
             // 添加任何遗漏的分组
             this.state.watchlists.forEach((stocks, groupName) => {
                 if (!(groupName in watchlists)) {
-                    watchlists[groupName] = Object.fromEntries(Array.from(stocks.entries()));
+                    const orderedStocks = {};
+                    Array.from(stocks.entries()).forEach(([code, name]) => {
+                        orderedStocks[code] = name;
+                    });
+                    
+                    watchlists[groupName] = orderedStocks;
                     this.state.groupOrder.push(groupName);
                 }
             });
+            
+            // 设置手动编辑标志
+            try {
+                // 设置手动编辑标志为true
+                const editFlagResponse = await fetch('/api/set-watchlist-edit-flag', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ edited: true })
+                });
+                
+                const editFlagData = await editFlagResponse.json();
+                if (editFlagData.success) {
+                    console.log('成功设置手动编辑标志');
+                } else {
+                    console.warn('设置手动编辑标志失败:', editFlagData.error);
+                }
+            } catch (flagError) {
+                console.error('设置手动编辑标志时出错:', flagError);
+                // 继续保存过程，不阻止
+            }
             
             const response = await fetch('/api/watchlists', {
                 method: 'POST',
@@ -703,6 +931,10 @@ class WatchlistEditor {
                 }
             });
             document.dispatchEvent(event);
+            
+            // 在localStorage中标记编辑器已保存
+            localStorage.setItem('watchlistEditorSaved', 'true');
+            localStorage.setItem('watchlistEditorSavedTime', new Date().getTime());
         } catch (error) {
             console.error('保存失败:', error);
             this.showToast(error.message || '保存失败，请重试', 'error');
@@ -780,6 +1012,34 @@ class WatchlistEditor {
             body.style.display = 'none';
             icon?.classList.replace('bi-chevron-down', 'bi-chevron-up');
         }
+    }
+
+    // 折叠所有分组
+    collapseAllGroups() {
+        const groups = document.querySelectorAll('.watchlist-group');
+        groups.forEach(group => {
+            const cardBody = group.querySelector('.card-body');
+            const icon = group.querySelector('.group-header i.bi-chevron-up, .group-header i.bi-chevron-down');
+            
+            if (cardBody && icon) {
+                cardBody.style.display = 'none';
+                icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+            }
+        });
+    }
+    
+    // 展开所有分组
+    expandAllGroups() {
+        const groups = document.querySelectorAll('.watchlist-group');
+        groups.forEach(group => {
+            const cardBody = group.querySelector('.card-body');
+            const icon = group.querySelector('.group-header i.bi-chevron-up, .group-header i.bi-chevron-down');
+            
+            if (cardBody && icon) {
+                cardBody.style.display = 'block';
+                icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+            }
+        });
     }
 }
 

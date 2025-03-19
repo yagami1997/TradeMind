@@ -9,12 +9,12 @@
         "VOO": "先锋标普500ETF",
         "IVV": "iShares核心标普500ETF",
         "QQQ": "纳指100ETF",
+        "QQQA": "ProShares纳斯达克100多策略ETF",
+        "QQQM": "Invesco纳斯达克100ETF",
         "XAR": "SPDR航空航天与国防ETF",
         "XLK": "SPDR科技行业ETF",
         "XLP": "SPDR必需消费品ETF",
         "XLY": "SPDR非必需消费品ETF",
-        "QQQA": "ProShares纳斯达克100多策略ETF",
-        "QQQM": "Invesco纳斯达克100ETF",
         "DBC": "Invesco商品指数追踪ETF",
         "FENY": "Fidelity能源行业ETF",
         "FTEC": "Fidelity信息技术ETF",
@@ -42,18 +42,18 @@
         "ORCL": "甲骨文"
     },
     "半导体与硬件": {
-        "AMAT": "应用材料",
+        "INTC": "英特尔",
         "AMD": "超威半导体",
-        "ARM": "ARM控股",
+        "TSM": "台积电",
         "ASML": "阿斯麦",
         "AVGO": "博通",
-        "DELL": "戴尔科技",
-        "INTC": "英特尔",
-        "MU": "美光科技",
         "QCOM": "高通",
+        "ARM": "ARM控股",
+        "DELL": "戴尔科技",
+        "MU": "美光科技",
         "SNPS": "新思科技",
+        "AMAT": "应用材料",
         "SONY": "索尼集团",
-        "TSM": "台积电",
         "WDC": "西部数据"
     },
     "互联网与软件": {
@@ -111,7 +111,7 @@
         "HSBC": "汇丰控股",
         "JPM": "摩根大通",
         "KKR": "KKR集团",
-        "MA": "Mastercard Incorporated",
+        "MA": "万事达",
         "MCO": "穆迪公司",
         "MET": "大都会人寿",
         "MS": "摩根士丹利",
@@ -142,7 +142,7 @@
         "F": "福特汽车",
         "GD": "通用动力",
         "GE": "通用电气",
-        "GM": "General Motors Company",
+        "GM": "通用汽车",
         "HII": "亨廷顿英格尔斯工业",
         "HON": "霍尼韦尔",
         "LHX": "L3哈里斯技术",
@@ -156,6 +156,7 @@
     "医疗健康": {
         "ABT": "雅培",
         "AZN": "阿斯利康",
+        "PFE": "辉瑞",
         "BMY": "Bristol-Myers",
         "GILD": "吉利德科学",
         "GSK": "葛兰素史克",
@@ -163,14 +164,13 @@
         "LLY": "礼来",
         "MDT": "美敦力",
         "MRK": "默克",
-        "NVO": "诺和诺德",
-        "PFE": "辉瑞"
+        "NVO": "诺和诺德"
     },
     "电信与通讯": {
-        "KDDIY": "KDDI公司",
         "T": "AT&T",
         "TMUS": "T-Mobile美国",
-        "VOD": "沃达丰"
+        "VOD": "沃达丰",
+        "KDDIY": "KDDI公司"
     },
     "无分类自选股": {}
 }

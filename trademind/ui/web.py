@@ -138,6 +138,20 @@ def analyze_stocks():
                 
             logger.info(f'加载所有股票，使用文件: {user_watchlists_file}')
             
+            # 获取分组顺序文件
+            groups_order_file = os.path.join(os.path.dirname(user_watchlists_file), 'groups_order.json')
+            groups_order = []
+            
+            # 读取分组顺序
+            if os.path.exists(groups_order_file):
+                try:
+                    with open(groups_order_file, 'r', encoding='utf-8') as f:
+                        groups_order = json.load(f).get('groups_order', [])
+                    logger.info(f"成功读取分组顺序: {groups_order}")
+                except Exception as e:
+                    logger.error(f"读取分组顺序文件失败: {str(e)}")
+                    groups_order = []
+            
             # 直接加载文件
             try:
                 with open(user_watchlists_file, 'r', encoding='utf-8') as f:
@@ -156,13 +170,32 @@ def analyze_stocks():
             all_symbols = []
             all_names = {}
             
-            # 按照文件中定义的顺序添加股票
-            for group_name, group_stocks in all_watchlists.items():
-                logger.info(f'处理组: {group_name}, 股票数量: {len(group_stocks)}')
-                for code, name in group_stocks.items():
-                    if code not in all_names:  # 避免重复
-                        all_symbols.append(code)
-                        all_names[code] = name
+            # 如果有分组顺序，按顺序处理
+            if groups_order:
+                logger.info(f'使用分组顺序处理股票: {groups_order}')
+                
+                # 按照分组顺序添加股票
+                for group_name in groups_order:
+                    if group_name in all_watchlists:
+                        group_stocks = all_watchlists[group_name]
+                        logger.info(f'处理组: {group_name}, 股票数量: {len(group_stocks)}')
+                        
+                        # 按照文件中的顺序添加该分组中的股票
+                        for code, name in group_stocks.items():
+                            if code not in all_names:  # 避免重复
+                                all_symbols.append(code)
+                                all_names[code] = name
+            else:
+                # 没有分组顺序，则按照文件中定义的顺序添加股票
+                logger.info('没有找到分组顺序，使用文件中的定义顺序')
+                
+                # 按照文件中定义的顺序添加股票
+                for group_name, group_stocks in all_watchlists.items():
+                    logger.info(f'处理组: {group_name}, 股票数量: {len(group_stocks)}')
+                    for code, name in group_stocks.items():
+                        if code not in all_names:  # 避免重复
+                            all_symbols.append(code)
+                            all_names[code] = name
             
             symbols = all_symbols
             names = all_names
@@ -635,9 +668,14 @@ def import_watchlist():
             translate=True
         )
         
-        # 导入成功后，重置手动编辑标志
+        # 导入成功后，设置手动编辑标志
         if result.get('success'):
-            save_user_watchlist_edit_status(user_id, False)
+            # 确保设置编辑标志
+            edit_result = save_user_watchlist_edit_status(user_id, True)
+            if not edit_result:
+                app.logger.warning(f"导入股票成功但设置编辑标志失败: {user_id}")
+            else:
+                app.logger.info(f"导入股票后成功设置编辑标志: {user_id}")
         
         return jsonify(result)
     except Exception as e:
@@ -1026,6 +1064,16 @@ def auto_organize_watchlist():
         
         # 获取最终的分组顺序
         groups_order = list(updated_watchlists.keys())
+        
+        # 自动整理后设置手动编辑标志为true
+        try:
+            edit_flag_result = save_user_watchlist_edit_status(user_id, True)
+            if edit_flag_result:
+                app.logger.info(f"自动整理后成功设置编辑标志: {user_id}")
+            else:
+                app.logger.warning(f"自动整理后设置编辑标志失败: {user_id}")
+        except Exception as flag_error:
+            app.logger.error(f"设置编辑标志时出错: {str(flag_error)}")
         
         # 返回结果
         return jsonify({
@@ -1691,12 +1739,34 @@ def api_watchlists():
             # 更新全局变量
             watchlists = ordered_watchlists
             
-            # 返回数据时同时返回分组顺序
-            return jsonify({
+            # 记录每个分组前5个股票，帮助调试
+            for group, stocks in ordered_watchlists.items():
+                first_5_stocks = list(stocks.keys())[:5] if stocks else []
+                logger.info(f"分组 '{group}' 前5个股票: {first_5_stocks}")
+                
+            # 创建一个包含原始顺序信息的响应对象
+            response = {
                 'success': True,
                 'watchlists': ordered_watchlists,
                 'groups_order': groups_order
-            })
+            }
+            
+            # 将每个分组的股票顺序添加到响应中
+            stocks_order = {}
+            for group, stocks in ordered_watchlists.items():
+                stocks_order[group] = list(stocks.keys())
+            
+            response['stocks_order'] = stocks_order
+            
+            # 获取并添加手动编辑标志
+            hasBeenManuallyEdited = get_user_watchlist_edit_status(user_id)
+            response['hasBeenManuallyEdited'] = hasBeenManuallyEdited
+            
+            # 记录日志
+            logger.info(f"用户 {user_id} 的自选股编辑标志状态: {hasBeenManuallyEdited}")
+            
+            # 返回数据时同时返回分组顺序
+            return jsonify(response)
             
         elif request.method == 'POST':
             data = request.get_json()
@@ -2023,6 +2093,68 @@ def api_save_watchlists():
     except Exception as e:
         logger.error(f'保存watchlists失败: {str(e)}')
         return jsonify({'error': '保存失败'}), 500
+
+@app.route('/api/set-watchlist-edit-flag', methods=['POST'])
+def set_watchlist_edit_flag():
+    """设置自选股列表的手动编辑标志"""
+    try:
+        # 获取请求数据
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': '无效的请求数据'}), 400
+            
+        # 获取编辑状态
+        edited = data.get('edited', True)
+        
+        # 获取用户ID
+        user_id = session.get('user_id', 'default')
+        
+        # 设置编辑标志
+        result = save_user_watchlist_edit_status(user_id, edited)
+        
+        if result:
+            logger.info(f"用户 {user_id} 的自选股编辑标志已设置为: {edited}")
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': '保存编辑标志失败'})
+            
+    except Exception as e:
+        logger.exception(f"设置自选股编辑标志时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/get-import-modal-html', methods=['GET'])
+def get_import_modal_html():
+    """获取导入模块的HTML和相关资源"""
+    # 返回完整的导入模块所需的HTML、脚本和样式
+    response = {
+        'html': '',
+        'script': '',
+        'stylesheet': ''
+    }
+    
+    # 获取模态框HTML
+    with open(os.path.join(os.path.dirname(__file__), 'templates', 'index.html'), 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    # 提取导入模块的HTML
+    import re
+    pattern = r'<div class="modal fade" id="importWatchlistModal".*?</div>\s*</div>\s*</div>'
+    match = re.search(pattern, content, re.DOTALL)
+    
+    if match:
+        response['html'] = match.group(0)
+    else:
+        return jsonify({'error': '导入模块HTML提取失败'}), 500
+    
+    # 获取导入模块的JavaScript代码
+    try:
+        with open(os.path.join(os.path.dirname(__file__), 'static', 'js', 'watchlist-importer.js'), 'r', encoding='utf-8') as f:
+            response['script'] = f.read()
+    except Exception as e:
+        logger.exception(f"读取导入模块脚本失败: {str(e)}")
+        return jsonify({'error': f'读取导入模块脚本失败: {str(e)}'}), 500
+        
+    return jsonify(response)
 
 if __name__ == "__main__":
     try:
