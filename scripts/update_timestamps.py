@@ -24,17 +24,53 @@ def update_file_timestamp(file_path, timestamp):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
+    # 标记是否找到并更新了时间戳
+    updated = False
+    
     # 更新文件顶部的时间戳
-    content = re.sub(r'\*\*最后更新\*\*: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
-                    f'**最后更新**: {timestamp}', content)
+    if re.search(r'\*\*最后更新\*\*: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', content):
+        content = re.sub(r'\*\*最后更新\*\*: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
+                        f'**最后更新**: {timestamp}', content)
+        updated = True
     
     # 更新文件底部的时间戳
-    content = re.sub(r'\*最后更新: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', 
-                    f'*最后更新: {timestamp}*', content)
+    if re.search(r'\*最后更新: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', content):
+        content = re.sub(r'\*最后更新: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', 
+                        f'*最后更新: {timestamp}*', content)
+        updated = True
+    elif re.search(r'\*生成时间：\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', content):
+        content = re.sub(r'\*生成时间：\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', 
+                        f'*生成时间：{timestamp}*', content)
+        updated = True
+    elif re.search(r'\*发布于: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', content):
+        content = re.sub(r'\*发布于: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T\*', 
+                        f'*发布于: {timestamp}*', content)
+        updated = True
     
     # 更新"最后更新"部分的时间戳
-    content = re.sub(r'## 最后更新\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
-                    f'## 最后更新\n{timestamp}', content)
+    if re.search(r'## 最后更新\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', content):
+        content = re.sub(r'## 最后更新\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
+                        f'## 最后更新\n{timestamp}', content)
+        updated = True
+    
+    # 更新发布日期
+    if re.search(r'### 发布日期\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', content):
+        content = re.sub(r'### 发布日期\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T', 
+                        f'### 发布日期\n{timestamp}', content)
+        updated = True
+    
+    # 更新README.md特殊格式
+    if re.search(r'<span style="font-size: 14px; color: #888;">\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T</span>', content):
+        content = re.sub(r'<span style="font-size: 14px; color: #888;">\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} P[DS]T</span>', 
+                        f'<span style="font-size: 14px; color: #888;">{timestamp}</span>', content)
+        updated = True
+    
+    # 如果没有找到任何时间戳格式，在文件末尾添加生成时间
+    if not updated and not content.strip().endswith(f'*生成时间：{timestamp}*'):
+        if content.endswith('\n'):
+            content += f'\n*生成时间：{timestamp}*'
+        else:
+            content += f'\n\n*生成时间：{timestamp}*'
     
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)
