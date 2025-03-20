@@ -302,4 +302,206 @@ def prepare_trend_analysis(analyzer_result: Dict) -> Dict:
 
 ### 4. 系统集成
 
-在`
+在`trademind/core/analyzer.py`中添加新的分析方法：
+
+```python
+def analyze_pressure_and_trend(self, symbol: str) -> Dict:
+    """
+    综合分析压力位和趋势
+    
+    参数:
+        symbol: 股票代码
+        
+    返回:
+        Dict: 包含压力位和趋势分析结果的字典
+    """
+    # 获取价格数据
+    price_data = self.get_price_data(symbol)
+    
+    # 创建分析器实例
+    pressure_analyzer = PressurePointAnalyzer(price_data)
+    trend_analyzer = TrendAnalyzer(price_data)
+    
+    # 执行分析
+    pressure_points = pressure_analyzer.analyze()
+    trend_analysis = trend_analyzer.analyze()
+    
+    # 整合结果
+    return {
+        'pressure_points': pressure_points,
+        'trend_analysis': trend_analysis,
+        'recommendation': self._generate_recommendation(
+            pressure_points, trend_analysis
+        )
+    }
+
+def _generate_recommendation(self, pressure_points: Dict, trend_analysis: Dict) -> Dict:
+    """
+    基于压力位和趋势分析生成交易建议
+    
+    参数:
+        pressure_points: 压力位分析结果
+        trend_analysis: 趋势分析结果
+        
+    返回:
+        Dict: 交易建议
+    """
+    current_price = self.get_current_price()
+    trend_direction = trend_analysis['direction']
+    trend_strength = trend_analysis['strength']
+    
+    # 获取最近的支撑位和阻力位
+    nearest_support = min(p for p in pressure_points['support_levels'] if p < current_price)
+    nearest_resistance = min(p for p in pressure_points['resistance_levels'] if p > current_price)
+    
+    # 计算建议的买入区间
+    buy_zone = {
+        'low': nearest_support,
+        'high': nearest_support * 1.02  # 支撑位上方2%以内
+    }
+    
+    # 计算止损位
+    stop_loss = nearest_support * 0.98  # 支撑位下方2%
+    
+    return {
+        'buy_zone': buy_zone,
+        'stop_loss': stop_loss,
+        'confidence': self._calculate_confidence(
+            trend_direction, trend_strength, current_price,
+            nearest_support, nearest_resistance
+        )
+    }
+```
+
+## 测试计划
+
+1. 单元测试：
+   - 测试Fibonacci回调位计算准确性
+   - 测试价格分布密度分析
+   - 测试ADX计算
+   - 测试趋势线识别
+   - 测试支撑位/阻力位识别
+   - 测试建议生成逻辑
+
+2. 集成测试：
+   - 测试压力位和趋势分析的组合效果
+   - 测试UI展示效果
+   - 测试实时数据更新
+   - 测试与现有系统的集成
+
+3. 性能测试：
+   - 测试大量数据下的计算性能
+   - 测试实时分析的响应时间
+   - 测试UI渲染性能
+   - 测试内存使用情况
+
+4. 用户体验测试：
+   - 测试UI交互流畅度
+   - 测试数据更新实时性
+   - 测试信息展示清晰度
+   - 测试操作建议的可理解性
+
+## 验收标准
+
+1. 功能验收：
+   - 压力位识别准确率不低于80%
+   - 趋势判断准确率不低于75%
+   - 所有计算指标与主流交易软件的误差不超过0.1%
+   - 支持实时数据更新，延迟不超过3秒
+
+2. 性能验收：
+   - 分析卡片首次加载时间不超过1秒
+   - 数据更新延迟不超过1秒
+   - CPU使用率峰值不超过50%
+   - 内存使用量不超过500MB
+
+3. 代码质量：
+   - 所有单元测试通过率100%
+   - 代码覆盖率不低于85%
+   - 无严重或中等级别的安全漏洞
+   - 符合PEP 8代码规范
+
+4. 用户体验：
+   - UI响应时间不超过100ms
+   - 趋势和压力位展示清晰直观
+   - 操作建议具体且易于理解
+   - 支持交互式查看详细信息
+
+## 相关任务
+
+- TASK-013: 动态RSI阈值算法实现
+- TASK-009: 主程序和用户界面开发
+- TASK-003: 形态识别迁移
+- TASK-004: 信号生成迁移
+
+## 注意事项
+
+1. 技术实现：
+   - 确保使用经典且被市场验证的分析方法
+   - 避免过度拟合历史数据
+   - 注意计算性能优化
+   - 保持代码的可维护性和可扩展性
+
+2. 用户体验：
+   - 保持UI简洁直观
+   - 确保信息展示的清晰度
+   - 提供必要的交互反馈
+   - 支持自定义参数配置
+
+3. 系统集成：
+   - 确保与现有系统的平滑集成
+   - 保持数据一致性
+   - 做好异常处理
+   - 提供完整的日志记录
+
+4. 测试与部署：
+   - 编写完整的单元测试
+   - 进行充分的集成测试
+   - 准备回滚方案
+   - 制定监控计划
+
+## 进度安排
+
+1. 第1天：
+   - 完成压力位识别系统的核心实现
+   - 编写基础单元测试
+
+2. 第2天：
+   - 完成趋势判定系统的核心实现
+   - 补充单元测试
+   - 开始UI组件开发
+
+3. 第3天：
+   - 完成UI组件开发
+   - 进行系统集成
+   - 开始集成测试
+
+4. 第4天：
+   - 完成所有测试
+   - 性能优化
+   - 文档完善
+
+5. 第5天：
+   - 系统联调
+   - 问题修复
+   - 准备部署
+
+## 风险管理
+
+1. 技术风险：
+   - 风险：计算性能不足
+   - 缓解：优化算法，使用缓存机制
+
+2. 进度风险：
+   - 风险：复杂度超出预期
+   - 缓解：预留缓冲时间，及时调整范围
+
+3. 质量风险：
+   - 风险：准确率不达标
+   - 缓解：增加验证数据集，细化测试用例
+
+4. 集成风险：
+   - 风险：与现有系统不兼容
+   - 缓解：提前进行接口测试，做好版本控制
+
+*生成时间：2025-03-20 00:05:40 PDT*
