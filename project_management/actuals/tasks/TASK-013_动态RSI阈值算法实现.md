@@ -329,4 +329,4 @@ def backtest_dynamic_rsi(price_data, initial_capital=10000):
 代码已经整合到项目的核心模块中，可以通过`from trademind.core import dynamic_atr_rsi, generate_signals, backtest_dynamic_rsi`导入使用。
 
 ---
-*最后更新: 2025-03-16 21:58:33 PDT* 
+*最后更新: 2025-03-19 18:36:48 PDT* 
