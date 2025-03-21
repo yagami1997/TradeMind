@@ -47,6 +47,10 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    - 基于 Richard Donchian 的移动平均线交易系统理论
    - 将主要均线位置作为动态支撑压力位
 
+####🔔有关开发文档指南：
+- 📋 [TASK-016: 压力位和趋势分析系统实现](https://github.com/yagami1997/TradeMind/blob/main/project_management/actuals/tasks/TASK-016_%E5%8E%8B%E5%8A%9B%E4%BD%8D%E5%92%8C%E8%B6%8B%E5%8A%BF%E5%88%86%E6%9E%90%E7%B3%BB%E7%BB%9F%E5%AE%9E%E7%8E%B0.md)
+- 📝 [Decision-004: 项目决策文档](https://github.com/yagami1997/TradeMind/blob/main/project_management/actuals/decisions/decision_004.md)
+
 
 ### 🆕 2025年3月19日自选股编辑器重构更新 (Beta 0.3.2)
 
