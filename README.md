@@ -310,7 +310,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 ### 📈 股票分析流程
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/0c7f3de4-a15e-4b60-8a39-a6544ab9dda8" alt="股票分析流程" width="800px"/>
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/9ea15bdb-7936-4dce-93e6-c6d6be9fcff1" />
 </div>
 
 1. **输入股票代码**
@@ -322,7 +322,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 2. **等待分析完成**
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/23dfcb33-5c8a-4c67-86a9-d23b83ebfb50" alt="分析进度" width="800px"/>
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/17ec3779-7065-4ec2-85ab-3e64ccd248d3" />
 </div>
 
    - 程序会显示进度条
@@ -332,7 +332,12 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 ### 📊 报告解读指南
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/1179f396-9bbf-4d09-b534-4f9cffb9456c" alt="报告示例" width="800px"/>
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/c4b00dd6-8632-43d4-8f8c-2bf191c0ac43" />
+</div>
+
+### 🖌️ 自选股编辑器
+<div align="center">
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/df1786f7-27d6-47be-9437-57f2623a2220" />
 </div>
 
 1. **报告结构**
