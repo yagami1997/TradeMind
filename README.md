@@ -28,6 +28,26 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
 
 ## 📝 更新日志
 
+### 🆕 2025年3月20日开发文档更新决策004和Task016 (Beta 0.3.2)
+🔔 **下阶段关注重点：压力位识别和趋势判定系统实现**
+
+🏁**技术路线**
+1. **Fibonacci回调位**
+   - 基于Fibonacci数列（0.236, 0.382, 0.5, 0.618, 0.786）的回调位计算
+   - 在主要趋势中寻找高点和低点，计算关键回调位置
+   - 被广泛应用于华尔街，具有较强的市场认可度
+
+2. **历史价格分布密度分析**
+   - 基于 Market Profile 理论（由 Peter Steidlmayer 开发）
+   - 分析价格在不同区域的成交密度
+   - 识别高成交量价格区域作为潜在支撑/压力位
+
+3. **移动平均线支撑压力系统**
+   - 使用广泛认可的均线系统：MA20、MA50、MA200
+   - 基于 Richard Donchian 的移动平均线交易系统理论
+   - 将主要均线位置作为动态支撑压力位
+
+
 ### 🆕 2025年3月19日自选股编辑器重构更新 (Beta 0.3.2)
 
 - 将自选股编辑器完全重写，支持行业分类编辑，股票信息编辑等详细功能
@@ -601,5 +621,5 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Th
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-03-19 18:46:03 PDT</span>
+  <span style="font-size: 14px; color: #888;">2025-03-20 18:14:43 PDT</span>
 </p>
