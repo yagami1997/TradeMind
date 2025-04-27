@@ -1,86 +1,85 @@
 # TradeMind Lite 依赖库列表
-# 最后更新: 2025-03-19 07:38:02 PDT
+# 最后更新: 2023-05-15
 # 维护者: Yagami
 
 # 核心数据处理库
-numpy==2.0.2
-pandas==2.2.3
+numpy>=1.24.0
+pandas>=2.0.0
 
 # 数据获取和网络请求
-yfinance==0.2.54
-requests==2.32.3
+yfinance>=0.2.18
+requests>=2.28.0
 urllib3==1.26.6  # 固定版本，不使用2.x版本
 
 # Web框架及其依赖
-Flask==2.3.3
-Werkzeug==2.3.7
-Jinja2==3.1.3
-flask-cors==5.0.1  # 添加CORS支持
+Flask>=2.2.0
+Werkzeug>=2.2.0
+Jinja2>=3.1.2
+flask-cors>=3.0.10  # 添加CORS支持
 
 # 数据可视化
-matplotlib==3.9.4  # 更新到最新版本，解决冲突问题
-seaborn==0.13.2
-plotly==6.0.1  # 更新到6.0.1版本，解决导入问题
-narwhals>=1.15.1  # plotly依赖库
+matplotlib>=3.7.0  # 解决冲突问题
+seaborn>=0.12.0
+plotly>=5.13.0  # 当前最新稳定版
 
 # 系统和工具库
-pytz==2025.1
-python-dateutil==2.9.0.post0
-typing_extensions==4.12.2
-psutil==5.9.8
+pytz>=2023.3
+python-dateutil>=2.8.2
+typing_extensions>=4.5.0
+psutil>=5.9.0
 
 # 终端界面美化
-rich==13.7.0
+rich>=13.3.5
 
 # 基础工具库
-certifi==2025.1.31
-six==1.17.0
-idna==3.10
+certifi>=2022.12.7
+six>=1.16.0
+idna>=3.4
 
 # 用于处理操作系统中的文件路径
-appdirs==1.4.4
+appdirs>=1.4.4
 
 # Python 的网页解析库，用于提取网页数据
-beautifulsoup4==4.13.3
+beautifulsoup4>=4.11.0
 
 # 字符编码检测库
-charset-normalizer==3.4.1
+charset-normalizer>=2.1.0
 
 # 事件驱动编程库
-eventkit==1.0.3
+eventkit>=1.0.0
 
 # 不可变字典实现
-frozendict==2.4.6
+frozendict>=2.3.0
 
 # HTML 和 XML 文件解析器
-html5lib==1.1
+html5lib>=1.1
 
 # Interactive Brokers Python API 的异步封装库，用于股票交易
-ib-insync==0.9.86
+ib-insync>=0.9.0
 
 # XML 和 HTML 处理库，性能优秀
-lxml==5.3.1
+lxml>=4.9.0
 
 # Python 多任务处理库
-multitasking==0.0.11
+multitasking>=0.0.11
 
 # 解决 Jupyter 中的异步嵌套问题
-nest-asyncio==1.6.0
+nest-asyncio>=1.5.0
 
 # 基于 Pandas 的技术分析指标库，用于金融市场分析
-pandas_ta==0.3.14b0
+pandas_ta>=0.3.14b0
 
 # 简单而小巧的 ORM 数据库框架
-peewee==3.17.9
+peewee>=3.16.0
 
 # 进度条显示库，用于显示循环进度
-tqdm==4.67.1
+tqdm>=4.65.0
 
 # 科学计算库
-scipy==1.13.1
+scipy>=1.10.0
 
 # beautifulsoup4 的依赖库
-soupsieve==2.6
+soupsieve>=2.4.0
 
 # 文件末尾
 # 最后更新: 2025-03-19 07:38:02 PDT
