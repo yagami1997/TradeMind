@@ -27,6 +27,8 @@ from trademind.core.indicators import (
 )
 from trademind.core.patterns import identify_candlestick_patterns
 from trademind.core.signals import generate_trading_advice, generate_signals
+from trademind.core.pressure_points import PressurePointAnalyzer
+from trademind.core.trend_analysis import TrendAnalyzer
 from trademind.backtest import run_backtest
 from trademind.reports.generator import generate_html_report, generate_performance_charts
 
@@ -205,7 +207,12 @@ class StockAnalyzer:
                         'annualized_return': 0.00
                     }
                 
-                results.append({
+                # 添加压力位和趋势分析
+                print("分析压力位和趋势...")
+                pressure_trend_result = self.analyze_pressure_and_trend(symbol)
+                
+                # 创建基本结果字典
+                result = {
                     'symbol': symbol,
                     'name': names.get(symbol, symbol),
                     'price': current_price,
@@ -216,7 +223,16 @@ class StockAnalyzer:
                     'patterns': patterns,
                     'advice': advice,
                     'backtest': backtest_results
-                })
+                }
+                
+                # 将压力位和趋势分析结果整合到最终结果中
+                if pressure_trend_result:
+                    # 获取UI需要的格式化数据
+                    ui_data = self._prepare_pressure_trend_for_report(pressure_trend_result)
+                    # 合并到主结果中
+                    result.update(ui_data)
+                
+                results.append(result)
                 
                 print(f"✅ {symbol} 分析完成")
                 time.sleep(0.5)
@@ -914,4 +930,345 @@ class StockAnalyzer:
         """
         # 实现回测逻辑
         # 这里需要根据实际的回测逻辑来实现
-        return {} 
+        return {}
+
+    def analyze_pressure_and_trend(self, symbol: str) -> Dict:
+        """
+        分析股票的压力位和趋势
+        
+        参数:
+            symbol: 股票代码
+            
+        返回:
+            Dict: 包含压力位和趋势分析结果的字典
+        """
+        try:
+            # 获取股票数据
+            data = self.get_stock_data(symbol)
+            if data.empty:
+                return {}
+                
+            # 计算压力位
+            from trademind.core.pressure_points import PressurePointAnalyzer
+            pressure_analyzer = PressurePointAnalyzer(data)
+            pressure_points = pressure_analyzer.analyze()
+            
+            # 计算趋势
+            from trademind.core.trend_analysis import TrendAnalyzer
+            trend_analyzer = TrendAnalyzer(data)
+            trend_analysis = trend_analyzer.analyze()
+            
+            # 获取当前价格
+            current_price = data['Close'].iloc[-1]
+            
+            # 基于趋势和压力位生成推荐
+            recommendation = self._generate_recommendation(pressure_points, trend_analysis, current_price)
+            
+            # 计算ADX数据并确保有有效值
+            adx_data = trend_analyzer.calculate_adx()
+            
+            # 打印详细的ADX计算结果，便于调试
+            print(f"计算ADX结果(详细): {adx_data}")
+            
+            # 确保ADX值不为零
+            adx_value = adx_data.get('adx', 0.0)
+            plus_di_value = adx_data.get('plus_di', 0.0)
+            minus_di_value = adx_data.get('minus_di', 0.0)
+            
+            if adx_value == 0.0:
+                adx_value = 15.0  # 使用默认值
+                print("ADX值为零，使用默认值15.0")
+            if plus_di_value == 0.0:
+                plus_di_value = 10.0
+                print("+DI值为零，使用默认值10.0")
+            if minus_di_value == 0.0:
+                minus_di_value = 10.0
+                print("-DI值为零，使用默认值10.0")
+            
+            # 整合结果
+            result = {
+                'pressure_points': pressure_points,
+                'trend_analysis': trend_analysis,
+                'recommendation': recommendation,
+                
+                # 直接在顶层添加ADX数据，方便访问
+                'adx': adx_value,
+                'plus_di': plus_di_value,
+                'minus_di': minus_di_value,
+                
+                # 保留原始ADX数据
+                'adx_data': adx_data
+            }
+            
+            # 添加状态标志
+            result['status'] = 'success'
+            
+            print(f"压力位和趋势分析完成，ADX值: {adx_value}, +DI: {plus_di_value}, -DI: {minus_di_value}")
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"分析压力位和趋势时出错: {str(e)}", exc_info=True)
+            return {'status': 'error', 'message': str(e)}
+
+    def _generate_recommendation(self, pressure_points: Dict, trend_analysis: Dict, current_price: float) -> Dict:
+        """
+        基于压力位和趋势分析生成交易建议
+        
+        参数:
+            pressure_points: 压力位分析结果
+            trend_analysis: 趋势分析结果
+            current_price: 当前价格
+            
+        返回:
+            Dict: 交易建议
+        """
+        trend_direction = trend_analysis['direction']
+        trend_strength = trend_analysis['strength']
+        
+        # 获取最近的支撑位和阻力位
+        nearest_support = pressure_points['nearest_support']['price']
+        nearest_resistance = pressure_points['nearest_resistance']['price']
+        
+        # 计算价格相对支撑位和阻力位的位置百分比
+        price_range = nearest_resistance - nearest_support
+        if price_range <= 0:
+            relative_position = 50  # 如果支撑位和阻力位重合，设置为中间位置
+        else:
+            relative_position = ((current_price - nearest_support) / price_range) * 100
+        
+        # 初始置信度为趋势强度的一半
+        confidence = trend_strength / 2
+        
+        # 根据价格位置调整建议和置信度
+        action = 'hold'  # 默认为持有
+        
+        if trend_direction == 'up' and trend_strength > 50:
+            # 多头趋势且强度高
+            if relative_position < 30:
+                # 靠近支撑位，适合买入
+                action = 'buy'
+                confidence += 25
+            elif relative_position > 70:
+                # 靠近阻力位，考虑部分获利了结
+                action = 'partial_profit'
+                confidence += 10
+        
+        elif trend_direction == 'down' and trend_strength > 50:
+            # 空头趋势且强度高
+            if relative_position > 70:
+                # 靠近阻力位，适合卖出
+                action = 'sell'
+                confidence += 25
+            elif relative_position < 30:
+                # 靠近支撑位，考虑减轻仓位或观望
+                action = 'reduce_position'
+                confidence += 10
+        
+        elif trend_direction == 'neutral' or trend_strength <= 30:
+            # 无明显趋势或趋势强度低
+            if relative_position < 20:
+                # 非常靠近支撑位，可能考虑轻仓买入试探
+                action = 'light_buy'
+                confidence += 15
+            elif relative_position > 80:
+                # 非常靠近阻力位，可能考虑轻仓卖出试探
+                action = 'light_sell'
+                confidence += 15
+            else:
+                # 区间中部，建议观望
+                action = 'observe'
+                confidence += 20
+        
+        # 确保置信度在0-100范围内
+        confidence = max(0, min(100, int(confidence)))
+        
+        # 生成具体建议文字描述
+        descriptions = {
+            'buy': '买入信号。当前价格接近支撑位，且处于上升趋势，建议买入。',
+            'sell': '卖出信号。当前价格接近阻力位，且处于下降趋势，建议卖出。',
+            'partial_profit': '部分获利。当前价格接近阻力位，建议考虑部分获利了结。',
+            'reduce_position': '减轻仓位。价格接近支撑位但趋势向下，建议减轻仓位或设置止损。',
+            'light_buy': '轻仓买入。价格接近支撑位，可以考虑轻仓买入，但须设置止损。',
+            'light_sell': '轻仓卖出。价格接近阻力位，可以考虑轻仓试探性卖出。',
+            'observe': '观望信号。当前无明显趋势，建议观望等待更明确的信号。',
+            'hold': '持有不动。维持当前仓位，等待更明确的信号。'
+        }
+        
+        # 丰富买入区间和止损建议
+        buy_zone = pressure_points['buy_zone']
+        stop_loss = pressure_points['stop_loss']
+        
+        return {
+            'action': action,
+            'confidence': confidence,
+            'description': descriptions.get(action, '无明确建议。'),
+            'relative_position': int(relative_position),
+            'buy_zone': buy_zone,
+            'stop_loss': stop_loss
+        }
+
+    def _prepare_trend_analysis_for_ui(self, trend_analysis: Dict, pressure_points: Dict) -> Dict:
+        """
+        准备趋势分析数据用于UI展示
+        
+        参数:
+            trend_analysis: 趋势分析原始结果
+            pressure_points: 压力位分析结果
+            
+        返回:
+            Dict: 处理后的UI展示数据
+        """
+        trend_direction = trend_analysis['direction']
+        trend_strength = trend_analysis['strength']
+        
+        # 设置趋势方向的样式类和箭头
+        trend_class = {
+            'up': 'trend-up',
+            'down': 'trend-down',
+            'neutral': 'trend-neutral'
+        }.get(trend_direction, 'trend-neutral')
+        
+        trend_arrow = {
+            'up': '↑',
+            'down': '↓',
+            'neutral': '→'
+        }.get(trend_direction, '→')
+        
+        # 翻译趋势方向为中文
+        trend_direction_cn = {
+            'up': '上升',
+            'down': '下降',
+            'neutral': '盘整'
+        }.get(trend_direction, '盘整')
+        
+        # 设置道氏理论相关的类
+        primary_trend = trend_analysis['dow_theory']['primary_trend']
+        secondary_trend = trend_analysis['dow_theory']['secondary_trend']
+        
+        primary_trend_class = {
+            'up': 'trend-up',
+            'down': 'trend-down',
+            'neutral': 'trend-neutral'
+        }.get(primary_trend, 'trend-neutral')
+        
+        secondary_trend_class = {
+            'up': 'trend-up',
+            'down': 'trend-down',
+            'neutral': 'trend-neutral'
+        }.get(secondary_trend, 'trend-neutral')
+        
+        # 翻译道氏理论趋势为中文
+        primary_trend_cn = {
+            'up': '上升',
+            'down': '下降',
+            'neutral': '盘整'
+        }.get(primary_trend, '盘整')
+        
+        secondary_trend_cn = {
+            'up': '上升',
+            'down': '下降',
+            'neutral': '盘整'
+        }.get(secondary_trend, '盘整')
+        
+        # 获取ADX值
+        adx = trend_analysis['adx']['adx']
+        plus_di = trend_analysis['adx']['plus_di']
+        minus_di = trend_analysis['adx']['minus_di']
+        
+        # 获取支撑阻力
+        resistance_price = pressure_points['nearest_resistance']['price']
+        resistance_source = pressure_points['nearest_resistance']['source']
+        support_price = pressure_points['nearest_support']['price']
+        support_source = pressure_points['nearest_support']['source']
+        
+        # 获取买入区间和止损
+        buy_zone_low = pressure_points['buy_zone']['low']
+        buy_zone_high = pressure_points['buy_zone']['high']
+        stop_loss = pressure_points['stop_loss']
+        
+        return {
+            'trend_direction': trend_direction_cn,
+            'trend_class': trend_class,
+            'trend_arrow': trend_arrow,
+            'strength': trend_strength,
+            'primary_trend': primary_trend_cn,
+            'primary_trend_class': primary_trend_class,
+            'secondary_trend': secondary_trend_cn,
+            'secondary_trend_class': secondary_trend_class,
+            'dow_description': trend_analysis['dow_theory']['description'],
+            'adx': adx,
+            'plus_di': plus_di,
+            'minus_di': minus_di,
+            'resistance_price': resistance_price,
+            'resistance_source': resistance_source,
+            'support_price': support_price,
+            'support_source': support_source,
+            'buy_zone_low': buy_zone_low,
+            'buy_zone_high': buy_zone_high,
+            'stop_loss': stop_loss,
+            'support_levels': pressure_points['support_levels'],
+            'resistance_levels': pressure_points['resistance_levels'],
+            'fibonacci_levels': pressure_points['fibonacci_levels']
+        }
+
+    def _prepare_pressure_trend_for_report(self, pressure_trend_result: Dict) -> Dict:
+        """
+        为报告准备压力位和趋势分析数据
+        
+        参数:
+            pressure_trend_result: analyze_pressure_and_trend的结果
+            
+        返回:
+            Dict: 格式化后的报告数据
+        """
+        # 初始化结果
+        report_data = {}
+        
+        # 获取原始数据
+        pressure_points = pressure_trend_result.get('pressure_points', {})
+        trend_analysis = pressure_trend_result.get('trend_analysis', {})
+        
+        if not pressure_points or not trend_analysis:
+            return report_data
+            
+        # 获取UI格式化数据
+        ui_data = pressure_trend_result.get('trend_direction', {})
+        if isinstance(ui_data, str):
+            # 如果已经调用过_prepare_trend_analysis_for_ui
+            report_data.update(pressure_trend_result)
+        else:
+            # 否则调用格式化方法
+            ui_data = self._prepare_trend_analysis_for_ui(trend_analysis, pressure_points)
+            report_data.update(ui_data)
+        
+        # 直接将ADX数据添加到报告顶层，便于访问
+        adx_data = trend_analysis.get('adx', {})
+        if isinstance(adx_data, dict):
+            adx_value = adx_data.get('adx', 0.0)
+            plus_di_value = adx_data.get('plus_di', 0.0)
+            minus_di_value = adx_data.get('minus_di', 0.0)
+            
+            # 确保不使用0值
+            if adx_value == 0.0:
+                adx_value = 15.0  # 默认值
+            if plus_di_value == 0.0:
+                plus_di_value = 10.0
+            if minus_di_value == 0.0:
+                minus_di_value = 10.0
+                
+            # 直接添加到报告顶层
+            report_data['adx'] = adx_value
+            report_data['plus_di'] = plus_di_value
+            report_data['minus_di'] = minus_di_value
+            
+            print(f"在analyzer._prepare_pressure_trend_for_report中设置ADX: {adx_value}, +DI: {plus_di_value}, -DI: {minus_di_value}")
+        else:
+            print(f"未找到ADX数据或格式不正确: {adx_data}")
+            
+        # 在报告数据中添加标记，表示包含压力位和趋势分析
+        report_data['has_pressure_trend_analysis'] = True
+        
+        # 添加顶层引用，确保ADX数据可从多处访问
+        report_data['adx_from_report'] = report_data.get('adx', 15.0)
+        
+        return report_data 

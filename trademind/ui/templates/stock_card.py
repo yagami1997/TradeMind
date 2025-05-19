@@ -1,0 +1,377 @@
+"""
+TradeMind - 股票分析卡片HTML模板
+
+本模块包含一个用于生成股票分析卡片的HTML模板字符串。
+"""
+
+# 股票分析卡片模板 - 用于Jinja2模板引擎渲染
+stock_card_template = """
+<div class="analysis-card">
+  <!-- 趋势研判面板 -->
+  <div class="trend-panel">
+    <h3>趋势研判</h3>
+    <div class="trend-info">
+      <div class="trend-status">
+        <span class="trend-direction {{ trend_class }}">
+          趋势：{{ trend_direction }} {{ trend_arrow }}
+        </span>
+        <div class="trend-strength">
+          <span>强度：</span>
+          <div class="strength-bar">
+            <div class="strength-value" data-width="{{ strength }}"></div>
+          </div>
+          <span>{{ strength }}%</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 价格区间 -->
+    <div class="price-levels">
+      <div class="resistance-level">
+        阻力: {{ resistance_price|round(2) }} ({{ resistance_source }})
+      </div>
+      <div class="current-price">
+        现价: {{ current_price|round(2) }}
+      </div>
+      <div class="support-level">
+        支撑: {{ support_price|round(2) }} ({{ support_source }})
+      </div>
+    </div>
+    
+    <!-- 操作建议 -->
+    <div class="action-zone">
+      <h4>建议操作区间</h4>
+      <div class="buy-zone">
+        买入: {{ buy_zone_low|round(2) }} ~ {{ buy_zone_high|round(2) }}
+      </div>
+      <div class="stop-loss">
+        止损: {{ stop_loss|round(2) }}
+      </div>
+    </div>
+  </div>
+  
+  <!-- 技术指标面板 -->
+  <div class="indicators-panel">
+    <h3>道氏分析</h3>
+    <div class="dow-theory">
+      <p>{{ dow_description }}</p>
+      <div class="trend-details">
+        <div class="trend-item">
+          <span class="trend-label">主要趋势:</span>
+          <span class="trend-value {{ primary_trend_class }}">{{ primary_trend }}</span>
+        </div>
+        <div class="trend-item">
+          <span class="trend-label">次要趋势:</span>
+          <span class="trend-value {{ secondary_trend_class }}">{{ secondary_trend }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <h3>技术指标</h3>
+    <div class="technical-indicators">
+      <div class="indicator-item">
+        <span class="indicator-label">ADX:</span>
+        <span class="indicator-value">{{ adx|round(1) }}</span>
+        <div class="indicator-interpretation">
+          {% if adx > 25 %}
+          <span class="strong-trend">强趋势</span>
+          {% elif adx > 20 %}
+          <span class="moderate-trend">中等趋势</span>
+          {% else %}
+          <span class="weak-trend">弱趋势/盘整</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="indicator-item">
+        <span class="indicator-label">+DI:</span>
+        <span class="indicator-value">{{ plus_di|round(1) }}</span>
+      </div>
+      <div class="indicator-item">
+        <span class="indicator-label">-DI:</span>
+        <span class="indicator-value">{{ minus_di|round(1) }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 压力位面板 -->
+  <div class="pressure-panel">
+    <h3>支撑与阻力</h3>
+    <div class="pressure-distribution">
+      <!-- 阻力位列表 -->
+      <div class="resistance-list">
+        <h4>阻力位</h4>
+        <ul>
+          {% for level in resistance_levels %}
+          <li>
+            {{ level.price|round(2) }} 
+            <span class="level-source">({{ level.source }})</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      
+      <!-- 支撑位列表 -->
+      <div class="support-list">
+        <h4>支撑位</h4>
+        <ul>
+          {% for level in support_levels %}
+          <li>
+            {{ level.price|round(2) }} 
+            <span class="level-source">({{ level.source }})</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    
+    <!-- 斐波那契水平位 -->
+    <div class="fibonacci-levels">
+      <h4>斐波那契水平位</h4>
+      <ul class="fib-list">
+        {% for level, price in fibonacci_levels.items() %}
+        <li>
+          {{ level }} - {{ price|round(2) }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+  .analysis-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+  }
+  
+  .trend-panel {
+    grid-column: 1 / 3;
+    padding: 15px;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 20px;
+  }
+  
+  .indicators-panel, .pressure-panel {
+    padding: 15px;
+    border-radius: 8px;
+    background: #fff;
+  }
+  
+  h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  
+  h4 {
+    font-size: 16px;
+    color: #444;
+    margin: 15px 0 10px;
+  }
+  
+  .trend-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+  
+  .trend-direction {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .trend-up {
+    color: #00a960;
+  }
+  
+  .trend-down {
+    color: #ff4d4f;
+  }
+  
+  .trend-neutral {
+    color: #666;
+  }
+  
+  .trend-strength {
+    display: flex;
+    align-items: center;
+  }
+  
+  .strength-bar {
+    display: inline-block;
+    width: 120px;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 0 8px;
+  }
+  
+  .strength-value {
+    height: 100%;
+    background: linear-gradient(90deg, #00a960, #52c41a);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  
+  .price-levels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .resistance-level {
+    color: #ff4d4f;
+    font-weight: 500;
+  }
+  
+  .current-price {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .support-level {
+    color: #00a960;
+    font-weight: 500;
+  }
+  
+  .action-zone {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .buy-zone {
+    color: #00a960;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  
+  .stop-loss {
+    color: #ff4d4f;
+    font-weight: 500;
+  }
+  
+  .dow-theory {
+    margin-bottom: 20px;
+  }
+  
+  .trend-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .trend-item {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .trend-label {
+    font-weight: 500;
+  }
+  
+  .technical-indicators {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .indicator-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .indicator-label {
+    font-weight: 500;
+    width: 40px;
+  }
+  
+  .indicator-value {
+    font-weight: 600;
+  }
+  
+  .strong-trend {
+    color: #00a960;
+    font-size: 14px;
+  }
+  
+  .moderate-trend {
+    color: #1890ff;
+    font-size: 14px;
+  }
+  
+  .weak-trend {
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .pressure-distribution {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .resistance-list, .support-list {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .resistance-list h4 {
+    color: #ff4d4f;
+  }
+  
+  .support-list h4 {
+    color: #00a960;
+  }
+  
+  ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  .fib-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  
+  .level-source {
+    font-size: 12px;
+    color: #999;
+  }
+  
+  @media (max-width: 768px) {
+    .analysis-card {
+      grid-template-columns: 1fr;
+    }
+    
+    .trend-panel {
+      grid-column: 1;
+    }
+    
+    .price-levels {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+</style>
+""" 

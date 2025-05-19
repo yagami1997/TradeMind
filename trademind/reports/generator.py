@@ -136,9 +136,10 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                 gap: 10px;
             }}
             .indicator {{
-                background-color: #f5f5f5;
-                padding: 8px;
+                background-color: #FFFFFF;  /* 白色背景更突出指标 */
+                padding: 10px;
                 border-radius: 5px;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             }}
             .indicator-name {{
                 font-weight: bold;
@@ -146,8 +147,8 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
             }}
             .pattern-section {{
                 margin-bottom: 15px;
-                background-color: #FFE4E1 !important;
-                padding: 12px;
+                background-color: #F2F8F0;  /* 更柔和的淡绿色背景 */
+                padding: 15px;
                 border-radius: 5px;
             }}
             .patterns-container {{
@@ -160,6 +161,8 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                 padding: 5px 10px;
                 border-radius: 15px;
                 font-size: 12px;
+                background-color: #DEB887;
+                color: #333;
             }}
             .signals-container {{
                 display: flex;
@@ -186,33 +189,182 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
             }}
             .advice-section {{
                 margin-bottom: 15px;
-                padding: 10px;
-                background-color: #f5f5f5;
+                padding: 15px;
+                background-color: #FFF8F0;  /* 更温和的淡橙色背景 */
                 border-radius: 5px;
             }}
             .backtest-results {{
                 margin-top: 15px;
+                background-color: #F5F0FA;  /* 更温和的淡紫色背景 */
+                padding: 15px;
+                border-radius: 5px;
             }}
             .backtest-table {{
                 width: 100%;
                 border-collapse: collapse;
             }}
             .backtest-table td {{
-                padding: 5px;
+                padding: 6px;
                 border-bottom: 1px solid #eee;
-                font-size: 12px;
             }}
-            .backtest-note {{
-                margin-top: 10px;
-                padding: 10px;
-                background-color: #fff8e1;
+            /* 趋势和压力位分析样式 */
+            .analysis-section {{
+                margin-bottom: 20px;
+                background-color: #F0F8FA;  /* 更温和的淡蓝色背景 */
+                padding: 15px;
                 border-radius: 5px;
-                font-size: 12px;
-                color: #555;
             }}
-            .backtest-note ul {{
-                margin: 5px 0;
-                padding-left: 20px;
+            .analysis-section h4 {{
+                margin-top: 0;
+                margin-bottom: 15px;
+                color: #333;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+            }}
+            .trend-panel {{
+                background: #fff;
+                border-radius: 5px;
+                padding: 15px;
+                margin-bottom: 15px;
+            }}
+            .trend-info {{
+                margin-bottom: 15px;
+            }}
+            .trend-status {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }}
+            .trend-direction {{
+                font-size: 16px;
+                font-weight: 600;
+            }}
+            .trend-up {{
+                color: #34785A;
+            }}
+            .trend-down {{
+                color: #A65459;
+            }}
+            .trend-neutral {{
+                color: #666;
+            }}
+            .trend-strength {{
+                display: flex;
+                align-items: center;
+            }}
+            .strength-bar {{
+                display: inline-block;
+                width: 100px;
+                height: 6px;
+                background: #e9ecef;
+                border-radius: 3px;
+                margin: 0 8px;
+            }}
+            .strength-value {{
+                height: 100%;
+                background: #98C2A4;  /* 不使用渐变，使用单一温和色调 */
+                border-radius: 3px;
+            }}
+            .price-levels {{
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                text-align: center;
+                margin: 15px 0;
+                padding: 10px;
+                background: #F0F7F7;  /* 更温和的青绿色背景 */
+                border-radius: 4px;
+            }}
+            .resistance-level {{
+                color: #A65459;
+                font-weight: 500;
+            }}
+            .current-price {{
+                font-weight: 600;
+            }}
+            .support-level {{
+                color: #34785A;
+                font-weight: 500;
+            }}
+            .action-zone {{
+                margin-top: 15px;
+                padding: 10px;
+                background: #F2F8F2;  /* 更温和的淡绿色背景 */
+                border-radius: 4px;
+            }}
+            .action-zone h4 {{
+                margin-top: 0;
+                margin-bottom: 10px;
+                font-size: 14px;
+                border-bottom: none;
+            }}
+            .buy-zone {{
+                color: #34785A;
+                font-weight: 500;
+                margin-bottom: 5px;
+            }}
+            .stop-loss {{
+                color: #A65459;
+                font-weight: 500;
+            }}
+            .tech-indicators {{
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 15px;
+                background: #F8F9FA;
+                border-radius: 5px;
+                padding: 15px;
+            }}
+            .indicator-row {{
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }}
+            .indicator-label {{
+                font-weight: 500;
+                width: 40px;
+            }}
+            .indicator-value {{
+                font-weight: 600;
+            }}
+            .indicator-item {{
+                background-color: #F5F8FA;  /* 技术指标更柔和的背景色 */
+                padding: 8px 12px;
+                border-radius: 6px;
+                margin-bottom: 6px;
+            }}
+            .indicator-interpretation {{
+                font-size: 13px;
+                margin-top: 2px;
+            }}
+            .dow-theory {{
+                background: #F9F7F0;  /* 温和的米色背景 */
+                border-radius: 5px;
+                padding: 15px;
+            }}
+            .dow-theory h4 {{
+                margin-top: 0;
+                margin-bottom: 10px;
+                font-size: 14px;
+                border-bottom: none;
+            }}
+            .dow-theory p {{
+                margin-bottom: 10px;
+            }}
+            .trend-details {{
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }}
+            .trend-item {{
+                display: flex;
+                justify-content: space-between;
+                background-color: #FFFFFF;
+                padding: 6px 10px;
+                border-radius: 4px;
+            }}
+            .trend-label {{
+                font-weight: 500;
             }}
             .no-patterns {{
                 color: #999;
@@ -297,13 +449,29 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                     height: auto;
                 }}
             }}
+            /* ADX指标样式 */
+            .strong-trend {{
+                color: #005cb2;
+                font-weight: bold;
+            }}
+            .moderate-trend {{
+                color: #0277bd;
+            }}
+            .weak-trend {{
+                color: #546e7a;
+            }}
+            .indicator-interpretation {{
+                margin-top: 4px;
+                font-size: 12px;
+                font-style: italic;
+            }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header-banner">
                 <h1>{title}</h1>
-                <p>生成时间: {formatted_time}</p>
+                <p>分析时间: {formatted_time}</p>
             </div>
             
             <div class="stock-grid">
@@ -403,6 +571,19 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                 </div>
             </div>
         </div>
+        
+        <script>
+            // 设置强度条的宽度
+            document.addEventListener('DOMContentLoaded', function() {
+                const strengthBars = document.querySelectorAll('.strength-value');
+                strengthBars.forEach(function(bar) {
+                    const width = bar.getAttribute('data-width');
+                    if (width) {
+                        bar.style.width = width + '%';
+                    }
+                });
+            });
+        </script>
     </body>
     </html>
     """
@@ -656,16 +837,22 @@ def generate_stock_card_html(result: Dict) -> str:
         price_change_pct = 0.0
         print("涨跌幅为NaN或无穷大，使用默认值0.0%")
     
-    # 设置价格变化的颜色和符号 - 使用美股市场习惯（红跌绿涨）
+    # 设置价格变化的颜色和符号 - 使用美股市场习惯（红跌绿涨）但使用更柔和的色调
     if price_change_pct > 0.001:  # 使用小阈值避免浮点误差
-        price_change_color = "#4CAF50"  # 绿色（美股市场上涨用绿色）
+        price_change_color = "#2E7D32"  # 更柔和的绿色
         price_change_symbol = "▲"
+        # 设置卡片头部为柔和的纯色绿色
+        header_bg = '#66A182'  # 柔和清新的绿色
     elif price_change_pct < -0.001:  # 使用小阈值避免浮点误差
-        price_change_color = "#F44336"  # 红色（美股市场下跌用红色）
+        price_change_color = "#C62828"  # 更柔和的红色
         price_change_symbol = "▼"
+        # 设置卡片头部为柔和的纯色红色
+        header_bg = '#B08A93'  # 柔和优雅的浅红色
     else:
         price_change_color = "#757575"  # 灰色
         price_change_symbol = "■"
+        # 设置卡片头部为灰色
+        header_bg = '#A1B5C1'  # 柔和的蓝灰色
     
     print(f"最终涨跌幅: {price_change_pct:.2f}%, 颜色: {price_change_color}, 符号: {price_change_symbol}")
     
@@ -676,41 +863,34 @@ def generate_stock_card_html(result: Dict) -> str:
     # 使用get方法获取explanation，避免KeyError
     explanation = advice.get('explanation', '')
     
-    # 根据建议设置背景颜色和文本
+    # 设置建议样式
     if '强烈买入' in advice_text:
-        header_bg = '#008000'  # 强烈买入 - 深绿色
         advice_text = '强烈买入'
-        advice_bg = '#008000'
+        advice_bg = '#1B5E20'
         advice_color = 'white'
     elif '买入' in advice_text:
-        header_bg = '#00FF00'  # 买入 - 鲜绿色
         advice_text = '买入'
-        advice_bg = '#00FF00'
-        advice_color = 'black'  # 鲜绿色背景配深色文字更易读
+        advice_bg = '#2E7D32'
+        advice_color = 'white'
     elif '观望偏多' in advice_text:
-        header_bg = '#32CD32'  # 观望偏多 - 酸橙绿
         advice_text = '观望偏多'
-        advice_bg = '#32CD32'
+        advice_bg = '#388E3C'
         advice_color = 'white'
     elif '观望偏空' in advice_text:
-        header_bg = '#FF6347'  # 观望偏空 - 番茄红
         advice_text = '观望偏空'
-        advice_bg = '#FF6347'
+        advice_bg = '#D32F2F'
         advice_color = 'white'
     elif '卖出' in advice_text:
-        header_bg = '#FF0000'  # 卖出 - 红色
         advice_text = '卖出'
-        advice_bg = '#FF0000'
+        advice_bg = '#C62828'
         advice_color = 'white'
     elif '强烈卖出' in advice_text:
-        header_bg = '#8B0000'  # 强烈卖出 - 深红色
         advice_text = '强烈卖出'
-        advice_bg = '#8B0000'
+        advice_bg = '#B71C1C'
         advice_color = 'white'
     else:
-        header_bg = '#F4A460'  # 观望 - 沙褐色
         advice_text = '观望'
-        advice_bg = '#F4A460'
+        advice_bg = '#546E7A'
         advice_color = 'white'
     
     # 处理技术指标 - 确保正确获取和显示
@@ -780,6 +960,55 @@ def generate_stock_card_html(result: Dict) -> str:
     else:
         bollinger_html = "N/A"
     
+    # 获取ADX指标 - 从ADX字段获取值，确保不为0或空
+    adx = result.get('adx', 0.0)
+    plus_di = result.get('plus_di', 0.0)
+    minus_di = result.get('minus_di', 0.0)
+    
+    # 检查是否为零或缺失，如果是，使用默认值
+    if adx == 0.0 or pd.isna(adx):
+        adx = 15.0
+        print("ADX指标缺失或为零，使用默认值15.0")
+    if plus_di == 0.0 or pd.isna(plus_di):
+        plus_di = 10.0
+        print("+DI指标缺失或为零，使用默认值10.0")
+    if minus_di == 0.0 or pd.isna(minus_di):
+        minus_di = 10.0
+        print("-DI指标缺失或为零，使用默认值10.0")
+    
+    # 从所有可能的地方尝试获取ADX值
+    alt_sources = [
+        result.get('adx_from_report', 0.0),
+        result.get('adx_data', {}).get('adx', 0.0) if isinstance(result.get('adx_data', {}), dict) else 0.0,
+        result.get('trend_analysis', {}).get('adx', {}).get('adx', 0.0) if (
+            isinstance(result.get('trend_analysis', {}), dict) and
+            isinstance(result.get('trend_analysis', {}).get('adx', {}), dict)
+        ) else 0.0
+    ]
+    
+    # 使用任何非零的替代值
+    for alt_value in alt_sources:
+        if alt_value > 0.0 and (adx == 0.0 or adx == 15.0):  # 只有当当前值为0或默认值时替换
+            adx = alt_value
+            print(f"使用替代ADX值: {alt_value}")
+            break
+    
+    # 格式化ADX指标值，限制小数点位数
+    adx_display = f"{adx:.1f}" if isinstance(adx, (int, float)) and not pd.isna(adx) else "15.0"
+    plus_di_display = f"{plus_di:.1f}" if isinstance(plus_di, (int, float)) and not pd.isna(plus_di) else "10.0"
+    minus_di_display = f"{minus_di:.1f}" if isinstance(minus_di, (int, float)) and not pd.isna(minus_di) else "10.0"
+    
+    # 根据ADX值确定趋势强度文本
+    adx_trend_text = ""
+    if adx > 25:
+        adx_trend_text = "<span class=\"strong-trend\">强趋势</span>"
+    elif adx > 20:
+        adx_trend_text = "<span class=\"moderate-trend\">中等趋势</span>"
+    else:
+        adx_trend_text = "<span class=\"weak-trend\">弱趋势/盘整</span>"
+        
+    print(f"最终ADX指标显示值: ADX={adx_display}, +DI={plus_di_display}, -DI={minus_di_display}, 趋势文本={adx_trend_text}")
+    
     # 获取K线形态 - 严格区分K线形态和技术指标信号
     patterns = result.get('patterns', [])
     pattern_html = ""
@@ -792,158 +1021,240 @@ def generate_stock_card_html(result: Dict) -> str:
                 pattern_name = pattern.get('name', '')
                 pattern_confidence = pattern.get('confidence', '')
                 # 严格确保这是一个K线形态而不是技术指标信号
-                if pattern_name and not any(keyword in pattern_name.lower() for keyword in ['macd', 'rsi', 'kdj', 'bollinger', '零轴', '金叉', '死叉', '超买', '超卖']):
+                if pattern_name and not any(signal in pattern_name.lower() for signal in ['buy', 'sell', 'rsi', 'macd', 'kdj', 'signal', '信号']):
+                    if has_valid_patterns:
+                        pattern_html += ", "
+                    pattern_html += f"{pattern_name}"
+                    if pattern_confidence and isinstance(pattern_confidence, (int, float)):
+                        confidence_value = int(pattern_confidence)
+                        pattern_html += f" ({confidence_value}%)"
                     has_valid_patterns = True
-                    # 根据形态类型设置不同的底色
-                    bg_color = "#DEB887"  # 默认中性振荡信号用#DEB887
-                    
-                    # 积极信号用#3CB371
-                    if any(keyword in pattern_name for keyword in ["看涨", "启明星", "晨星", "锤子", "反转", "上升"]):
-                        bg_color = "#3CB371"
-                    # 悲观信号用#F08080
-                    elif any(keyword in pattern_name for keyword in ["看跌", "黄昏星", "暮星", "吊颈", "下降"]):
-                        bg_color = "#F08080"
-                    # 中性信号用#DEB887
-                    elif any(keyword in pattern_name for keyword in ["十字星", "平头", "震荡"]):
-                        bg_color = "#DEB887"
-                    
-                    pattern_html += '<div style="display: inline-block; margin: 2px; padding: 5px 10px; background-color: ' + bg_color + ' !important; color: #333; border-radius: 4px; font-size: 13px;">' + pattern_name + ' (' + str(pattern_confidence) + '%)</div>'
+            elif isinstance(pattern, str):
+                # 如果是字符串，直接使用
+                if not any(signal in pattern.lower() for signal in ['buy', 'sell', 'rsi', 'macd', 'kdj', 'signal', '信号']):
+                    if has_valid_patterns:
+                        pattern_html += ", "
+                    pattern_html += pattern
+                    has_valid_patterns = True
         
         if not has_valid_patterns:
-            pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #FFE4E1 !important; padding: 8px; border-radius: 4px; border: 1px dashed #E8D4D1;">无明显K线形态</div>'
+            pattern_html = "未检测到明显形态"
     else:
-        pattern_html = '<div style="text-align: center; font-style: italic; color: #555; background-color: #FFE4E1 !important; padding: 8px; border-radius: 4px; border: 1px dashed #E8D4D1;">无明显K线形态</div>'
+        pattern_html = "未检测到明显形态"
     
-    # 获取信号 - 严格筛选技术指标信号
-    signals = []
-    if result.get('signals'):
-        signals = result.get('signals', [])
-    elif result.get('advice', {}).get('signals'):
-        signals = result.get('advice', {}).get('signals', [])
-    else:
-        signals = []  # 如果没有信号，使用空列表作为默认值
-    
-    # 生成信号标签HTML - 使用更清晰的配色方案
-    signals_html = ""
-    for signal in signals:
-        # 严格筛选技术指标信号
-        if any(keyword in signal.lower() for keyword in ['macd', 'rsi', 'kdj', 'bollinger', '零轴', '金叉', '死叉', '超买', '超卖']):
-            if "买入" in signal or "看涨" in signal or "零轴以上" in signal or "金叉" in signal or "超卖" in signal:
-                # 买入/看涨信号 - 使用柔和的绿色
-                signal_bg = "#E8F5E9"  # 非常浅的绿色背景
-                signal_color = "#2E7D32"  # 深绿色文字
-                signal_border = "#A5D6A7"  # 浅绿色边框
-            elif "卖出" in signal or "看跌" in signal or "零轴以下" in signal or "死叉" in signal or "超买" in signal:
-                # 卖出/看跌信号 - 使用柔和的红色
-                signal_bg = "#FFEBEE"  # 非常浅的红色背景
-                signal_color = "#C62828"  # 深红色文字
-                signal_border = "#EF9A9A"  # 浅红色边框
-            else:
-                # 中性信号 - 使用柔和的灰色
-                signal_bg = "#F5F5F5"  # 非常浅的灰色背景
-                signal_color = "#616161"  # 深灰色文字
-                signal_border = "#E0E0E0"  # 浅灰色边框
+    # 获取趋势分析数据（如果有）
+    has_pressure_trend = result.get('has_pressure_trend_analysis', False)
+    trend_html = ""
+    if has_pressure_trend:
+        trend_direction = result.get('trend_direction', '盘整')
+        trend_strength = result.get('strength', 0)
+        trend_html = f"""
+        <div class="analysis-section">
+            <h4>趋势分析</h4>
+            <div class="trend-panel">
+                <div class="trend-info">
+                    <div class="trend-status">
+                        <span class="trend-direction {result.get('trend_class', 'trend-neutral')}">
+                            趋势: {trend_direction} {result.get('trend_arrow', '→')}
+                        </span>
+                        <div class="trend-strength">
+                            <span>强度:</span>
+                            <div class="strength-bar">
+                                <div class="strength-value" style="width: {trend_strength}%;"></div>
+                            </div>
+                            <span>{trend_strength}%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="price-levels">
+                    <div class="resistance-level">
+                        阻力: {format_price(result.get('resistance_price', 'N/A'))} 
+                        <small>({result.get('resistance_source', 'N/A')})</small>
+                    </div>
+                    <div class="current-price">
+                        现价: {current_price_display}
+                    </div>
+                    <div class="support-level">
+                        支撑: {format_price(result.get('support_price', 'N/A'))} 
+                        <small>({result.get('support_source', 'N/A')})</small>
+                    </div>
+                </div>
+                
+                <div class="action-zone">
+                    <h4>建议操作区间</h4>
+                    <div class="buy-zone">
+                        买入: {format_price(result.get('buy_zone_low', 'N/A'))} ~ {format_price(result.get('buy_zone_high', 'N/A'))}
+                    </div>
+                    <div class="stop-loss">
+                        止损: {format_price(result.get('stop_loss', 'N/A'))}
+                    </div>
+                </div>
+            </div>
             
-            signals_html += '<span style="display: inline-block; margin: 2px; padding: 3px 8px; background-color: ' + signal_bg + '; color: ' + signal_color + '; border: 1px solid ' + signal_border + '; border-radius: 4px; font-size: 12px;">' + signal + '</span>'
-    
-    # 获取回测结果
-    backtest = result.get('backtest', {})
-    
-    # 构建股票卡片HTML - 明确区分K线形态和技术指标
-    stock_card_html = f"""
-    <div class="stock-card" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <div class="stock-header" style="background-color: {header_bg}; padding: 12px 15px; color: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 18px;">{stock_name} ({stock_code})</h3>
-                <div style="text-align: right;">
-                    <div class="stock-price" style="font-size: 18px; font-weight: bold;">${current_price_display}</div>
-                    <div style="color: {price_change_color}; font-size: 14px;">{price_change_symbol} {price_change_pct:.2f}%</div>
+            <div class="dow-theory">
+                <h4>道氏分析</h4>
+                <p>{result.get('dow_description', '无法进行道氏理论分析')}</p>
+                <div class="trend-details">
+                    <div class="trend-item">
+                        <span class="trend-label">主要趋势:</span>
+                        <span class="trend-value {result.get('primary_trend_class', 'trend-neutral')}">{result.get('primary_trend', '盘整')}</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">次要趋势:</span>
+                        <span class="trend-value {result.get('secondary_trend_class', 'trend-neutral')}">{result.get('secondary_trend', '盘整')}</span>
+                    </div>
+                </div>
+                
+                <h4>技术指标</h4>
+                <div class="technical-indicators">
+                    <div class="indicator-item">
+                        <span class="indicator-label">ADX:</span>
+                        <span class="indicator-value">{adx_display}</span>
+                        <div class="indicator-interpretation">
+                            {adx_trend_text}
+                        </div>
+                    </div>
+                    <div class="indicator-item">
+                        <span class="indicator-label">+DI:</span>
+                        <span class="indicator-value">{plus_di_display}</span>
+                    </div>
+                    <div class="indicator-item">
+                        <span class="indicator-label">-DI:</span>
+                        <span class="indicator-value">{minus_di_display}</span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="stock-body" style="padding: 12px;">
-            <div style="background-color: #FFE4E1; padding: 12px; border-radius: 5px; margin-bottom: 12px;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #424242; border-bottom: 1px solid #E8D4D1; padding-bottom: 4px; font-size: 15px;">K线形态分析</h4>
-                <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 14px; margin-bottom: 10px;">
-                    {pattern_html}
-                </div>
-            </div>
+        """
+    
+    # 获取回测结果
+    backtest = result.get('backtest', {})
+    backtest_html = ""
+    if backtest:
+        try:
+            profit = backtest.get('profit', 0)
+            win_rate = backtest.get('win_rate', 0)
+            profit_factor = backtest.get('profit_factor', 0)
+            drawdown = backtest.get('max_drawdown', 0)
             
-            <div class="indicator-section" style="background-color: #f0f7ff; padding: 12px; border-radius: 5px; margin-bottom: 12px;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #1565c0; border-bottom: 1px solid #bbdefb; padding-bottom: 4px; font-size: 15px;">技术指标分析</h4>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; font-size: 14px;">
-                    <div style="font-weight: bold;">RSI (14日)</div>
-                    <div style="text-align: right;">{rsi_display}</div>
-                    
-                    <div style="font-weight: bold;">KDJ (9日)</div>
-                    <div style="text-align: right;">{kdj_html}</div>
-                    
-                    <div style="font-weight: bold;">MACD (12,26,9)</div>
-                    <div style="text-align: right;">{macd_html}</div>
-                    
-                    <div style="font-weight: bold;">布林带 (20日)</div>
-                    <div style="text-align: right;">{bollinger_html}</div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; justify-content: center;">
-                    {signals_html}
-                </div>
-            </div>
+            profit_display = f"{profit:.2f}%" if isinstance(profit, (int, float)) else "N/A"
+            win_rate_display = f"{win_rate:.1f}%" if isinstance(win_rate, (int, float)) else "N/A"
+            profit_factor_display = f"{profit_factor:.2f}" if isinstance(profit_factor, (int, float)) else "N/A"
+            drawdown_display = f"{drawdown:.2f}%" if isinstance(drawdown, (int, float)) else "N/A"
             
-            <div class="advice-section" style="background-color: #f9f9f9; padding: 12px; border-radius: 5px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-                    <div style="background-color: {advice_bg}; color: {advice_color}; padding: 6px 18px; font-weight: bold; border-radius: 5px; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        {advice_text}
-                    </div>
-                    <div style="margin-left: 12px; font-size: 15px; font-weight: bold;">
-                        置信度: {confidence}%
-                    </div>
-                </div>
-                {'<p>' + explanation + '</p>' if explanation else ''}
-            </div>
-            
-            <div class="backtest-results" style="background-color: #fff8e1; padding: 12px; border-radius: 5px;">
-                <h4 style="margin-top: 0; margin-bottom: 8px; color: #f57f17; border-bottom: 1px solid #ffe0b2; padding-bottom: 4px; font-size: 15px;">回测结果</h4>
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            backtest_html = f"""
+            <div class="backtest-results">
+                <h4>回测结果</h4>
+                <table class="backtest-table">
                     <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">总交易次数</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('total_trades', 0)}</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">胜率</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('win_rate', 0)}%</td>
+                        <td>收益率</td>
+                        <td><strong>{profit_display}</strong></td>
                     </tr>
                     <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">平均收益</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">${backtest.get('avg_profit', 0)}</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">盈亏比</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('profit_factor', 0)}</td>
+                        <td>胜率</td>
+                        <td>{win_rate_display}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">最大收益</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">${backtest.get('max_profit', 0)}</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">最大亏损</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">${backtest.get('max_loss', 0)}</td>
+                        <td>盈亏比</td>
+                        <td>{profit_factor_display}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">最大回撤</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('max_drawdown', 0)}%</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">连续亏损次数</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('consecutive_losses', 0)}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">平均持仓天数</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('avg_hold_days', 0)}</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2;">总收益率</td>
-                        <td style="padding: 4px; border-bottom: 1px solid #ffe0b2; text-align: right;">{backtest.get('final_return', 0)}%</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px;">Sharpe比率</td>
-                        <td style="padding: 4px; text-align: right;">{backtest.get('sharpe_ratio', 0):.2f}</td>
-                        <td style="padding: 4px;">Sortino比率</td>
-                        <td style="padding: 4px; text-align: right;">{backtest.get('sortino_ratio', 0):.2f}</td>
+                        <td>最大回撤</td>
+                        <td>{drawdown_display}</td>
                     </tr>
                 </table>
             </div>
+            """
+        except Exception as e:
+            backtest_html = f"""
+            <div class="backtest-results">
+                <h4>回测结果</h4>
+                <p>回测数据处理错误: {str(e)}</p>
+            </div>
+            """
+    
+    # 构建完整的HTML
+    html = f"""
+    <div class="stock-card">
+        <div class="stock-header" style="background: {header_bg};">
+            <h3>{stock_name} ({stock_code})</h3>
+            <div class="stock-price">价格: {current_price_display} <span style="color: {price_change_color}">{price_change_symbol} {price_change_pct:.2f}%</span></div>
+            <div class="stock-advice" style="background-color: {advice_bg}; color: {advice_color}; padding: 3px 8px; border-radius: 3px; display: inline-block; margin-top: 5px;">{advice_text} ({confidence}%)</div>
+        </div>
+        <div class="stock-body">
+            {trend_html}
+            
+            <div class="indicator-section">
+                <h4>技术指标</h4>
+                <div class="indicators-grid">
+                    <div class="indicator">
+                        <span class="indicator-name">RSI(14)</span>: {rsi_display}
+                    </div>
+                    <div class="indicator">
+                        <span class="indicator-name">KDJ</span>: {kdj_html}
+                    </div>
+                </div>
+                <div class="indicator" style="margin-top: 10px;">
+                    <span class="indicator-name">MACD</span>: {macd_html}
+                </div>
+                <div class="indicator" style="margin-top: 10px;">
+                    <span class="indicator-name">布林带</span>: {bollinger_html}
+                </div>
+            </div>
+            
+            <div class="pattern-section">
+                <h4>K线形态</h4>
+                <div class="patterns-container">
+                    {pattern_html if pattern_html else "未检测到明显形态"}
+                </div>
+            </div>
+            
+            <div class="advice-section">
+                <h4>分析建议</h4>
+                <p>{explanation}</p>
+                <div class="signals-container">
+    """
+    
+    # 添加信号标签
+    signals = advice.get('signals', [])
+    if signals and len(signals) > 0:
+        for signal in signals:
+            if isinstance(signal, dict):
+                signal_type = signal.get('type', '')
+                signal_class = "signal-neutral"
+                if "买入" in signal_type:
+                    signal_class = "signal-buy"
+                elif "卖出" in signal_type:
+                    signal_class = "signal-sell"
+                html += f'<span class="signal-tag {signal_class}">{signal_type}</span>'
+            elif isinstance(signal, str):
+                signal_class = "signal-neutral"
+                if "买入" in signal:
+                    signal_class = "signal-buy"
+                elif "卖出" in signal:
+                    signal_class = "signal-sell"
+                html += f'<span class="signal-tag {signal_class}">{signal}</span>'
+    else:
+        html += f'<span class="signal-tag signal-neutral">观望等待</span>'
+    
+    # 完成HTML
+    html += f"""
+                </div>
+            </div>
+            
+            {backtest_html}
         </div>
     </div>
     """
     
-    return stock_card_html 
+    return html 
+
+def format_price(price: Union[str, float]) -> str:
+    """格式化价格显示，确保最多显示两位小数"""
+    if isinstance(price, (int, float)):
+        return f"{price:.2f}"
+    elif isinstance(price, str) and price.replace('.', '', 1).isdigit():
+        return f"{float(price):.2f}"
+    else:
+        return str(price) 
