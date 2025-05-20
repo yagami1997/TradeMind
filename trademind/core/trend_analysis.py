@@ -55,36 +55,69 @@ class TrendAnalyzer:
             return {'adx': 15.0, 'plus_di': 10.0, 'minus_di': 10.0}  # 返回默认值而不是零值
         
         try:
-            # 计算方向移动
-            up_move = high.diff()
-            down_move = low.diff(-1).abs()
+            # 确保数据无缺失值
+            if high.isna().any() or low.isna().any() or close.isna().any():
+                # 填充NaN值
+                high = high.fillna(method='ffill').fillna(method='bfill')
+                low = low.fillna(method='ffill').fillna(method='bfill')
+                close = close.fillna(method='ffill').fillna(method='bfill')
+                print("警告: 数据中存在NaN值，已进行填充")
             
-            # 正向方向移动
-            plus_dm = np.zeros(len(high))
-            plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0)
-            
-            # 负向方向移动
-            minus_dm = np.zeros(len(high))
-            minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0)
-            
-            # 计算真实范围TR
-            tr1 = high - low
+            # 计算真实范围TR (使用绝对值避免负数)
+            tr1 = (high - low).abs()
             tr2 = (high - close.shift(1)).abs()
             tr3 = (low - close.shift(1)).abs()
             tr = pd.DataFrame({'tr1': tr1, 'tr2': tr2, 'tr3': tr3}).max(axis=1)
             
-            # 使用平滑方法计算指标
-            tr_smoothed = tr.rolling(window=self.adx_period).mean()
-            plus_dm_smoothed = pd.Series(plus_dm).rolling(window=self.adx_period).mean()
-            minus_dm_smoothed = pd.Series(minus_dm).rolling(window=self.adx_period).mean()
+            # 计算方向移动 (改进计算逻辑)
+            plus_dm = pd.Series(0.0, index=high.index)
+            minus_dm = pd.Series(0.0, index=high.index)
+            
+            # 计算高点和低点的变化
+            high_diff = high.diff()
+            low_diff = low.diff()
+            
+            # 使用向量化操作计算+DM和-DM
+            for i in range(1, len(high)):
+                # 当前高点高于前一个高点，当前低点高于前一个低点
+                if high_diff.iloc[i] > 0 and high_diff.iloc[i] > abs(low_diff.iloc[i]):
+                    plus_dm.iloc[i] = high_diff.iloc[i]
+                else:
+                    plus_dm.iloc[i] = 0.0
+                
+                # 当前低点低于前一个低点，当前高点低于前一个高点
+                if low_diff.iloc[i] < 0 and abs(low_diff.iloc[i]) > abs(high_diff.iloc[i]):
+                    minus_dm.iloc[i] = abs(low_diff.iloc[i])
+                else:
+                    minus_dm.iloc[i] = 0.0
+            
+            # 使用指数平滑而不是简单移动平均
+            smoothing = 2.0 / (self.adx_period + 1)
+            
+            # 计算初始值
+            tr_smoothed = tr.rolling(window=self.adx_period).mean().fillna(tr.mean())
+            plus_dm_smoothed = plus_dm.rolling(window=self.adx_period).mean().fillna(plus_dm.mean())
+            minus_dm_smoothed = minus_dm.rolling(window=self.adx_period).mean().fillna(minus_dm.mean())
+            
+            # 应用威尔德平滑方法
+            for i in range(self.adx_period, len(tr)):
+                tr_smoothed.iloc[i] = tr_smoothed.iloc[i-1] * (1 - smoothing) + tr.iloc[i] * smoothing
+                plus_dm_smoothed.iloc[i] = plus_dm_smoothed.iloc[i-1] * (1 - smoothing) + plus_dm.iloc[i] * smoothing
+                minus_dm_smoothed.iloc[i] = minus_dm_smoothed.iloc[i-1] * (1 - smoothing) + minus_dm.iloc[i] * smoothing
+            
+            # 确保不除以零
+            tr_smoothed = tr_smoothed.replace(0, 0.001)
             
             # 计算方向指标
             plus_di = 100 * (plus_dm_smoothed / tr_smoothed)
             minus_di = 100 * (minus_dm_smoothed / tr_smoothed)
             
-            # 计算方向指标差异
+            # 计算方向指标差异和总和
             di_diff = (plus_di - minus_di).abs()
             di_sum = plus_di + minus_di
+            
+            # 防止除以零
+            di_sum = di_sum.replace(0, 0.001)
             
             # 计算DX
             dx = 100 * (di_diff / di_sum)
@@ -94,8 +127,12 @@ class TrendAnalyzer:
                 print("警告: DX计算结果全为NaN")
                 return {'adx': 15.0, 'plus_di': 10.0, 'minus_di': 10.0}  # 返回默认值
             
-            # 计算ADX - ADX是DX的移动平均
-            adx = dx.rolling(window=self.adx_period).mean()
+            # 计算ADX - ADX是DX的平滑移动平均
+            adx = dx.rolling(window=self.adx_period).mean().fillna(method='bfill')
+            
+            # 应用平滑
+            for i in range(self.adx_period * 2, len(dx)):
+                adx.iloc[i] = adx.iloc[i-1] * (1 - smoothing) + dx.iloc[i] * smoothing
             
             # 获取最新值
             adx_value = adx.iloc[-1] if not pd.isna(adx.iloc[-1]) else 15.0
@@ -120,7 +157,7 @@ class TrendAnalyzer:
                 'minus_di': minus_di_value
             }
             
-            print(f"成功计算ADX: {result}")
+            print(f"计算ADX结果(详细): {result}")
             return result
             
         except Exception as e:
@@ -318,13 +355,13 @@ class TrendAnalyzer:
         """
         # 获取ADX值
         adx_result = self.calculate_adx()
-        adx_value = adx_result['adx']
+        adx_value = adx_result.get('adx', 15.0)
         
         # 获取DoW Theory分析结果
         dow_result = self.analyze_dow_theory()
-        primary_trend = dow_result['primary_trend']
-        secondary_trend = dow_result['secondary_trend']
-        volume_confirms = dow_result['volume_confirms']
+        primary_trend = dow_result.get('primary_trend', 'neutral')
+        secondary_trend = dow_result.get('secondary_trend', 'neutral')
+        volume_confirms = dow_result.get('volume_confirms', False)
         
         # 获取趋势线分析结果
         trend_lines = self.identify_trend_lines()
@@ -341,10 +378,13 @@ class TrendAnalyzer:
             
         # 趋势线强度分数（0-30分）
         trendline_score = 0
-        if primary_trend == 'up' and trend_lines['support']['strength'] > 0:
-            trendline_score += min(30, trend_lines['support']['strength'] / 3)
-        elif primary_trend == 'down' and trend_lines['resistance']['strength'] > 0:
-            trendline_score += min(30, trend_lines['resistance']['strength'] / 3)
+        support_strength = trend_lines.get('support', {}).get('strength', 0)
+        resistance_strength = trend_lines.get('resistance', {}).get('strength', 0)
+        
+        if primary_trend == 'up' and support_strength > 0:
+            trendline_score += min(30, support_strength / 3)
+        elif primary_trend == 'down' and resistance_strength > 0:
+            trendline_score += min(30, resistance_strength / 3)
         
         # 总分
         total_score = int(adx_score + consistency_score + trendline_score)
@@ -361,6 +401,9 @@ class TrendAnalyzer:
         # 计算ADX
         adx_result = self.calculate_adx()
         
+        # 确保ADX结果有效
+        print(f"第一步检查 - 直接从adx_result获取: ADX={adx_result.get('adx', 15.0)}, +DI={adx_result.get('plus_di', 10.0)}, -DI={adx_result.get('minus_di', 10.0)}")
+        
         # 分析道氏理论
         dow_result = self.analyze_dow_theory()
         
@@ -370,12 +413,17 @@ class TrendAnalyzer:
         # 计算趋势强度
         strength = self.calculate_trend_strength()
         
+        # 确保ADX值是有效的
+        adx_value = adx_result.get('adx', 15.0)
+        plus_di_value = adx_result.get('plus_di', 10.0)
+        minus_di_value = adx_result.get('minus_di', 10.0)
+        
         # 确定趋势方向
-        if adx_result['adx'] < self.trend_threshold:
+        if adx_value < self.trend_threshold:
             direction = 'neutral'  # ADX低于阈值，认为是盘整
         else:
             # ADX高于阈值，判断DI+和DI-的关系
-            if adx_result['plus_di'] > adx_result['minus_di']:
+            if plus_di_value > minus_di_value:
                 direction = 'up'  # 多头趋势
             else:
                 direction = 'down'  # 空头趋势
@@ -389,4 +437,5 @@ class TrendAnalyzer:
             'trend_lines': trend_lines
         }
         
+        print(f"最终ADX结果: adx={adx_value}, plus_di={plus_di_value}, minus_di={minus_di_value}")
         return result 

@@ -106,7 +106,7 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                 box-shadow: 0 6px 12px rgba(0,0,0,0.15);
             }}
             .stock-header {{
-                background-color: #4CAF50;
+                /* 移除默认背景色，完全由动态设置控制 */
                 color: white;
                 padding: 15px;
                 text-align: center;
@@ -174,23 +174,28 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
                 padding: 5px 10px;
                 border-radius: 15px;
                 font-size: 12px;
+                background-color: #FFFFFF; /* 更新为白色背景，让标签在深色背景上更突出 */
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* 添加轻微阴影提高可读性 */
             }}
             .signal-buy {{
                 background-color: #e8f5e9;
                 color: #2e7d32;
+                border: 1px solid #a5d6a7; /* 添加边框增强区分度 */
             }}
             .signal-sell {{
                 background-color: #ffebee;
                 color: #c62828;
+                border: 1px solid #ef9a9a; /* 添加边框增强区分度 */
             }}
             .signal-neutral {{
                 background-color: #fff8e1;
                 color: #f57f17;
+                border: 1px solid #ffe082; /* 添加边框增强区分度 */
             }}
             .advice-section {{
                 margin-bottom: 15px;
                 padding: 15px;
-                background-color: #FFF8F0;  /* 更温和的淡橙色背景 */
+                background-color: #E6EAF2;  /* 更改为淡蓝紫色背景，与指标块区分 */
                 border-radius: 5px;
             }}
             .backtest-results {{
@@ -564,7 +569,7 @@ def generate_html_report(results: List[Dict], title: str = "股票分析报告",
             </div>
             
             <div class="footer">
-                <p>TradeMind Lite Beta 0.3.3 © 2025 | <a href="https://github.com/yourusername/trademind" target="_blank">GitHub</a></p>
+                <p>TradeMind Lite Beta 0.3.4 © 2025 | <a href="https://github.com/yourusername/trademind" target="_blank">GitHub</a></p>
                 <div class="watermark">
                     In this cybernetic realm, we shall ultimately ascend to digital rebirth<br>
                     Long live the Free Software Movement!
@@ -841,18 +846,12 @@ def generate_stock_card_html(result: Dict) -> str:
     if price_change_pct > 0.001:  # 使用小阈值避免浮点误差
         price_change_color = "#2E7D32"  # 更柔和的绿色
         price_change_symbol = "▲"
-        # 设置卡片头部为柔和的纯色绿色
-        header_bg = '#66A182'  # 柔和清新的绿色
     elif price_change_pct < -0.001:  # 使用小阈值避免浮点误差
         price_change_color = "#C62828"  # 更柔和的红色
         price_change_symbol = "▼"
-        # 设置卡片头部为柔和的纯色红色
-        header_bg = '#B08A93'  # 柔和优雅的浅红色
     else:
         price_change_color = "#757575"  # 灰色
         price_change_symbol = "■"
-        # 设置卡片头部为灰色
-        header_bg = '#A1B5C1'  # 柔和的蓝灰色
     
     print(f"最终涨跌幅: {price_change_pct:.2f}%, 颜色: {price_change_color}, 符号: {price_change_symbol}")
     
@@ -864,34 +863,63 @@ def generate_stock_card_html(result: Dict) -> str:
     explanation = advice.get('explanation', '')
     
     # 设置建议样式
-    if '强烈买入' in advice_text:
-        advice_text = '强烈买入'
+    advice_text_orig = advice_text  # 保留原始建议文本用于显示
+    # 标准化建议文本，去除所有空格和标点，便于准确匹配
+    advice_text_norm = advice_text.strip().replace(' ', '').replace('，', '').replace(',', '')
+    
+    # 精确匹配建议类型 - 这将决定整个卡片头部颜色
+    if advice_text_norm == '强烈买入' or advice_text == '强烈买入':
+        header_bg = '#5E7725'  # 强烈买入 - 深绿色
         advice_bg = '#1B5E20'
         advice_color = 'white'
-    elif '买入' in advice_text:
-        advice_text = '买入'
+    elif advice_text_norm == '买入' or advice_text == '买入' or '买入' in advice_text_norm:
+        header_bg = '#B1AA41'  # 买入 - 橄榄绿
         advice_bg = '#2E7D32'
         advice_color = 'white'
-    elif '观望偏多' in advice_text:
-        advice_text = '观望偏多'
+    elif advice_text_norm == '观望偏多' or '观望偏多' in advice_text:
+        header_bg = '#D3AD80'  # 观望 - 柔和棕褐色
         advice_bg = '#388E3C'
         advice_color = 'white'
-    elif '观望偏空' in advice_text:
-        advice_text = '观望偏空'
+    elif advice_text_norm == '观望偏空' or '观望偏空' in advice_text:
+        header_bg = '#D3AD80'  # 观望 - 柔和棕褐色
         advice_bg = '#D32F2F'
         advice_color = 'white'
-    elif '卖出' in advice_text:
-        advice_text = '卖出'
+    elif advice_text_norm == '观望' or advice_text == '观望' or '观望' in advice_text_norm:
+        header_bg = '#D3AD80'  # 观望 - 柔和棕褐色
+        advice_bg = '#546E7A'
+        advice_color = 'white'
+    elif advice_text_norm == '卖出' or advice_text == '卖出' or '卖出' in advice_text_norm:
+        header_bg = '#F481BA'  # 卖出 - 粉红色
         advice_bg = '#C62828'
         advice_color = 'white'
-    elif '强烈卖出' in advice_text:
-        advice_text = '强烈卖出'
+    elif advice_text_norm == '强烈卖出' or advice_text == '强烈卖出':
+        header_bg = '#C0538C'  # 强烈卖出 - 紫红色
         advice_bg = '#B71C1C'
         advice_color = 'white'
     else:
-        advice_text = '观望'
-        advice_bg = '#546E7A'
+        # 默认处理：尝试基于文本内容判断
+        if '买入' in advice_text_norm:
+            if '强烈' in advice_text_norm:
+                header_bg = '#5E7725'  # 强烈买入 - 深绿色
+                advice_bg = '#1B5E20'
+            else:
+                header_bg = '#B1AA41'  # 买入 - 橄榄绿
+                advice_bg = '#2E7D32'
+        elif '卖出' in advice_text_norm:
+            if '强烈' in advice_text_norm:
+                header_bg = '#C0538C'  # 强烈卖出 - 紫红色
+                advice_bg = '#B71C1C'
+            else:
+                header_bg = '#F481BA'  # 卖出 - 粉红色
+                advice_bg = '#C62828'
+        else:
+            header_bg = '#D3AD80'  # 观望（默认）- 柔和棕褐色
+            advice_bg = '#546E7A'
         advice_color = 'white'
+    
+    print(f"建议类型: '{advice_text_orig}' => 头部背景色: {header_bg}, 建议背景色: {advice_bg}")
+    
+    advice_text = advice_text_orig  # 恢复原始建议文本
     
     # 处理技术指标 - 确保正确获取和显示
     indicators = result.get('indicators', {})
