@@ -930,7 +930,7 @@ class StockAnalyzer:
         """
         # 实现回测逻辑
         # 这里需要根据实际的回测逻辑来实现
-        return {}
+        return {} 
 
     def analyze_pressure_and_trend(self, symbol: str) -> Dict:
         """
