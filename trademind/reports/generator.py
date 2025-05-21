@@ -1161,7 +1161,7 @@ def generate_stock_card_html(result: Dict) -> str:
     backtest_html = ""
     if backtest:
         try:
-            profit = backtest.get('profit', 0)
+            profit = backtest.get('final_return', 0)
             win_rate = backtest.get('win_rate', 0)
             profit_factor = backtest.get('profit_factor', 0)
             drawdown = backtest.get('max_drawdown', 0)
