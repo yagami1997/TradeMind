@@ -7,7 +7,7 @@ numpy>=1.24.0
 pandas>=2.0.0
 
 # 数据获取和网络请求
-yfinance>=0.2.18
+yfinance
 requests>=2.28.0
 urllib3==1.26.6  # 固定版本，不使用2.x版本
 
