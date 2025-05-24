@@ -1,8 +1,10 @@
 # 🚀 TradeMind Lite 轻量版美股技术分析工具 Beta 0.3.4
 
+**最后更新**: 2025-05-23 21:21:43 PDT
+
 ## ⚠️ 重要声明
 
-1. 本工具99%的代码由Cursor自动生成，Coding模型Claude3.5，当然也可以用别的。对我来说，更像个赛博念经的，负责规划设计调试。
+1. 本工具99%的代码由Cursor自动生成，Coding模型Claude4/3.7/3.5，当然也可以用别的。对我来说，更像个赛博念经的，负责规划设计调试。
 2. Clone下来的源代码包括了所有的程序代码和项目所需的开发文档，测试文档，对于普通用户来说，我稍后会发行Windows/macOS的安装版本。
 3. 本工具的分析结果仅供参考，仅代表我不成熟的策略设计思路，所以不构成任何投资建议和风险控制依据。
 4. 本工具完全开源、免费、无论是Clone、再开发甚至商业化我都不反对，但必须遵守FSF的GPLv3许可证协议。
@@ -341,7 +343,7 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    # 确保pip是最新版本
    python -m pip install --upgrade pip
    
-   # 安装所有依赖
+   # 基础安装（推荐，包含所有核心功能）
    pip install -r requirements.txt
    
    # 验证关键依赖安装
@@ -402,8 +404,11 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    # 更新pip
    pip install --upgrade pip
    
-   # 安装依赖
+   # 基础安装（推荐，包含所有核心功能）
    pip install -r requirements.txt
+   
+   # 如果需要开发环境（包含测试、代码检查等工具）
+   pip install -r requirements-dev.txt
    
    # 如果lxml安装失败，先安装开发工具
    xcode-select --install
@@ -456,8 +461,11 @@ TradeMind Lite是一个轻量级的美股技术分析工具，专注于技术面
    # 更新pip
    pip install --upgrade pip
    
-   # 安装依赖
+   # 基础安装（推荐，包含所有核心功能）
    pip install -r requirements.txt
+   
+   # 如果需要开发环境（包含测试、代码检查等工具）
+   pip install -r requirements-dev.txt
    ```
 
 5. **运行程序**
@@ -806,5 +814,5 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0). Th
 <p align="right">
   <em>"In this cybernetic realm, we shall ultimately ascend to digital rebirth，Long live the Free Software Movement!"</em><br>
  — <strong>Yagami</strong><br>
-  <span style="font-size: 14px; color: #888;">2025-05-19 02:43:19 PDT</span>
+  <span style="font-size: 14px; color: #888;">文档最后更新: 2025-05-23 21:21:43 PDT</span>
 </p>
