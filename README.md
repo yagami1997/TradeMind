@@ -9,23 +9,164 @@
 5. 后续其他二次开发版本和我无关，我亦不承担任何责任，本代码仓库仅供学习研究。
 6. 市场有风险，投资需谨慎，成熟的交易者绝对不会把决策简单归因于信息差或者技术操作，投资是修行。
 
-## 🌐 网络连接问题解决方案
+<details>
+<summary><strong>⚠️ Yahoo Finance API 访问错误解决方案</strong></summary>
 
-**重要提示**：如果在使用过程中遇到 `yfinance.exceptions.YFRateLimitError: Too Many Requests. Rate limited.` 错误，这通常是因为无法正常访问Yahoo Finance API导致的网络连接问题。
+## 问题描述
+使用 yfinance 库时遇到：
+```
+yfinance.exceptions.YFRateLimitError: Too Many Requests. Rate limited.
+```
 
-### 解决方法（适用于支持代理的网络环境）：
+## 问题根因
+该错误**并非代码问题**，而是 Yahoo Finance 的技术限制：
 
-如果你使用代理工具，请将以下域名添加到代理配置中，让其走某个代理规则：
+### 核心技术变化
+- **官方 API 已停止**（2017年关闭）
+  - 原因：大规模数据滥用，违反数据提供商条款
+  - 影响：所有第三方库转为屏幕抓取模式
+  
+- **反爬虫机制升级**（2025年5月起加强）
+  - Cookie 依赖检测：要求先访问网站获取有效Cookie
+  - User-Agent 识别：检测非浏览器请求模式
+  - 请求频率分析：识别程序化访问行为
+  
+- **严格频率限制**（每日数百次请求后封IP）
+  - IP级别封锁：即使更换API密钥也无效
+  - 地域性限制：部分地区访问受到额外限制
+  - 动态阈值调整：根据服务器负载动态调整限制
 
+## 解决方案
+
+### 方法一：代理配置（推荐）
+将以下域名添加到代理工具的规则集，按照工具要求书写正确规则：
+```
 *.finance.yahoo.com
 finance.yahoo.com
 query1.finance.yahoo.com
 query2.finance.yahoo.com
+```
+然后重启代理服务。
 
-配置完成后重启代理服务，即可解决网络连接问题。
+### 方法二：代码优化
+```python
+import yfinance as yf
+import time
+import random
 
-**说明**：这个问题本质上是网络连接问题，而非代码逻辑问题，因此通过网络层面的代理配置来解决是最直接有效的方案。我们尝试了很多代码优化的方案，最后决策修改代码是无效行为，应该直接解决网络问题。
+def fetch_data_with_retry(symbol, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            ticker = yf.Ticker(symbol)
+            return ticker.info
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(random.uniform(1, 3))
+                continue
+            else:
+                raise e
+```
 
+### 方法三：IBKR Gateway API（专业方案）
+
+**前提条件**：需要成为盈透证券（Interactive Brokers）的客户
+
+#### 优势特点
+- **数据质量**：机构级别实时数据，无延迟
+- **稳定性**：官方API支持，无限制风险
+- **覆盖范围**：全球160个市场，36个国家
+- **功能完整**：股票、期权、期货、外汇、债券全覆盖
+
+#### 基本使用步骤
+
+1. **开设IBKR账户**
+   ```bash
+   # 可开设模拟账户用于测试
+   # 访问 interactivebrokers.com 注册
+   ```
+
+2. **下载并安装客户端**
+   ```bash
+   # 选择其一：
+   # - TWS (Trader Workstation) - 适合初学者，有图形界面
+   # - IB Gateway - 轻量级，适合程序化使用
+   ```
+
+3. **安装Python API**
+   ```bash
+   # 从官网下载TWS API (版本9.73+)
+   # 或使用第三方库
+   pip install ib_insync  # 推荐，更易用
+   pip install ibapi      # 官方原生API
+   ```
+
+4. **基本代码示例**
+   ```python
+   from ib_insync import *
+   
+   # 连接到IB Gateway/TWS
+   ib = IB()
+   ib.connect('127.0.0.1', 7497, clientId=1)  # 模拟账户
+   # ib.connect('127.0.0.1', 7496, clientId=1)  # 真实账户
+   
+   # 获取股票数据
+   contract = Stock('AAPL', 'SMART', 'USD')
+   ticker = ib.reqMktData(contract)
+   
+   # 获取历史数据
+   bars = ib.reqHistoricalData(
+       contract, 
+       endDateTime='', 
+       durationStr='1 Y',
+       barSizeSetting='1 day',
+       whatToShow='TRADES',
+       useRTH=True
+   )
+   
+   ib.disconnect()
+   ```
+
+#### 配置要点
+- **API端口**：模拟账户7497，真实账户7496
+- **连接限制**：每秒最多50条消息
+- **权限设置**：需在TWS/Gateway中启用API连接
+
+### 替代数据源
+
+#### Alpha Vantage
+- **免费额度**：每日25次请求，每分钟5次请求
+- **付费计划**：起步价$49.99/月，每分钟75次请求
+- **数据覆盖**：股票、外汇、加密货币，支持50+技术指标
+- **优势**：文档详细，Python库支持好
+- **缺点**：可能存在IP级别限制
+
+#### IEX Cloud（已停止服务）
+⚠️ **重要更新**：IEX Cloud已于2024年8月31日停止服务
+- **替代方案**：官方推荐迁移至Intrinio（价格较高）
+
+#### Finnhub
+- **免费额度**：每分钟60次API调用
+- **数据覆盖**：全球股票交易所、10个外汇经纪商、15+加密货币交易所
+- **特色功能**：机构级别替代数据、基本面数据
+- **优势**：免费额度慷慨，数据质量高，API文档完善
+- **适用场景**：概念验证和想法测试
+
+#### Twelve Data
+- **免费额度**：每日800次请求
+- **数据类型**：实时和历史股票数据
+- **覆盖范围**：全球市场支持
+
+#### Polygon.io
+- **免费方式**：通过Alpaca经纪商账户免费获取
+- **数据质量**：机构级别数据
+- **适用对象**：需要高质量数据的专业用户
+
+## 重要提醒
+- ✅ **有效**：网络层面解决访问限制
+- ❌ **无效**：单纯修改代码逻辑
+- 💡 **本质**：解决网络访问问题，非绕过限制
+
+</details>
 ---
 
 ## 📋 项目简介
