@@ -10,7 +10,7 @@
 6. 市场有风险，投资需谨慎，成熟的交易者绝对不会把决策简单归因于信息差或者技术操作，投资是修行。
 
 
-<details><summary><strong><h4>⚠️ Yahoo Finance API 访问错误解决方案</h4></strong></summary>
+<details><summary><strong><span style="color: #ff4444; font-size: 1.1em;">🚨⚠️ Yahoo Finance API 访问错误解决方案 ⚠️🚨</span></strong></summary>
 
 ## 问题描述
 使用 yfinance 库时遇到：
