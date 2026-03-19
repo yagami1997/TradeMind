@@ -1,0 +1,54 @@
+[MASTER]
+# 分析的最大工作进程数
+jobs=4
+
+# Python 版本
+py-version=3.13
+
+# 忽略的文件
+ignore=
+    __pycache__,
+    .venv,
+    venv,
+    .git
+
+[MESSAGES CONTROL]
+# 禁用的规则
+disable=
+    C0111,  # missing-docstring
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    W0212,  # protected-access
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    C0301,  # line-too-long (Black 处理)
+
+[FORMAT]
+# 最大行长
+max-line-length=120
+
+# 缩进
+indent-string='    '
+indent-after-paren=4
+
+[DESIGN]
+# 最大属性数
+max-attributes=7
+
+# 最大局部变量数
+max-locals=15
+
+# 最大分支数
+max-branches=12
+
+# 最大语句数
+max-statements=50
+
+[VARIABLES]
+# 允许超短变量名称
+good-names=i,j,k,ex,Run,_,x,y,df,fn,fp
+
+[SIMILARITY]
+# 最小相似性检查阈值
+min-similarity-lines=4
