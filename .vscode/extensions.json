@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "ms-python.pylint",
+    "ms-pyright.pyright",
+    "eamodio.gitlens",
+    "GitHub.copilot",
+    "charliermarsh.ruff",
+    "ms-vscode.makefile-tools",
+    "ms-vscode-remote.vscode-remote-extensionpack",
+    "ms-vscode.cpptools-extension-pack"
+  ]
+}
