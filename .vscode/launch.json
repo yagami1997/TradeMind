@@ -1,0 +1,98 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: 主程序(trademind)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/trademind.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    {
+      "name": "Python: CLI 模式",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/trademind.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["--cli"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    {
+      "name": "Python: Web 模式 (3336)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/trademind.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["--web", "--port", "3336", "--host", "127.0.0.1"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    {
+      "name": "Python: 运行当前文件",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    {
+      "name": "Python: pytest (全部测试)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "tests",
+        "-v",
+        "--tb=short",
+        "--no-header"
+      ]
+    },
+    {
+      "name": "Python: pytest (当前文件)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "${file}",
+        "-v",
+        "--tb=short"
+      ]
+    },
+    {
+      "name": "Python: pytest (集成测试)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "tests/integration",
+        "-v",
+        "--tb=short"
+      ]
+    },
+    {
+      "name": "Python: 调试器 (attach)",
+      "type": "debugpy",
+      "request": "attach",
+      "justMyCode": false
+    }
+  ]
+}
