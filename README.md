@@ -1,14 +1,16 @@
-# TradeMind Lite
+# 🚀 TradeMind Lite
 
 TradeMind Lite is an open-source U.S. stock technical analysis system that combines indicator analysis, candlestick pattern recognition, trend and pressure-level analysis, HTML reporting, and both CLI and Web workflows.
 
 Current version: `Beta 0.3.4`
 
-## Disclaimer
+> 📍 An open-source technical analysis workspace for U.S. stocks and ETFs, built for practical daily use, local reports, and Chinese-speaking developers who want to study or extend the system.
+
+## ⚠️ Disclaimer
 
 TradeMind Lite is a research and learning tool. Its analysis results are for reference only and must not be treated as investment advice, trading instructions, or risk-control guidance. Markets are risky, and all trading decisions remain your own responsibility.
 
-## What This Project Does
+## 📌 What This Project Does
 
 TradeMind Lite focuses on technical analysis for U.S. equities and ETFs. The system can:
 
@@ -21,7 +23,9 @@ TradeMind Lite focuses on technical analysis for U.S. equities and ETFs. The sys
 - generate HTML reports
 - provide both an interactive terminal workflow and a browser-based workflow
 
-## Highlights
+## ✨ Highlights
+
+### 🎯 Core Capabilities
 
 - Dual interface: interactive CLI and Web UI
 - Batch analysis: analyze multiple symbols in one run
@@ -30,35 +34,44 @@ TradeMind Lite focuses on technical analysis for U.S. equities and ETFs. The sys
 - Trend analysis: pressure levels, trend state, and ADX-related output
 - Open source: distributed under GPL-3.0
 
-## Screenshots
+### 🧩 Built Into the Workflow
 
-### Main Menu
+- local report generation with no external dashboard dependency
+- persistent watchlist files that are easy to fork and edit
+- built-in backtest output as part of the analysis pipeline
+- repository-level development documentation for secondary development
+
+## 🖼️ Screenshots
+
+### 🧭 Main Menu
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/e2b1dcf3-f0e4-47a5-ae20-26b4f71ac95d" alt="TradeMind main menu" width="900" />
 </div>
 
-### Web Analysis Workflow
+### 🌐 Web Analysis Workflow
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/9ea15bdb-7936-4dce-93e6-c6d6be9fcff1" alt="TradeMind web analysis screen" width="900" />
 </div>
 
-### Generated Report View
+### 📊 Generated Report View
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/c4b00dd6-8632-43d4-8f8c-2bf191c0ac43" alt="TradeMind HTML report" width="900" />
 </div>
 
-### Watchlist Editor
+### 🗂️ Watchlist Editor
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/df1786f7-27d6-47be-9437-57f2623a2220" alt="TradeMind watchlist editor" width="900" />
 </div>
 
-## Quick Start
+## ⚡ Quick Start
 
 If you only want the shortest working path:
+
+> ✅ Recommended for first-time setup: create a fresh virtual environment, install from `requirements.txt`, then start with `python trademind.py`.
 
 ```bash
 git clone https://github.com/yagami1997/TradeMind.git
@@ -76,27 +89,27 @@ On Windows PowerShell, activate the environment with:
 venv\Scripts\Activate.ps1
 ```
 
-## System Requirements
+## 🧰 System Requirements
 
 - Python `3.8+`
 - Windows, macOS, or Linux
 - Internet access for market data retrieval
 - A modern browser for Web mode and HTML reports
 
-## Installation Guide
+## 💻 Installation Guide
 
 The project is source-first. There is no packaged installer in this repository, so the recommended workflow is to create a virtual environment and install from `requirements.txt`.
 
-### 1. Clone the Repository
+### 1. 📥 Clone the Repository
 
 ```bash
 git clone https://github.com/yagami1997/TradeMind.git
 cd TradeMind
 ```
 
-### 2. Create a Virtual Environment
+### 2. 🧪 Create a Virtual Environment
 
-#### Windows
+#### 🪟 Windows
 
 ```powershell
 python -m venv venv
@@ -109,14 +122,14 @@ If PowerShell blocks activation, run this once in a user shell:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-#### macOS / Linux
+#### 🍎 macOS / 🐧 Linux
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Upgrade `pip`
+### 3. ⬆️ Upgrade `pip`
 
 ```bash
 python -m pip install --upgrade pip
@@ -124,7 +137,7 @@ python -m pip install --upgrade pip
 
 If your shell maps `python` to Python 2 or an unavailable interpreter, use `python3` instead.
 
-### 4. Install Dependencies
+### 4. 📦 Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -137,7 +150,7 @@ Core runtime dependencies include:
 - `yfinance`, `pandas`, `numpy`, and `scipy` for data and analysis
 - `matplotlib`, `seaborn`, and `plotly` for reports and visualization
 
-### 5. Verify the Environment
+### 5. ✅ Verify the Environment
 
 ```bash
 python --version
@@ -150,9 +163,9 @@ Optional sanity check:
 python -c "import rich, flask, yfinance, pandas, numpy; print('Environment OK')"
 ```
 
-### Platform Notes
+### 🧭 Platform Notes
 
-#### Windows
+#### 🪟 Windows
 
 - Install Python from the official Python website and make sure `Add Python to PATH` is checked.
 - If you use Command Prompt instead of PowerShell, activate the environment with:
@@ -161,7 +174,7 @@ python -c "import rich, flask, yfinance, pandas, numpy; print('Environment OK')"
 venv\Scripts\activate.bat
 ```
 
-#### macOS
+#### 🍎 macOS
 
 - If `python3` is missing, install it with Homebrew:
 
@@ -175,7 +188,7 @@ brew install python
 xcode-select --install
 ```
 
-#### Ubuntu / Debian
+#### 🐧 Ubuntu / Debian
 
 Install Python and common build tools first:
 
@@ -184,11 +197,13 @@ sudo apt update
 sudo apt install -y python3 python3-venv python3-pip build-essential git
 ```
 
-## Running the Application
+## ▶️ Running the Application
 
 TradeMind Lite provides one main launcher and two shortcut entry scripts.
 
-### Main Launcher
+> 💡 If you are not sure which mode to use, start with the main launcher and enter Web mode from the menu.
+
+### 🏁 Main Launcher
 
 ```bash
 python trademind.py
@@ -200,7 +215,7 @@ This opens the main menu, where you can choose:
 - `2` for Web mode
 - `q` to quit
 
-### Launch CLI Mode Directly
+### ⌨️ Launch CLI Mode Directly
 
 ```bash
 python trademind.py --cli
@@ -212,7 +227,7 @@ Or use the shortcut:
 python trademind_cli.py
 ```
 
-### Launch Web Mode Directly
+### 🌐 Launch Web Mode Directly
 
 ```bash
 python trademind.py --web
@@ -230,11 +245,13 @@ Or use the shortcut:
 python trademind_web.py
 ```
 
-## CLI Usage Guide
+## ⌨️ CLI Usage Guide
 
 CLI mode is useful if you prefer terminal-driven analysis and quick report generation.
 
-### CLI Menu Options
+> ⚡ Best for quick single-symbol checks, batch runs, and local report browsing from the terminal.
+
+### 📋 CLI Menu Options
 
 The CLI menu includes:
 
@@ -244,7 +261,7 @@ The CLI menu includes:
 - open recent reports
 - adjust analysis-related menu settings exposed by the CLI
 
-### Analyze a Single Symbol
+### 🔍 Analyze a Single Symbol
 
 1. Start CLI mode.
 2. Choose option `1`.
@@ -252,7 +269,7 @@ The CLI menu includes:
 4. Wait for the analysis to finish.
 5. TradeMind Lite generates an HTML report and opens it in your browser.
 
-### Analyze Multiple Symbols
+### 📈 Analyze Multiple Symbols
 
 1. Start CLI mode.
 2. Choose option `2`.
@@ -265,7 +282,7 @@ AAPL MSFT GOOGL NVDA
 4. Wait for the analysis batch to complete.
 5. The generated report is saved to `reports/stocks`.
 
-### View Watchlists
+### 🗂️ View Watchlists
 
 Watchlists are loaded from:
 
@@ -273,7 +290,7 @@ Watchlists are loaded from:
 
 You can use CLI mode to inspect the available groups, or edit the JSON file directly if you want to manage symbols manually.
 
-### View Historical Reports
+### 🧾 View Historical Reports
 
 TradeMind Lite stores generated HTML reports in:
 
@@ -281,11 +298,13 @@ TradeMind Lite stores generated HTML reports in:
 
 From CLI mode, you can browse recent reports and open them in your browser.
 
-## Web Usage Guide
+## 🌐 Web Usage Guide
 
 Web mode is the most convenient workflow for normal daily use.
 
-### Starting the Web UI
+> 🖥️ Best for routine use if you want a visual workflow, watchlist editing, and recent-report access in the browser.
+
+### 🚀 Starting the Web UI
 
 Run:
 
@@ -301,7 +320,7 @@ If the browser does not open automatically, visit:
 http://localhost:3336
 ```
 
-### Typical Web Workflow
+### 🔄 Typical Web Workflow
 
 1. Start Web mode.
 2. Open the browser page.
@@ -310,7 +329,7 @@ http://localhost:3336
 5. Wait for the progress indicator to finish.
 6. Open the generated report from the results area or the recent reports list.
 
-### Watchlist Management in Web Mode
+### 🗃️ Watchlist Management in Web Mode
 
 The Web UI includes watchlist editing and import workflows. User watchlist data is stored under:
 
@@ -320,7 +339,7 @@ The Web UI includes watchlist editing and import workflows. User watchlist data 
 
 This means your watchlist changes are persisted locally in the project directory.
 
-## Output and File Locations
+## 📁 Output and File Locations
 
 Important runtime directories:
 
@@ -329,7 +348,14 @@ Important runtime directories:
 - `config/users/default`: default user watchlists and ordering data
 - `results`: additional generated artifacts used by the project
 
-## How the Analysis Works
+### 🗃️ Most Important Paths
+
+- `trademind.py`: main launcher
+- `reports/stocks`: generated HTML reports
+- `logs`: runtime logs
+- `config/users/default/watchlists.json`: default watchlist source
+
+## 🧠 How the Analysis Works
 
 At a high level, TradeMind Lite does the following during analysis:
 
@@ -341,7 +367,7 @@ At a high level, TradeMind Lite does the following during analysis:
 6. Performs trend and pressure-level analysis.
 7. Builds an HTML report and saves it locally.
 
-## Data Source and Rate Limits
+## 📡 Data Source and Rate Limits
 
 TradeMind Lite currently relies on Yahoo Finance data through `yfinance`.
 
@@ -365,9 +391,11 @@ Update command:
 pip install --upgrade yfinance
 ```
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
-### `ModuleNotFoundError` when starting the app
+> 🔧 Most startup problems come from one of three causes: dependencies were not installed, the virtual environment is not active, or Yahoo Finance requests are being rate-limited.
+
+### ❗ `ModuleNotFoundError` when starting the app
 
 The most common cause is that dependencies were not installed into the active virtual environment.
 
@@ -383,7 +411,7 @@ Then retry:
 python trademind.py
 ```
 
-### Web UI does not open
+### ❗ Web UI does not open
 
 - check whether the server is already running on the selected port
 - open `http://localhost:3336` manually
@@ -393,20 +421,20 @@ python trademind.py
 python trademind.py --web --port 5000
 ```
 
-### Report was not generated
+### ❗ Report was not generated
 
 - check whether `reports/stocks` exists
 - make sure the project directory is writable
 - inspect log files under `logs`
 
-### Stock data cannot be downloaded
+### ❗ Stock data cannot be downloaded
 
 - verify the symbol
 - check your network
 - retry later in case of Yahoo-side rate limiting
 - update `yfinance`
 
-### Environment activation fails on Windows
+### ❗ Environment activation fails on Windows
 
 Use one of the correct activation commands:
 
@@ -418,7 +446,7 @@ venv\Scripts\Activate.ps1
 venv\Scripts\activate.bat
 ```
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```text
 TradeMind/
@@ -439,7 +467,7 @@ TradeMind/
 └── project_management/       # Development and decision records
 ```
 
-## Release Notes
+## 📝 Release Notes
 
 For detailed version history, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
@@ -449,11 +477,11 @@ Recent release focus in `Beta 0.3.4`:
 - ADX-related data display fixes
 - report rendering and presentation improvements
 
-## Development Notes
+## 🧱 Development Notes
 
 This repository also contains project-management and development-process documentation. That material is useful if you want to understand the evolution of the system, but it is separate from the normal user workflow.
 
-## License
+## 📄 License
 
 This project is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for the full text.
 
@@ -463,8 +491,13 @@ In short:
 - derivative distributions must comply with GPL-3.0 obligations
 - the software is provided as-is, without warranty
 
-## Author Note
+## 🙋 Author Note
 
 TradeMind Lite was originally written for my friends in China, so the software itself was designed as a Chinese-language product first. To make forking and secondary development easier for Chinese users, the development and project-management materials in this repository are also primarily written in Chinese. At this time, I do not plan to release official English or Japanese editions of the software, and I also do not plan to maintain an English edition of the development documentation.
+
+> 🇨🇳 Software-first language: Chinese  
+> 🧾 Development docs: primarily Chinese  
+> 🌍 Official English/Japanese software editions: not planned  
+> 📚 English development documentation: not planned
 
 Last updated: `2026-04-03 05:35:56 PDT`
