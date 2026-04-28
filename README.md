@@ -4,7 +4,7 @@ TradeMind Lite is an open-source U.S. stock technical analysis system that combi
 
 Current version: `Beta 0.3.4`
 
-> 📍 An open-source technical analysis workspace for U.S. stocks and ETFs, built for practical daily use, local reports, and Chinese-speaking developers who want to study or extend the system.
+> 📍 An open-source technical analysis workspace for U.S. stocks and ETFs, built for practical day-to-day use, local reports, and Chinese-speaking developers who want to study or extend the system.
 
 ## ⚠️ Disclaimer
 
